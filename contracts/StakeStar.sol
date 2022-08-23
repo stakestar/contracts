@@ -6,12 +6,18 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import {IStakeStar} from "./IStakeStar.sol";
+import {ReceiptToken} from "./ReceiptToken.sol";
 
 contract StakeStar is IStakeStar, Initializable, AccessControlUpgradeable {
 
+    ReceiptToken public receiptToken;
+
     function initialize() public initializer {
-        console.log("Initializing owner", msg.sender);
+        receiptToken = new ReceiptToken();
+        console.log("ReceiptToken is deployed:", address(receiptToken));
+
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        console.log("Owner is initialized:", msg.sender);
     }
 
     // receive eth from msg.sender

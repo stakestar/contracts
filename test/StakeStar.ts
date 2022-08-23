@@ -23,6 +23,15 @@ describe("StakeStar", function () {
 
       expect(await stakeStar.hasRole(await stakeStar.DEFAULT_ADMIN_ROLE(), owner.address)).to.equal(true);
     });
+
+    it("Should set the right owner for ReceiptToken", async function () {
+      const { stakeStar } = await loadFixture(deployStakeStarFixture);
+
+      const ERC20 = await ethers.getContractFactory("ReceiptToken");
+      const receiptToken = await ERC20.attach(await stakeStar.receiptToken());
+
+      expect(await receiptToken.hasRole(await receiptToken.DEFAULT_ADMIN_ROLE(), stakeStar.address)).to.equal(true);
+    });
   });
 
 });
