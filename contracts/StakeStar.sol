@@ -5,10 +5,10 @@ import "hardhat/console.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import {IStakeStar} from "./IStakeStar.sol";
+import {IStakingPool} from "./IStakingPool.sol";
 import {ReceiptToken} from "./ReceiptToken.sol";
 
-contract StakeStar is IStakeStar, Initializable, AccessControlUpgradeable {
+contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     ReceiptToken public receiptToken;
 
@@ -20,21 +20,50 @@ contract StakeStar is IStakeStar, Initializable, AccessControlUpgradeable {
         console.log("Owner is initialized:", msg.sender);
     }
 
-    // receive eth from msg.sender
-    // mint shares to msg.sender
+    // receive ETH from msg.sender
+    // mint ReceiptToken to msg.sender
     function stake() public payable {
         revert("not implemented");
     }
 
-    // receive ERC20 shares from msg.sender
-    // burn shares
+    // receive ReceiptToken from msg.sender
+    // burn ReceiptToken
     // register unstake operation
     function unstake(uint256 amount) public {
         revert("not implemented");
     }
 
-    // transfer eth to msg.sender
+    // transfer ETH to msg.sender
     function claim() public {
+        revert("not implemented");
+    }
+
+    // deposit ETH
+    // register validator in SSV Network
+    function createValidator() public {
+        revert("not implemented");
+    }
+
+    // enough "free" ETH on balance
+    // SSV position not liquidatable
+    // TBD
+    function validatorCreationAvailable() public view returns(bool) {
+        return false;
+    }
+
+    // TBD
+    function destroyValidator() public {
+        revert("not implemented");
+    }
+
+    // TBD
+    function validatorDestructionAvailable() public view returns(bool) {
+        return false;
+    }
+
+    // pull rewards
+    // update ReceiptToken price
+    function harvest() public {
         revert("not implemented");
     }
 
