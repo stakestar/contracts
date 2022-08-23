@@ -7,23 +7,28 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {IStakingPool} from "./IStakingPool.sol";
 import {ReceiptToken} from "./ReceiptToken.sol";
+import {StakeStarRewards} from "./StakeStarRewards.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     ReceiptToken public receiptToken;
+    StakeStarRewards public stakeStarRewards;
 
     function initialize() public initializer {
         receiptToken = new ReceiptToken();
         console.log("ReceiptToken is deployed:", address(receiptToken));
 
+        stakeStarRewards = new StakeStarRewards();
+        console.log("StakeStarRewards is deployed:", address(stakeStarRewards));
+
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         console.log("Owner is initialized:", msg.sender);
     }
 
-    // receive ETH from msg.sender
-    // mint ReceiptToken to msg.sender
+    receive() external payable {}
+
     function stake() public payable {
-        revert("not implemented");
+        receiptToken.mint(msg.sender, msg.value);
     }
 
     // receive ReceiptToken from msg.sender
@@ -61,10 +66,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         return false;
     }
 
-    // pull rewards
-    // update ReceiptToken price
-    function harvest() public {
-        revert("not implemented");
+    function applyRewards() public {
+        uint256 amount = address(stakeStarRewards).balance;
+        stakeStarRewards.pull();
+        receiptToken.updateRate(amount, true);
+    }
+
+    function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        receiptToken.updateRate(amount, false);
     }
 
 }
