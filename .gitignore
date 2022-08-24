@@ -1,4 +1,5 @@
 .openzeppelin/unknown-31337.json
+.openzeppelin/goerli.json
 
 node_modules
 
