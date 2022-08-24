@@ -2,16 +2,23 @@ import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
 
+import {addressesFor} from "../scripts/utils/addresses";
+
 describe("StakeStar", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
   async function deployStakeStarFixture() {
+    const chainId = (await ethers.provider.getNetwork()).chainId;
+    const addresses = addressesFor(chainId);
+
+    console.log(`Chain ID ${chainId}`);
+
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
 
     const StakeStar = await ethers.getContractFactory("StakeStar");
-    const stakeStar = await upgrades.deployProxy(StakeStar);
+    const stakeStar = await upgrades.deployProxy(StakeStar, [addresses.depositContract, addresses.ssvNetwork, addresses.ssvToken]);
     await stakeStar.deployed();
     const stakeStarPublic = stakeStar.connect(otherAccount);
 
@@ -99,11 +106,11 @@ describe("StakeStar", function () {
 
       await expect(
         otherAccount.sendTransaction({to: stakeStarRewards.address, value: 1})
-      ).to.changeEtherBalances([otherAccount, stakeStarRewards],[-1, 1]);
+      ).to.changeEtherBalances([otherAccount, stakeStarRewards], [-1, 1]);
 
       await expect(
         stakeStarPublic.applyRewards()
-      ).to.changeEtherBalances([stakeStarRewards, stakeStarPublic],[-1, 1]);
+      ).to.changeEtherBalances([stakeStarRewards, stakeStarPublic], [-1, 1]);
 
       expect(await receiptToken.rate()).to.equal('2000000000000000000');
       expect(await receiptToken.totalSupply()).to.equal('1');
