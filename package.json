@@ -1,8 +1,12 @@
 {
-  "name": "stakestar",
+  "name": "@stakestar/contracts",
+  "main": "dist/typechain-types/index.js",
+  "types": "dist/typechain-types/index.d.ts",
+  "files": [
+    "dist/typechain-types"
+  ],
   "version": "0.1.0",
-  "description": "Ethereum Staking Pool",
-  "repository": "https://github.com/orionterra/stakestar",
+  "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
   "scripts": {
@@ -33,5 +37,12 @@
     "ts-node": ">=8.0.0",
     "typechain": "^8.1.0",
     "typescript": ">=4.5.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stakestar/contracts.git"
   }
 }
