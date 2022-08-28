@@ -10,6 +10,7 @@
   "author": "onestar.dev",
   "license": "MIT",
   "scripts": {
+    "build": "hh clean && hh compile && tsc",
     "test": "hh test"
   },
   "devDependencies": {

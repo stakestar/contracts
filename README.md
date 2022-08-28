@@ -1,8 +1,9 @@
 # StakeStar Contracts
 
 ```shell
-hh compile
-hh test
+yarn
+yarn build
+yarn publish
 ```
 
 # TODO
@@ -12,4 +13,4 @@ hh test
 - [ ] Publish package to `npm.pkg.github.com`
 - [ ] Replace ISSV*.sol files with the published package
 - [ ] Implement Unstake Operations queue
-- [ ] Fix `stream/web is an experimental feature` warning
+- [x] Fix `stream/web is an experimental feature` warning
