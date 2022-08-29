@@ -3,7 +3,6 @@
 ```shell
 yarn
 yarn build
-yarn publish
 ```
 
 # TODO

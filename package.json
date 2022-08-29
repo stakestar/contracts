@@ -10,8 +10,8 @@
   "author": "onestar.dev",
   "license": "MIT",
   "scripts": {
-    "build": "hh clean && hh compile && tsc",
-    "test": "hh test"
+    "build": "hardhat clean && hardhat compile && tsc",
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
