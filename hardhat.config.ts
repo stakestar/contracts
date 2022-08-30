@@ -11,6 +11,10 @@ const config: HardhatUserConfig = {
       forking: {
         url: process.env.INFURA_GOERLI_RPC || 'oops'
       }
+    },
+    goerli: {
+      url: process.env.INFURA_GOERLI_RPC || 'oops',
+      accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || 'oops']
     }
   },
   solidity: {

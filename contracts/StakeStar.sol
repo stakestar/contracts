@@ -15,6 +15,8 @@ import {ISSVNetwork} from "./ISSVNetwork.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
+    event Stake(address indexed staker, uint256 amount);
+
     struct ValidatorParams {
         bytes publicKey;
         bytes withdrawalCredentials;
@@ -52,16 +54,18 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function stake() public payable {
         require(msg.value > 0, "insufficient stake amount");
         receiptToken.mint(msg.sender, msg.value);
+        emit Stake(msg.sender, msg.value);
     }
 
     // receive ReceiptToken from msg.sender
     // burn ReceiptToken
-    // register unstake operation
+    // initiate unstake operation
     function unstake(uint256 amount) public {
         revert("not implemented");
     }
 
     // transfer ETH to msg.sender
+    // complete unstake operation
     function claim() public {
         revert("not implemented");
     }
