@@ -2,6 +2,7 @@ import {HardhatUserConfig} from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import '@openzeppelin/hardhat-upgrades';
 import "dotenv/config";
+import {ZERO_PRIVKEY} from "./scripts/utils/constants";
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -14,7 +15,7 @@ const config: HardhatUserConfig = {
     },
     goerli: {
       url: process.env.INFURA_GOERLI_RPC || 'oops',
-      accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || 'oops']
+      accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || ZERO_PRIVKEY]
     }
   },
   solidity: {
