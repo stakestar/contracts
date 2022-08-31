@@ -71,7 +71,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(validatorCreationAvailable(), "validator creation not available");
+        require(validatorCreationAvailability(), "validator creation not available");
 
         depositContract.deposit{value : 32 ether}(
             validatorParams.publicKey,
@@ -90,7 +90,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function validatorCreationAvailable() public view returns (bool) {
+    function validatorCreationAvailability() public view returns (bool) {
         return address(this).balance >= 32 ether;
     }
 
@@ -100,7 +100,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     // TBD
-    function validatorDestructionAvailable() public view returns (bool) {
+    function validatorDestructionAvailability() public view returns (bool) {
         revert("not implemented");
     }
 

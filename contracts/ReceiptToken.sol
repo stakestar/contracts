@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract ReceiptToken is ERC20, AccessControl {
     using SafeMath for uint256;
 
+    event UpdateRate(uint256 rate);
+
     uint256 private _rate;
 
     constructor() ERC20("Receipt", "RCPT") {
@@ -35,5 +37,6 @@ contract ReceiptToken is ERC20, AccessControl {
     function updateRate(uint256 amount, bool positive) public onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 total = totalSupply().mul(_rate).div(10 ** decimals());
         _rate = (positive ? total.add(amount) : total.sub(amount)).mul(10 ** decimals()).div(totalSupply());
+        emit UpdateRate(_rate);
     }
 }
