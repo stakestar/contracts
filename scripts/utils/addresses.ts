@@ -3,7 +3,8 @@ const ADDRESSES: {
     depositContract: string,
     ssvNetwork: string,
     ssvToken: string,
-    stakeStar: string
+    stakeStarRegistry: string,
+    stakeStar: string,
   }
 } = {
   // goerli
@@ -11,7 +12,8 @@ const ADDRESSES: {
     depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    stakeStar: "0x95e491106448207CA482DFbEd315b79892bD7648"
+    stakeStarRegistry: "0x41082E8dCEb5eDda19206feD05B0033AeEe7fE76",
+    stakeStar: "0x8109a33A617fB5D4D9934009F3d7520348e7E33e",
   }
 }
 

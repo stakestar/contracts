@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract ReceiptToken is ERC20, AccessControl {
+contract StakeStarReceipt is ERC20, AccessControl {
     using SafeMath for uint256;
 
     event UpdateRate(uint256 rate);
 
     uint256 private _rate;
 
-    constructor() ERC20("Receipt", "RCPT") {
+    constructor() ERC20("StakeStarReceipt", "SSR") {
         _rate = 10 ** decimals();
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }

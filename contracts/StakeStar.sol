@@ -7,16 +7,14 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import {IStakingPool} from "./IStakingPool.sol";
-import {ReceiptToken} from "./ReceiptToken.sol";
+import {StakeStarRegistry} from "./StakeStarRegistry.sol";
+import {StakeStarReceipt} from "./StakeStarReceipt.sol";
 import {StakeStarRewards} from "./StakeStarRewards.sol";
 
 import {IDepositContract} from "./IDepositContract.sol";
 import {ISSVNetwork} from "./ISSVNetwork.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
-
-    event Stake(address indexed staker, uint256 amount);
-
     struct ValidatorParams {
         bytes publicKey;
         bytes withdrawalCredentials;
@@ -27,38 +25,43 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes[] sharesEncrypted;
     }
 
-    ReceiptToken public receiptToken;
+    event Stake(address indexed staker, uint256 amount);
+
+    StakeStarRegistry public stakeStarRegistry;
+    StakeStarReceipt public stakeStarReceipt;
     StakeStarRewards public stakeStarRewards;
 
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
 
-    function initialize(address depositContractAddress, address ssvNetworkAddress, address ssvTokenAddress) public initializer {
+    function initialize(
+        address depositContractAddress,
+        address ssvNetworkAddress,
+        address ssvTokenAddress,
+        address stakeStarRegistryAddress
+    ) public initializer {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvNetworkAddress);
 
-        receiptToken = new ReceiptToken();
-        console.log("ReceiptToken is deployed:", address(receiptToken));
-
+        stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
+        stakeStarReceipt = new StakeStarReceipt();
         stakeStarRewards = new StakeStarRewards();
-        console.log("StakeStarRewards is deployed:", address(stakeStarRewards));
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        console.log("Owner is initialized:", msg.sender);
     }
 
     receive() external payable {}
 
     function stake() public payable {
         require(msg.value > 0, "insufficient stake amount");
-        receiptToken.mint(msg.sender, msg.value);
+        stakeStarReceipt.mint(msg.sender, msg.value);
         emit Stake(msg.sender, msg.value);
     }
 
-    // receive ReceiptToken from msg.sender
-    // burn ReceiptToken
+    // receive StakeStarReceipt from msg.sender
+    // burn StakeStarReceipt
     // initiate unstake operation
     function unstake(uint256 amount) public {
         revert("not implemented");
@@ -109,11 +112,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(amount > 0, "no rewards");
 
         stakeStarRewards.pull();
-        receiptToken.updateRate(amount, true);
+        stakeStarReceipt.updateRate(amount, true);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        receiptToken.updateRate(amount, false);
+        stakeStarReceipt.updateRate(amount, false);
     }
 
 }
