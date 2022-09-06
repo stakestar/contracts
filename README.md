@@ -1,8 +1,16 @@
 # StakeStar Contracts
 
+## Install
+
 ```shell
 yarn
 yarn build
+```
+
+## Publish
+
+```shell
+hub release create <tag>
 ```
 
 # TODO
