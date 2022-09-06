@@ -12,10 +12,10 @@ async function main() {
 
   const StakeStar = await ethers.getContractFactory("StakeStar");
   const stakeStar = await upgrades.deployProxy(StakeStar, [
-    stakeStarRegistry.address,
     addresses.depositContract,
     addresses.ssvNetwork,
-    addresses.ssvToken
+    addresses.ssvToken,
+    stakeStarRegistry.address,
   ]);
   await stakeStar.deployed();
   console.log(`StakeStar is deployed to ${stakeStar.address}`);

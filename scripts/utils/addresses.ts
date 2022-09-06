@@ -12,8 +12,8 @@ const ADDRESSES: {
     depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    stakeStarRegistry: "0x1298EE01938C47737f3B5413f90bC02cB084F2D8",
-    stakeStar: "0xFCd8cD4099757a2f5C5A472DAd4888D2f23a8eE2",
+    stakeStarRegistry: "0x22Ffa9Fa82596528e568FcDa8FAFFbd7802B429d",
+    stakeStar: "0xD1eaf74dcB06ce47cD61FAAb1B41cd3ccB235F7A",
   }
 }
 
