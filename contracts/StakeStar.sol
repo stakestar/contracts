@@ -43,7 +43,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     ) public initializer {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
-        ssvToken = IERC20(ssvNetworkAddress);
+        ssvToken = IERC20(ssvTokenAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarReceipt = new StakeStarReceipt();

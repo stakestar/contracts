@@ -1,25 +1,25 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0xdf94c785239dA65bff0B3445fae36bE7E461e3fe",
-    "txHash": "0xb0b1747bd63177e0d12003cdc9a0eb5f6cbef0a0684579ff0821ab2ffb1763a5"
+    "address": "0xe13E7b5eBc780e27854eA5D4d64831f45e67B6e4",
+    "txHash": "0x7650bcb1cd892a351565368e41163d44f756f67aa1c2cee3c87ca8e9c98cf56a"
   },
   "proxies": [
     {
-      "address": "0x41082E8dCEb5eDda19206feD05B0033AeEe7fE76",
-      "txHash": "0x0cd5ed8a73cf1adf1e28538f44d079faf2d35479f657df6df89a56bf3c727ba3",
+      "address": "0x1298EE01938C47737f3B5413f90bC02cB084F2D8",
+      "txHash": "0x262daf4974d530a69e9102ee4338cbccf1c3b478f54846ba6d461c82cbbb3596",
       "kind": "transparent"
     },
     {
-      "address": "0x8109a33A617fB5D4D9934009F3d7520348e7E33e",
-      "txHash": "0xee0db60e82cb7a4411b119aead17a7e116185c444e842efd8ca50f9705396607",
+      "address": "0xFCd8cD4099757a2f5C5A472DAd4888D2f23a8eE2",
+      "txHash": "0x6722886216af8d89ff805149f7520181f93a2f0820eba8428a2b3aa14183a7d8",
       "kind": "transparent"
     }
   ],
   "impls": {
     "016a8a2da7528848b436bc31b000b58d69d1f85e9762a7dab939182307381bce": {
-      "address": "0x4F7Ac8f4EB801EA33D7341f830EC55854423d592",
-      "txHash": "0x0e262b5def152c965b5c90f7187cfee2a46c82cce48ea163f786d60be7db3f84",
+      "address": "0x861E99eC748fa0ae05Bf411ebA05b99770692820",
+      "txHash": "0x22e450bac5ddb78bd1ed57fd087d82238b0513f8c3b419ff9ef3a0b390a30589",
       "layout": {
         "storage": [
           {
@@ -146,9 +146,9 @@
         }
       }
     },
-    "3ede3b36738daf29450760b351e7884f6f936cad44cf0cab6def291dc847c57c": {
-      "address": "0x72D42A4d9311321e374A3C7124F2145A9CfF3F73",
-      "txHash": "0x290eabce0a6ada2e6908312cd97415ccdaa59cfebf33842d5d6308646179a07a",
+    "7302ded78c9fd6d437c11838d4b400852946c228b485dabd3141d07a68d0c052": {
+      "address": "0x804352dc761cCAa7EF4C89122afb37c6488E3C8f",
+      "txHash": "0xf21016fe01894edb56e7db480a10685c2f36ea4478220a9102161609437274c5",
       "layout": {
         "storage": [
           {
