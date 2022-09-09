@@ -8,7 +8,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {IStakingPool} from "./IStakingPool.sol";
 import {StakeStarRegistry} from "./StakeStarRegistry.sol";
-import {StakeStarReceipt} from "./StakeStarReceipt.sol";
+import {StakeStarETH} from "./StakeStarETH.sol";
 import {StakeStarRewards} from "./StakeStarRewards.sol";
 
 import {IDepositContract} from "./IDepositContract.sol";
@@ -28,7 +28,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Stake(address indexed staker, uint256 amount);
 
     StakeStarRegistry public stakeStarRegistry;
-    StakeStarReceipt public stakeStarReceipt;
+    StakeStarETH public stakeStarETH;
     StakeStarRewards public stakeStarRewards;
 
     IDepositContract public depositContract;
@@ -46,7 +46,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvToken = IERC20(ssvTokenAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
-        stakeStarReceipt = new StakeStarReceipt();
+        stakeStarETH = new StakeStarETH();
         stakeStarRewards = new StakeStarRewards();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -56,12 +56,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function stake() public payable {
         require(msg.value > 0, "insufficient stake amount");
-        stakeStarReceipt.mint(msg.sender, msg.value);
+        stakeStarETH.mint(msg.sender, msg.value);
         emit Stake(msg.sender, msg.value);
     }
 
-    // receive StakeStarReceipt from msg.sender
-    // burn StakeStarReceipt
+    // receive StakeStarETH from msg.sender
+    // burn StakeStarETH
     // initiate unstake operation
     function unstake(uint256 amount) public {
         revert("not implemented");
@@ -112,11 +112,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(amount > 0, "no rewards");
 
         stakeStarRewards.pull();
-        stakeStarReceipt.updateRate(amount, true);
+        stakeStarETH.updateRate(amount, true);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        stakeStarReceipt.updateRate(amount, false);
+        stakeStarETH.updateRate(amount, false);
     }
 
 }
