@@ -8,35 +8,45 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract StakeStarETH is ERC20, AccessControl {
     using SafeMath for uint256;
 
+    event Mint(address indexed to, uint256 ssETH, uint256 rate);
+    event Burn(address indexed from, uint256 ssETH, uint256 rate);
     event UpdateRate(uint256 rate);
 
-    uint256 private _rate;
+    // ETH = ssETH * rate
+    uint256 public rate;
 
     constructor() ERC20("StakeStar ETH", "ssETH") {
-        _rate = 10 ** decimals();
+        rate = _rate(1, 1);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function rate() public view returns (uint256) {
-        return _rate;
+    function mint(address account, uint256 ETH) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 ssETH = ETH_to_ssETH(ETH);
+        _mint(account, ssETH);
+        emit Mint(account, ssETH, rate);
     }
 
-    function mint(address account, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (totalSupply() == 0) {
-            _rate = 10 ** decimals();
-            _mint(account, amount);
-        } else {
-            _mint(account, amount.mul(_rate).div(10 ** decimals()));
-        }
+    function burn(address account, uint256 ETH) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 ssETH = ETH_to_ssETH(ETH);
+        _burn(account, ssETH);
+        emit Burn(account, ssETH, rate);
     }
 
-    function burn(address account, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        revert("not implemented");
+    function updateRate(uint256 ETHChange, bool positiveOrNegative) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 ETH = ssETH_to_ETH(totalSupply());
+        rate = _rate(positiveOrNegative ? ETH.add(ETHChange) : ETH.sub(ETHChange), totalSupply());
+        emit UpdateRate(rate);
     }
 
-    function updateRate(uint256 amount, bool positive) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 total = totalSupply().mul(_rate).div(10 ** decimals());
-        _rate = (positive ? total.add(amount) : total.sub(amount)).mul(10 ** decimals()).div(totalSupply());
-        emit UpdateRate(_rate);
+    function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
+        return ssETH.mul(rate).div(1 ether);
+    }
+
+    function ETH_to_ssETH(uint256 ETH) public view returns (uint256) {
+        return ETH.mul(1 ether).div(rate);
+    }
+
+    function _rate(uint256 ETH, uint256 ssETH) private pure returns (uint256) {
+        return ETH.mul(1 ether).div(ssETH);
     }
 }

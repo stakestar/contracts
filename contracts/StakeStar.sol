@@ -25,8 +25,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes[] sharesEncrypted;
     }
 
-    event Stake(address indexed staker, uint256 amount);
-
     StakeStarRegistry public stakeStarRegistry;
     StakeStarETH public stakeStarETH;
     StakeStarRewards public stakeStarRewards;
@@ -57,7 +55,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function stake() public payable {
         require(msg.value > 0, "insufficient stake amount");
         stakeStarETH.mint(msg.sender, msg.value);
-        emit Stake(msg.sender, msg.value);
     }
 
     // receive StakeStarETH from msg.sender

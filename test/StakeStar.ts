@@ -17,18 +17,22 @@ describe("StakeStar", function () {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
 
+    const StakeStarRegistry = await ethers.getContractFactory("StakeStarRegistry");
+    const stakeStarRegistry = await upgrades.deployProxy(StakeStarRegistry);
+    await stakeStarRegistry.deployed();
+
     const StakeStar = await ethers.getContractFactory("StakeStar");
-    const stakeStar = await upgrades.deployProxy(StakeStar, [addresses.depositContract, addresses.ssvNetwork, addresses.ssvToken]);
+    const stakeStar = await upgrades.deployProxy(StakeStar, [addresses.depositContract, addresses.ssvNetwork, addresses.ssvToken, stakeStarRegistry.address]);
     await stakeStar.deployed();
     const stakeStarPublic = stakeStar.connect(otherAccount);
 
-    const ERC20 = await ethers.getContractFactory("ReceiptToken");
-    const receiptToken = await ERC20.attach(await stakeStar.receiptToken());
+    const StakeStarETH = await ethers.getContractFactory("StakeStarETH");
+    const stakeStarETH = await StakeStarETH.attach(await stakeStar.stakeStarETH());
 
     const StakeStarRewards = await ethers.getContractFactory("StakeStarRewards");
     const stakeStarRewards = await StakeStarRewards.attach(await stakeStar.stakeStarRewards());
 
-    return {stakeStar, stakeStarPublic, receiptToken, stakeStarRewards, owner, otherAccount};
+    return {stakeStar, stakeStarPublic, stakeStarETH: stakeStarETH, stakeStarRewards, owner, otherAccount};
   }
 
   describe("Deployment", function () {
@@ -38,13 +42,9 @@ describe("StakeStar", function () {
       expect(await stakeStar.hasRole(await stakeStar.DEFAULT_ADMIN_ROLE(), owner.address)).to.equal(true);
     });
 
-    it("Should set the right owner for ReceiptToken", async function () {
-      const {stakeStar} = await loadFixture(deployStakeStarFixture);
-
-      const ERC20 = await ethers.getContractFactory("ReceiptToken");
-      const receiptToken = await ERC20.attach(await stakeStar.receiptToken());
-
-      expect(await receiptToken.hasRole(await receiptToken.DEFAULT_ADMIN_ROLE(), stakeStar.address)).to.equal(true);
+    it("Should set the right owner for ssETH", async function () {
+      const {stakeStar, stakeStarETH} = await loadFixture(deployStakeStarFixture);
+      expect(await stakeStarETH.hasRole(await stakeStarETH.DEFAULT_ADMIN_ROLE(), stakeStar.address)).to.equal(true);
     });
   });
 
@@ -57,52 +57,52 @@ describe("StakeStar", function () {
       ).to.changeEtherBalances([otherAccount, stakeStarPublic], [-1, 1]);
     });
 
-    it("Should mint msg.value of ReceiptToken if rate is 1:1", async function () {
-      const {stakeStarPublic, receiptToken, otherAccount} = await loadFixture(deployStakeStarFixture);
+    it("Should mint msg.value of ssETH if rate is 1:1", async function () {
+      const {stakeStarPublic, stakeStarETH, otherAccount} = await loadFixture(deployStakeStarFixture);
 
       await expect(
         stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 1);
 
       await expect(
         stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 1);
 
       await expect(
         stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 1);
 
-      expect(await receiptToken.rate()).to.equal('1000000000000000000');
-      expect(await receiptToken.totalSupply()).to.equal('3');
+      expect(await stakeStarETH.rate()).to.equal('1000000000000000000');
+      expect(await stakeStarETH.totalSupply()).to.equal('3');
     });
 
-    it("Should mint msg.value / 2 of ReceiptToken if rate is 1:2", async function () {
-      const {stakeStar, stakeStarPublic, receiptToken, otherAccount} = await loadFixture(deployStakeStarFixture);
+    it("Should mint msg.value * 2 of ssETH if rate 0.5", async function () {
+      const {stakeStar, stakeStarPublic, stakeStarETH, otherAccount} = await loadFixture(deployStakeStarFixture);
 
       await expect(
         stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 1);
 
       await expect(
         stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 1);
 
       await stakeStar.applyPenalties(1);
 
-      expect(await receiptToken.rate()).to.equal('500000000000000000');
-      expect(await receiptToken.totalSupply()).to.equal('2');
+      expect(await stakeStarETH.rate()).to.equal('500000000000000000');
+      expect(await stakeStarETH.totalSupply()).to.equal('2');
 
       await expect(
         stakeStarPublic.stake({value: 2})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 4);
     });
 
-    it("Should mint msg.value * 2 of ReceiptToken if rate is 2:1", async function () {
-      const {stakeStarPublic, receiptToken, stakeStarRewards, otherAccount} = await loadFixture(deployStakeStarFixture);
+    it("Should mint msg.value / 2 of ssETH if rate is 2", async function () {
+      const {stakeStarPublic, stakeStarETH, stakeStarRewards, otherAccount} = await loadFixture(deployStakeStarFixture);
 
       await expect(
         stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 1);
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 1);
 
       await expect(
         otherAccount.sendTransaction({to: stakeStarRewards.address, value: 1})
@@ -112,12 +112,12 @@ describe("StakeStar", function () {
         stakeStarPublic.applyRewards()
       ).to.changeEtherBalances([stakeStarRewards, stakeStarPublic], [-1, 1]);
 
-      expect(await receiptToken.rate()).to.equal('2000000000000000000');
-      expect(await receiptToken.totalSupply()).to.equal('1');
+      expect(await stakeStarETH.rate()).to.equal('2000000000000000000');
+      expect(await stakeStarETH.totalSupply()).to.equal('1');
 
       await expect(
-        stakeStarPublic.stake({value: 1})
-      ).to.changeTokenBalance(receiptToken, otherAccount, 2);
+        stakeStarPublic.stake({value: 4})
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, 2);
     });
   });
 
