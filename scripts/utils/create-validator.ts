@@ -1,6 +1,5 @@
 import {AbiCoder} from "@ethersproject/abi";
 import {BigNumber, providers, Wallet} from "ethers";
-import {DEFAULT_GENESIS_FORK_VERSION, generateDepositData, signingKey, split} from "@stakestar/lib";
 import {addressesFor} from "./addresses";
 import {StakeStar, StakeStar__factory} from "../../typechain-types";
 
@@ -14,6 +13,9 @@ const operatorPubKeys = [
 ];
 
 async function main() {
+    const lib = await import("@stakestar/lib");
+    const {DEFAULT_GENESIS_FORK_VERSION, generateDepositData, signingKey, split} = lib;
+
     const provider = new providers.JsonRpcProvider(process.env.ENDPOINT);
     const wallet = Wallet.fromMnemonic(process.env.MNEMONIC!!).connect(provider);
 

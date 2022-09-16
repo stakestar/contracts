@@ -3,6 +3,7 @@
     "outDir": "dist",
     "target": "es2020",
     "module": "commonjs",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
