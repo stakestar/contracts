@@ -6,7 +6,7 @@
     "dist/typechain-types/**/*",
     "dist/scripts/utils/**/*"
   ],
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
