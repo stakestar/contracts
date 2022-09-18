@@ -1,8 +1,10 @@
-import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
+import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 
-import {addressesFor} from "../scripts/utils/addresses";
+import {addressesFor, operatorIdsFor, operatorPublicKeysFor} from "../scripts/utils/constants";
+import {HDNode} from "ethers/lib/utils";
+import {generateValidatorParams} from "../scripts/utils/helpers";
 
 describe("StakeStar", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -32,7 +34,7 @@ describe("StakeStar", function () {
     const StakeStarRewards = await ethers.getContractFactory("StakeStarRewards");
     const stakeStarRewards = await StakeStarRewards.attach(await stakeStar.stakeStarRewards());
 
-    return {stakeStar, stakeStarPublic, stakeStarETH: stakeStarETH, stakeStarRewards, owner, otherAccount};
+    return {chainId, stakeStar, stakeStarPublic, stakeStarETH: stakeStarETH, stakeStarRewards, owner, otherAccount};
   }
 
   describe("Deployment", function () {
