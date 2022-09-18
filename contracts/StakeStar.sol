@@ -25,6 +25,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes[] sharesEncrypted;
     }
 
+    enum ValidatorStatus {
+        MISSING,
+        CREATED,
+        DESTROYED
+    }
+
     StakeStarRegistry public stakeStarRegistry;
     StakeStarETH public stakeStarETH;
     StakeStarRewards public stakeStarRewards;
@@ -32,6 +38,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
+
+    mapping(bytes => ValidatorStatus) public validatorStatus;
+    bytes[] public validatorPublicKeys;
 
     function initialize(
         address depositContractAddress,
@@ -53,7 +62,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     receive() external payable {}
 
     function stake() public payable {
-        require(msg.value > 0, "insufficient stake amount");
+        require(msg.value > 0, "S1");
         stakeStarETH.mint(msg.sender, msg.value);
     }
 
@@ -61,17 +70,21 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // burn StakeStarETH
     // initiate unstake operation
     function unstake(uint256 amount) public {
-        revert("not implemented");
+        revert("U1");
     }
 
     // transfer ETH to msg.sender
     // complete unstake operation
     function claim() public {
-        revert("not implemented");
+        revert("C1");
     }
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(validatorCreationAvailability(), "validator creation not available");
+        require(validatorCreationAvailability(), "CV1");
+        require(validatorStatus[validatorParams.publicKey] == ValidatorStatus.MISSING, "CV2");
+
+        validatorStatus[validatorParams.publicKey] = ValidatorStatus.CREATED;
+        validatorPublicKeys.push(validatorParams.publicKey);
 
         depositContract.deposit{value : 32 ether}(
             validatorParams.publicKey,
@@ -95,7 +108,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     // TBD
-    function destroyValidator() public {
+    function destroyValidator(bytes memory publicKey) public {
+        require(validatorStatus[publicKey] == ValidatorStatus.CREATED, "DV1");
+        validatorStatus[publicKey] = ValidatorStatus.DESTROYED;
+
         revert("not implemented");
     }
 
@@ -116,4 +132,25 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarETH.updateRate(amount, false);
     }
 
+    function getValidatorPublicKeys(ValidatorStatus status) public view returns (bytes[] memory publicKeys) {
+        publicKeys = new bytes[](validatorPublicKeys.length);
+
+        for (uint32 i = 0; i < validatorPublicKeys.length; i++) {
+            bytes memory publicKey = validatorPublicKeys[i];
+            if (validatorStatus[publicKey] == status) {
+                publicKeys[i] = publicKey;
+            }
+        }
+    }
+
+    function countValidatorPublicKeys(ValidatorStatus status) public view returns (uint32 count) {
+        count = 0;
+
+        for (uint32 i = 0; i < validatorPublicKeys.length; i++) {
+            bytes memory publicKey = validatorPublicKeys[i];
+            if (validatorStatus[publicKey] == status) {
+                count++;
+            }
+        }
+    }
 }
