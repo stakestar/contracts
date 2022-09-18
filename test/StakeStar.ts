@@ -2,8 +2,7 @@ import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 
-import {addressesFor, operatorIdsFor, operatorPublicKeysFor} from "../scripts/utils/constants";
-import {HDNode} from "ethers/lib/utils";
+import {addressesFor, operatorIdsFor, operatorPublicKeysFor, VALIDATOR_PRIVATE_KEY} from "../scripts/utils/constants";
 import {generateValidatorParams} from "../scripts/utils/helpers";
 
 describe("StakeStar", function () {
@@ -18,6 +17,8 @@ describe("StakeStar", function () {
 
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
+
+    console.log(`Deployer ${owner.address}`);
 
     const StakeStarRegistry = await ethers.getContractFactory("StakeStarRegistry");
     const stakeStarRegistry = await upgrades.deployProxy(StakeStarRegistry);
@@ -34,7 +35,19 @@ describe("StakeStar", function () {
     const StakeStarRewards = await ethers.getContractFactory("StakeStarRewards");
     const stakeStarRewards = await StakeStarRewards.attach(await stakeStar.stakeStarRewards());
 
-    return {chainId, stakeStar, stakeStarPublic, stakeStarETH: stakeStarETH, stakeStarRewards, owner, otherAccount};
+    const ERC20 = await ethers.getContractFactory("ERC20");
+    const ssvToken = await ERC20.attach(addresses.ssvToken);
+
+    return {
+      chainId,
+      stakeStar,
+      stakeStarPublic,
+      stakeStarETH,
+      stakeStarRewards,
+      ssvToken,
+      owner,
+      otherAccount
+    };
   }
 
   describe("Deployment", function () {
@@ -123,4 +136,24 @@ describe("StakeStar", function () {
     });
   });
 
+  describe("CreateValidator", function () {
+    it("Creates a validator", async function () {
+      const {chainId, stakeStar, stakeStarRewards, ssvToken, owner} = await loadFixture(deployStakeStarFixture);
+
+      await owner.sendTransaction({
+        to: stakeStar.address,
+        value: ethers.utils.parseEther('99')
+      });
+      await ssvToken.connect(owner).transfer(stakeStar.address, await ssvToken.balanceOf(owner.address));
+
+      const validatorParams = await generateValidatorParams(
+        VALIDATOR_PRIVATE_KEY,
+        operatorPublicKeysFor(chainId),
+        operatorIdsFor(chainId),
+        stakeStarRewards.address
+      );
+
+      await stakeStar.createValidator(validatorParams, await ssvToken.balanceOf(stakeStar.address));
+    });
+  })
 });
