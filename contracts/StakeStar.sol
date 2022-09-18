@@ -39,7 +39,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
 
-    mapping(bytes => ValidatorStatus) public validatorStatus;
+    mapping(bytes => ValidatorStatus) public validatorStatuses;
     bytes[] public validatorPublicKeys;
 
     function initialize(
@@ -81,9 +81,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(validatorCreationAvailability(), "CV1");
-        require(validatorStatus[validatorParams.publicKey] == ValidatorStatus.MISSING, "CV2");
+        require(validatorStatuses[validatorParams.publicKey] == ValidatorStatus.MISSING, "CV2");
 
-        validatorStatus[validatorParams.publicKey] = ValidatorStatus.CREATED;
+        validatorStatuses[validatorParams.publicKey] = ValidatorStatus.CREATED;
         validatorPublicKeys.push(validatorParams.publicKey);
 
         depositContract.deposit{value : 32 ether}(
@@ -109,8 +109,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     // TBD
     function destroyValidator(bytes memory publicKey) public {
-        require(validatorStatus[publicKey] == ValidatorStatus.CREATED, "DV1");
-        validatorStatus[publicKey] = ValidatorStatus.DESTROYED;
+        require(validatorStatuses[publicKey] == ValidatorStatus.CREATED, "DV1");
+        validatorStatuses[publicKey] = ValidatorStatus.DESTROYED;
 
         revert("not implemented");
     }
@@ -137,7 +137,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         for (uint32 i = 0; i < validatorPublicKeys.length; i++) {
             bytes memory publicKey = validatorPublicKeys[i];
-            if (validatorStatus[publicKey] == status) {
+            if (validatorStatuses[publicKey] == status) {
                 publicKeys[i] = publicKey;
             }
         }
@@ -148,7 +148,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         for (uint32 i = 0; i < validatorPublicKeys.length; i++) {
             bytes memory publicKey = validatorPublicKeys[i];
-            if (validatorStatus[publicKey] == status) {
+            ValidatorStatus validatorStatus = validatorStatuses[publicKey];
+            if (status == ValidatorStatus.CREATED &&
+                (validatorStatus == ValidatorStatus.CREATED || validatorStatus == ValidatorStatus.DESTROYED)) {
+                count++;
+            } else if (status == ValidatorStatus.DESTROYED && validatorStatus == ValidatorStatus.DESTROYED) {
                 count++;
             }
         }
