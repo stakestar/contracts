@@ -1,5 +1,5 @@
 import {ethers, upgrades} from "hardhat";
-import {addressesFor} from "./utils/addresses";
+import {addressesFor} from "./utils/constants";
 
 async function main() {
   const chainId = (await ethers.provider.getNetwork()).chainId;
