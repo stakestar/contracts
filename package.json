@@ -4,9 +4,10 @@
   "types": "dist/typechain-types/index.d.ts",
   "files": [
     "dist/typechain-types/**/*",
-    "dist/scripts/utils/**/*"
+    "dist/scripts/utils/**/*",
+    "artifacts/contracts/**/*"
   ],
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
