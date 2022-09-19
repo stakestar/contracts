@@ -43,6 +43,7 @@ describe("StakeStar", function () {
     return {
       chainId,
       stakeStar,
+      stakeStarRegistry,
       stakeStarPublic,
       stakeStarETH,
       stakeStarRewards,

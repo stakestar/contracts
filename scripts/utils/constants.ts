@@ -1,6 +1,3 @@
-export const ZERO_PRIVKEY = '0000000000000000000000000000000000000000000000000000000000000000';
-export const VALIDATOR_PRIVATE_KEY = '0x6da4f8d49b28f88ef7154dd4ff9d5ebd83d0c0f29d04718996f6f89a95308219'; // random
-
 const ADDRESSES: {
   [chainId: number]: {
     depositContract: string,
@@ -55,3 +52,6 @@ export function operatorPublicKeysFor(chainId: number) {
     throw new Error("unsupported chainId");
   }
 }
+
+export const ZERO_PRIVATE_KEY = '0000000000000000000000000000000000000000000000000000000000000000';
+export const VALIDATOR_PRIVATE_KEY = '0x6da4f8d49b28f88ef7154dd4ff9d5ebd83d0c0f29d04718996f6f89a95308219'; // random

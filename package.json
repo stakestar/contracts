@@ -7,7 +7,7 @@
     "dist/scripts/utils/**/*",
     "artifacts/contracts/**/*"
   ],
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
