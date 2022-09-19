@@ -1,8 +1,9 @@
 {
   "name": "@stakestar/contracts",
-  "main": "dist/typechain-types/index.js",
-  "types": "dist/typechain-types/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
+    "dist/index.*",
     "dist/typechain-types/**/*",
     "dist/scripts/utils/**/*",
     "artifacts/contracts/**/*"
