@@ -4,6 +4,8 @@ const ADDRESSES: {
     ssvNetwork: string,
     ssvToken: string,
     stakeStarRegistry: string,
+    stakeStarETH: string,
+    stakeStarRewards: string,
     stakeStar: string,
   }
 } = {
@@ -12,6 +14,8 @@ const ADDRESSES: {
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarRegistry: "0x963bc8c2541Ca26Ab652D1aE5303dfa632976551",
+    stakeStarRewards: '0xFF667B6f9f8c4d921763771FDC624687ACeE235F',
+    stakeStarETH: '0x4f16bc88357B51733b57786bCc1928dd106D5479',
     stakeStar: "0x42D3c0b1d9d1C649c35601b033bFc4f48db0F073",
   }
 }
