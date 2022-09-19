@@ -2,7 +2,7 @@ import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 
-import {addressesFor, operatorIdsFor, operatorPublicKeysFor, VALIDATOR_PRIVATE_KEY} from "../scripts/utils/constants";
+import {addressesFor, operatorIdsFor, operatorPublicKeysFor, RANDOM_PRIVATE_KEY} from "../scripts/utils/constants";
 import {generateValidatorParams} from "../scripts/utils/helpers";
 
 describe("StakeStar", function () {
@@ -150,7 +150,7 @@ describe("StakeStar", function () {
       await ssvToken.connect(owner).transfer(stakeStar.address, await ssvToken.balanceOf(owner.address));
 
       const validatorParams = await generateValidatorParams(
-        VALIDATOR_PRIVATE_KEY,
+        RANDOM_PRIVATE_KEY,
         operatorPublicKeysFor(chainId),
         operatorIdsFor(chainId),
         stakeStarRewards.address
