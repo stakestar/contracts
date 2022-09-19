@@ -19,6 +19,9 @@ async function main() {
   ]);
   await stakeStar.deployed();
   console.log(`StakeStar is deployed to ${stakeStar.address}`);
+
+  await stakeStarRegistry.grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), stakeStar.address);
+  console.log(`STAKE_STAR_ROLE is granted to StakeStar contract`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -12,27 +12,28 @@ contract StakeStarETH is ERC20, AccessControl {
     event Burn(address indexed from, uint256 ssETH, uint256 rate);
     event UpdateRate(uint256 rate);
 
-    // ETH = ssETH * rate
-    uint256 public rate;
+    bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
+
+    uint256 public rate; // ETH = ssETH * rate
 
     constructor() ERC20("StakeStar ETH", "ssETH") {
         rate = _rate(1, 1);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(STAKE_STAR_ROLE, msg.sender);
     }
 
-    function mint(address account, uint256 ETH) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function mint(address account, uint256 ETH) public onlyRole(STAKE_STAR_ROLE) {
         uint256 ssETH = ETH_to_ssETH(ETH);
         _mint(account, ssETH);
         emit Mint(account, ssETH, rate);
     }
 
-    function burn(address account, uint256 ETH) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function burn(address account, uint256 ETH) public onlyRole(STAKE_STAR_ROLE) {
         uint256 ssETH = ETH_to_ssETH(ETH);
         _burn(account, ssETH);
         emit Burn(account, ssETH, rate);
     }
 
-    function updateRate(uint256 ETHChange, bool positiveOrNegative) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateRate(uint256 ETHChange, bool positiveOrNegative) public onlyRole(STAKE_STAR_ROLE) {
         uint256 ETH = ssETH_to_ETH(totalSupply());
         rate = _rate(positiveOrNegative ? ETH.add(ETHChange) : ETH.sub(ETHChange), totalSupply());
         emit UpdateRate(rate);

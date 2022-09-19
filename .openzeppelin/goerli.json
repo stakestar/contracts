@@ -1,25 +1,25 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0xa21dE787CcCDB1566b564383B699448DCFFDCD99",
-    "txHash": "0x8fa21d9bb98b2e926d0318cf50fc853bb1e795ec0644df15d0450706b8abe7ee"
+    "address": "0xd68F1b592A7C34183e1171076e21E4603c64F169",
+    "txHash": "0xed8a8920ca78cfb90b5f9e6c1db63e3fb80b312f3892303da699552ea23be637"
   },
   "proxies": [
     {
-      "address": "0x394c27C8B92d517A6d5bD546b6050CE0C32cbcA7",
-      "txHash": "0xfdab35278ad2754ab7771beb77305ff81f09d54feea25c478f7136fdcf0dabbc",
+      "address": "0x963bc8c2541Ca26Ab652D1aE5303dfa632976551",
+      "txHash": "0xe212ad5db84d5e2075f9e4f78952295786d7faabaf9b37b41f9d3112b5283996",
       "kind": "transparent"
     },
     {
-      "address": "0xb30417Ce2054fA4C4FD715e6373A0B761776316e",
-      "txHash": "0x942e2bfbfe4cdcf1bcecb3ad9a69146a617544a040663edd5375dfd6b256368d",
+      "address": "0x42D3c0b1d9d1C649c35601b033bFc4f48db0F073",
+      "txHash": "0x651d12191d5d38b4222291e7c2233363c67af780f5ebaa98fd5c76da9fdac4fa",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "016a8a2da7528848b436bc31b000b58d69d1f85e9762a7dab939182307381bce": {
-      "address": "0x39A0e7e6E627ABf46C09BA52B88E81E3B5C7d8b5",
-      "txHash": "0xdd1647af051e0d1ecad6956508a70547503a5bd0f1fdbfb509350b6f011b349e",
+    "cebeb7a46bf6285c213160b57d203cf957e4f5aa5503dffce2477f0b4754bdad": {
+      "address": "0xc132F5D843e8C19bB6bca47fa554F9d271Df030B",
+      "txHash": "0x7200c4ee5d302bc78d8722652bcd9eb5ba16fd5a6c91e05812ac267ab7164d15",
       "layout": {
         "storage": [
           {
@@ -77,13 +77,33 @@
             "slot": "151",
             "type": "t_mapping(t_uint32,t_bool)",
             "contract": "StakeStarRegistry",
-            "src": "contracts/StakeStarRegistry.sol:11"
+            "src": "contracts/StakeStarRegistry.sol:21"
+          },
+          {
+            "label": "validatorStatuses",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_bytes_memory_ptr,t_enum(ValidatorStatus)4121)",
+            "contract": "StakeStarRegistry",
+            "src": "contracts/StakeStarRegistry.sol:22"
+          },
+          {
+            "label": "validatorPublicKeys",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_array(t_bytes_storage)dyn_storage",
+            "contract": "StakeStarRegistry",
+            "src": "contracts/StakeStarRegistry.sol:23"
           }
         ],
         "types": {
           "t_address": {
             "label": "address",
             "numberOfBytes": "20"
+          },
+          "t_array(t_bytes_storage)dyn_storage": {
+            "label": "bytes[]",
+            "numberOfBytes": "32"
           },
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]",
@@ -101,12 +121,33 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
+          "t_bytes_memory_ptr": {
+            "label": "bytes",
+            "numberOfBytes": "32"
+          },
+          "t_bytes_storage": {
+            "label": "bytes",
+            "numberOfBytes": "32"
+          },
+          "t_enum(ValidatorStatus)4121": {
+            "label": "enum StakeStarRegistry.ValidatorStatus",
+            "members": [
+              "MISSING",
+              "CREATED",
+              "DESTROYED"
+            ],
+            "numberOfBytes": "1"
+          },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
           "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes_memory_ptr,t_enum(ValidatorStatus)4121)": {
+            "label": "mapping(bytes => enum StakeStarRegistry.ValidatorStatus)",
             "numberOfBytes": "32"
           },
           "t_mapping(t_uint32,t_bool)": {
@@ -146,9 +187,9 @@
         }
       }
     },
-    "9e335053564e8af94111b2cfe23db93adca4b8b8d75bd27f241893ae33e15986": {
-      "address": "0xA32D69c4581563f35478Ce130b9a02C12Ad635B1",
-      "txHash": "0x20c00bdc19402fafa4e6cd6e254c54141d8e9868cb00c7085a7e880065315949",
+    "be617e3ab7bcfcd89d4228e6e04c9c6ed00b22f6f91695572db82f53279c6fc8": {
+      "address": "0x38d3957C5be4c0E0b5DCBc83458f0A013a522014",
+      "txHash": "0x1493e759b2a44bf8ec46d85cf06c790eef027e2788db80fe2afb92d8b806a6e4",
       "layout": {
         "storage": [
           {
@@ -204,7 +245,7 @@
             "label": "stakeStarRegistry",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(StakeStarRegistry)4157",
+            "type": "t_contract(StakeStarRegistry)4393",
             "contract": "StakeStar",
             "src": "contracts/StakeStar.sol:28"
           },
@@ -212,7 +253,7 @@
             "label": "stakeStarETH",
             "offset": 0,
             "slot": "152",
-            "type": "t_contract(StakeStarETH)4058",
+            "type": "t_contract(StakeStarETH)4091",
             "contract": "StakeStar",
             "src": "contracts/StakeStar.sol:29"
           },
@@ -220,7 +261,7 @@
             "label": "stakeStarRewards",
             "offset": 0,
             "slot": "153",
-            "type": "t_contract(StakeStarRewards)4197",
+            "type": "t_contract(StakeStarRewards)4433",
             "contract": "StakeStar",
             "src": "contracts/StakeStar.sol:30"
           },
@@ -282,15 +323,15 @@
             "label": "contract ISSVNetwork",
             "numberOfBytes": "20"
           },
-          "t_contract(StakeStarETH)4058": {
+          "t_contract(StakeStarETH)4091": {
             "label": "contract StakeStarETH",
             "numberOfBytes": "20"
           },
-          "t_contract(StakeStarRegistry)4157": {
+          "t_contract(StakeStarRegistry)4393": {
             "label": "contract StakeStarRegistry",
             "numberOfBytes": "20"
           },
-          "t_contract(StakeStarRewards)4197": {
+          "t_contract(StakeStarRewards)4433": {
             "label": "contract StakeStarRewards",
             "numberOfBytes": "20"
           },

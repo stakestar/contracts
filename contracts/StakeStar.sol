@@ -25,12 +25,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes[] sharesEncrypted;
     }
 
-    enum ValidatorStatus {
-        MISSING,
-        CREATED,
-        DESTROYED
-    }
-
     StakeStarRegistry public stakeStarRegistry;
     StakeStarETH public stakeStarETH;
     StakeStarRewards public stakeStarRewards;
@@ -38,9 +32,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
-
-    mapping(bytes => ValidatorStatus) public validatorStatuses;
-    bytes[] public validatorPublicKeys;
 
     function initialize(
         address depositContractAddress,
@@ -62,7 +53,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     receive() external payable {}
 
     function stake() public payable {
-        require(msg.value > 0, "S1");
+        require(msg.value > 0, "SS S");
         stakeStarETH.mint(msg.sender, msg.value);
     }
 
@@ -70,21 +61,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // burn StakeStarETH
     // initiate unstake operation
     function unstake(uint256 amount) public {
-        revert("U1");
+        revert("not implemented");
     }
 
     // transfer ETH to msg.sender
     // complete unstake operation
     function claim() public {
-        revert("C1");
+        revert("not implemented");
     }
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(validatorCreationAvailability(), "CV1");
-        require(validatorStatuses[validatorParams.publicKey] == ValidatorStatus.MISSING, "CV2");
+        require(validatorCreationAvailability(), "SS CV");
 
-        validatorStatuses[validatorParams.publicKey] = ValidatorStatus.CREATED;
-        validatorPublicKeys.push(validatorParams.publicKey);
+        stakeStarRegistry.createValidator(validatorParams.publicKey);
 
         depositContract.deposit{value : 32 ether}(
             validatorParams.publicKey,
@@ -109,8 +98,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     // TBD
     function destroyValidator(bytes memory publicKey) public {
-        require(validatorStatuses[publicKey] == ValidatorStatus.CREATED, "DV1");
-        validatorStatuses[publicKey] = ValidatorStatus.DESTROYED;
+        require(validatorDestructionAvailability(), "SS DV");
+
+        stakeStarRegistry.destroyValidator(publicKey);
 
         revert("not implemented");
     }
@@ -122,39 +112,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function applyRewards() public {
         uint256 amount = address(stakeStarRewards).balance;
-        require(amount > 0, "no rewards");
+        require(amount > 0, "SS AR");
 
         stakeStarRewards.pull();
         stakeStarETH.updateRate(amount, true);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(amount > 0, "SS AP");
         stakeStarETH.updateRate(amount, false);
-    }
-
-    function getValidatorPublicKeys(ValidatorStatus status) public view returns (bytes[] memory publicKeys) {
-        publicKeys = new bytes[](validatorPublicKeys.length);
-
-        for (uint32 i = 0; i < validatorPublicKeys.length; i++) {
-            bytes memory publicKey = validatorPublicKeys[i];
-            if (validatorStatuses[publicKey] == status) {
-                publicKeys[i] = publicKey;
-            }
-        }
-    }
-
-    function countValidatorPublicKeys(ValidatorStatus status) public view returns (uint32 count) {
-        count = 0;
-
-        for (uint32 i = 0; i < validatorPublicKeys.length; i++) {
-            bytes memory publicKey = validatorPublicKeys[i];
-            ValidatorStatus validatorStatus = validatorStatuses[publicKey];
-            if (status == ValidatorStatus.CREATED &&
-                (validatorStatus == ValidatorStatus.CREATED || validatorStatus == ValidatorStatus.DESTROYED)) {
-                count++;
-            } else if (status == ValidatorStatus.DESTROYED && validatorStatus == ValidatorStatus.DESTROYED) {
-                count++;
-            }
-        }
     }
 }

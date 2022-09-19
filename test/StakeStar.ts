@@ -29,6 +29,8 @@ describe("StakeStar", function () {
     await stakeStar.deployed();
     const stakeStarPublic = stakeStar.connect(otherAccount);
 
+    await stakeStarRegistry.grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), stakeStar.address);
+
     const StakeStarETH = await ethers.getContractFactory("StakeStarETH");
     const stakeStarETH = await StakeStarETH.attach(await stakeStar.stakeStarETH());
 
@@ -59,7 +61,7 @@ describe("StakeStar", function () {
 
     it("Should set the right owner for ssETH", async function () {
       const {stakeStar, stakeStarETH} = await loadFixture(deployStakeStarFixture);
-      expect(await stakeStarETH.hasRole(await stakeStarETH.DEFAULT_ADMIN_ROLE(), stakeStar.address)).to.equal(true);
+      expect(await stakeStarETH.hasRole(await stakeStarETH.STAKE_STAR_ROLE(), stakeStar.address)).to.equal(true);
     });
   });
 
@@ -137,7 +139,7 @@ describe("StakeStar", function () {
   });
 
   describe("CreateValidator", function () {
-    it("Creates a validator", async function () {
+    it("Should create a validator", async function () {
       const {chainId, stakeStar, stakeStarRewards, ssvToken, owner} = await loadFixture(deployStakeStarFixture);
 
       await owner.sendTransaction({
