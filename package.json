@@ -13,11 +13,13 @@
   "license": "MIT",
   "scripts": {
     "build": "hardhat clean && hardhat compile && tsc",
+    "bump": "bump --commit 'Release v' --tag",
     "test": "hardhat test"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.1",
+    "@jsdevtools/version-bump-prompt": "^6.1.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.6",
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
