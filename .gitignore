@@ -1,5 +1,6 @@
 .openzeppelin/unknown-31337.json
 
+build
 dist
 node_modules
 
