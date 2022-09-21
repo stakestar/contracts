@@ -131,11 +131,7 @@
           },
           "t_enum(ValidatorStatus)4121": {
             "label": "enum StakeStarRegistry.ValidatorStatus",
-            "members": [
-              "MISSING",
-              "CREATED",
-              "DESTROYED"
-            ],
+            "members": ["MISSING", "CREATED", "DESTROYED"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_bool)": {

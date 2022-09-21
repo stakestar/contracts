@@ -21,21 +21,21 @@ contract StakeStarETH is ERC20, AccessControl {
         _setupRole(STAKE_STAR_ROLE, msg.sender);
     }
 
-    function mint(address account, uint256 ETH) public onlyRole(STAKE_STAR_ROLE) {
-        uint256 ssETH = ETH_to_ssETH(ETH);
+    function mint(address account, uint256 eth) public onlyRole(STAKE_STAR_ROLE) {
+        uint256 ssETH = ETH_to_ssETH(eth);
         _mint(account, ssETH);
         emit Mint(account, ssETH, rate);
     }
 
-    function burn(address account, uint256 ETH) public onlyRole(STAKE_STAR_ROLE) {
-        uint256 ssETH = ETH_to_ssETH(ETH);
+    function burn(address account, uint256 eth) public onlyRole(STAKE_STAR_ROLE) {
+        uint256 ssETH = ETH_to_ssETH(eth);
         _burn(account, ssETH);
         emit Burn(account, ssETH, rate);
     }
 
-    function updateRate(uint256 ETHChange, bool positiveOrNegative) public onlyRole(STAKE_STAR_ROLE) {
+    function updateRate(uint256 ethChange, bool positiveOrNegative) public onlyRole(STAKE_STAR_ROLE) {
         uint256 ETH = ssETH_to_ETH(totalSupply());
-        rate = _rate(positiveOrNegative ? ETH.add(ETHChange) : ETH.sub(ETHChange), totalSupply());
+        rate = _rate(positiveOrNegative ? ETH.add(ethChange) : ETH.sub(ethChange), totalSupply());
         emit UpdateRate(rate);
     }
 
@@ -43,11 +43,11 @@ contract StakeStarETH is ERC20, AccessControl {
         return ssETH.mul(rate).div(1 ether);
     }
 
-    function ETH_to_ssETH(uint256 ETH) public view returns (uint256) {
-        return ETH.mul(1 ether).div(rate);
+    function ETH_to_ssETH(uint256 eth) public view returns (uint256) {
+        return eth.mul(1 ether).div(rate);
     }
 
-    function _rate(uint256 ETH, uint256 ssETH) private pure returns (uint256) {
-        return ETH.mul(1 ether).div(ssETH);
+    function _rate(uint256 eth, uint256 ssETH) private pure returns (uint256) {
+        return eth.mul(1 ether).div(ssETH);
     }
 }
