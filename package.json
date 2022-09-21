@@ -8,7 +8,7 @@
     "dist/scripts/utils/**/*",
     "artifacts/contracts/**/*"
   ],
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
@@ -17,8 +17,13 @@
     "bump": "bump --commit 'Release v' --tag",
     "test": "hardhat test"
   },
-  "devDependencies": {
+  "dependencies": {
     "@ethersproject/abi": "^5.7.0",
+    "@stakestar/lib": "^0.1.1",
+    "ethers": "^5.7.1"
+  },
+  "devDependencies": {
+    "@ethersproject/bytes": "^5.7.0",
     "@ethersproject/providers": "^5.7.1",
     "@jsdevtools/version-bump-prompt": "^6.1.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
@@ -29,7 +34,6 @@
     "@openzeppelin/contracts": "^4.7.3",
     "@openzeppelin/contracts-upgradeable": "^4.7.3",
     "@openzeppelin/hardhat-upgrades": "^1.20.0",
-    "@stakestar/lib": "^0.1.1",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.3",
     "@types/chai": "^4.3.3",
@@ -37,7 +41,6 @@
     "@types/node": "^18.7.18",
     "chai": "^4.3.6",
     "dotenv": "^16.0.2",
-    "ethers": "^5.7.1",
     "hardhat": "^2.11.2",
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-coverage": "^0.8.2",
@@ -46,7 +49,7 @@
     "typescript": "^4.8.3"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com/"
   },
   "repository": {
     "type": "git",
