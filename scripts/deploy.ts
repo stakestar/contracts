@@ -1,9 +1,9 @@
 import { ethers, upgrades } from "hardhat";
-import { addressesFor } from "./utils";
+import { addressesFor, currentEnvironment } from "./utils";
 
 async function main() {
   const chainId = (await ethers.provider.getNetwork()).chainId;
-  const addresses = addressesFor(chainId);
+  const addresses = addressesFor(chainId, currentEnvironment());
 
   const StakeStarRegistry = await ethers.getContractFactory(
     "StakeStarRegistry"
