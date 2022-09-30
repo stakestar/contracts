@@ -1,5 +1,20 @@
+import "dotenv/config";
 import { AbiCoder } from "@ethersproject/abi";
 import { StakeStar } from "../../typechain-types";
+import { Environment } from "./types";
+
+export function currentEnvironment() {
+  switch (process.env.ENVIRONMENT) {
+    case "testnet":
+      return Environment.TESTNET;
+    case "tenderly":
+      return Environment.TENDERLY;
+    case "localnet":
+      return Environment.LOCALNET;
+    default:
+      return Environment.LOCALNET;
+  }
+}
 
 export async function generateValidatorParams(
   privateKey: string,

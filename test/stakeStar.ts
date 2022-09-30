@@ -4,11 +4,12 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import {
   addressesFor,
+  Environment,
+  generateValidatorParams,
   operatorIdsFor,
   operatorPublicKeysFor,
   RANDOM_PRIVATE_KEY,
 } from "../scripts/utils";
-import { generateValidatorParams } from "../scripts/utils";
 
 describe("StakeStar", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -16,7 +17,7 @@ describe("StakeStar", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployStakeStarFixture() {
     const chainId = (await ethers.provider.getNetwork()).chainId;
-    const addresses = addressesFor(chainId);
+    const addresses = addressesFor(chainId, Environment.LOCALNET);
 
     console.log(`Chain ID ${chainId}`);
 
