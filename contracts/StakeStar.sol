@@ -25,6 +25,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes[] sharesEncrypted;
     }
 
+    bytes32 public constant MANAGER_ROLE = keccak256("Manager");
+
     StakeStarRegistry public stakeStarRegistry;
     StakeStarETH public stakeStarETH;
     StakeStarRewards public stakeStarRewards;
@@ -70,7 +72,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         revert("not implemented");
     }
 
-    function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
         require(validatorCreationAvailability(), "SS CV");
 
         stakeStarRegistry.createValidator(validatorParams.publicKey);
@@ -97,7 +99,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     // TBD
-    function destroyValidator(bytes memory publicKey) public {
+    function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         require(validatorDestructionAvailability(), "SS DV");
 
         stakeStarRegistry.destroyValidator(publicKey);

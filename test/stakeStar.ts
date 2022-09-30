@@ -41,6 +41,8 @@ describe("StakeStar", function () {
     await stakeStar.deployed();
     const stakeStarPublic = stakeStar.connect(otherAccount);
 
+    await stakeStar.grantRole(await stakeStar.MANAGER_ROLE(), owner.address);
+
     await stakeStarRegistry.grantRole(
       await stakeStarRegistry.STAKE_STAR_ROLE(),
       stakeStar.address
@@ -83,6 +85,14 @@ describe("StakeStar", function () {
           await stakeStar.DEFAULT_ADMIN_ROLE(),
           owner.address
         )
+      ).to.equal(true);
+    });
+
+    it("Should set the right manager", async function () {
+      const { stakeStar, owner } = await loadFixture(deployStakeStarFixture);
+
+      expect(
+        await stakeStar.hasRole(await stakeStar.MANAGER_ROLE(), owner.address)
       ).to.equal(true);
     });
 
