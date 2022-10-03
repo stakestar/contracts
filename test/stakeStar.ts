@@ -9,6 +9,7 @@ import {
   operatorIdsFor,
   operatorPublicKeysFor,
   RANDOM_PRIVATE_KEY,
+  ZERO,
 } from "../scripts/utils";
 
 describe("StakeStar", function () {
@@ -204,6 +205,88 @@ describe("StakeStar", function () {
         otherAccount,
         2
       );
+    });
+  });
+
+  describe("Unstake", function () {
+    it("Should create pendingUnstake", async function () {
+      const { stakeStarPublic, otherAccount, stakeStarETH } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      const stakeAmount = ethers.utils.parseEther("2");
+      await stakeStarPublic.stake({ value: stakeAmount });
+      const ssEthAmount = await stakeStarETH.balanceOf(otherAccount.address);
+
+      expect(await stakeStarETH.totalSupply()).to.equal(ssEthAmount);
+
+      const unstakeAmount = stakeAmount.div(2);
+      const shouldBeBurnt = ssEthAmount.div(2);
+
+      await expect(
+        stakeStarPublic.unstake(unstakeAmount)
+      ).to.changeTokenBalance(
+        stakeStarETH,
+        otherAccount,
+        shouldBeBurnt.mul(-1)
+      );
+
+      expect(await stakeStarETH.totalSupply()).to.equal(
+        ssEthAmount.sub(shouldBeBurnt)
+      );
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(unstakeAmount);
+      expect(
+        await stakeStarPublic.pendingUnstake(otherAccount.address)
+      ).to.equal(unstakeAmount);
+    });
+  });
+
+  describe("Claim", function () {
+    it("Should finish pendingUnstake and send Ether", async function () {
+      const { stakeStarPublic, otherAccount } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      const stakeAmount = ethers.utils.parseEther("2");
+      const unstakeAmount = stakeAmount.div(2);
+
+      await stakeStarPublic.stake({ value: stakeAmount });
+      await stakeStarPublic.unstake(unstakeAmount);
+
+      await expect(stakeStarPublic.claim()).to.changeEtherBalances(
+        [stakeStarPublic.address, otherAccount.address],
+        [unstakeAmount.mul(-1), unstakeAmount]
+      );
+
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(ZERO);
+      expect(
+        await stakeStarPublic.pendingUnstake(otherAccount.address)
+      ).to.equal(ZERO);
+    });
+  });
+
+  describe("UnstakeAndClaim", function () {
+    it("Should unstake and claim in a single tx", async function () {
+      const { stakeStarPublic, otherAccount } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      const stakeAmount = ethers.utils.parseEther("2");
+      const unstakeAndClaimAmount = stakeAmount.div(2);
+
+      await stakeStarPublic.stake({ value: stakeAmount });
+
+      await expect(
+        stakeStarPublic.unstakeAndClaim(unstakeAndClaimAmount)
+      ).to.changeEtherBalances(
+        [stakeStarPublic.address, otherAccount.address],
+        [unstakeAndClaimAmount.mul(-1), unstakeAndClaimAmount]
+      );
+
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(ZERO);
+      expect(
+        await stakeStarPublic.pendingUnstake(otherAccount.address)
+      ).to.equal(ZERO);
     });
   });
 
