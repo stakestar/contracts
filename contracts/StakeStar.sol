@@ -41,6 +41,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     mapping(address => uint256) public pendingUnstake;
     uint256 public pendingUnstakeSum;
 
+    uint256 public localPoolSize;
+
     function initialize(
         address depositContractAddress,
         address ssvNetworkAddress,
@@ -56,6 +58,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarRewards = new StakeStarRewards();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function setLocalPoolSize(uint256 size) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        localPoolSize = size;
     }
 
     receive() external payable {}
@@ -90,7 +96,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         claim();
     }
 
-    // TODO: add local pool
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
 
@@ -113,12 +118,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
-    // TODO: add local pool
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance >= 32 ether;
+        return address(this).balance.add(localPoolSize).sub(pendingUnstakeSum) >= 32 ether;
     }
 
-    // TODO: add local pool
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         require(validatorDestructionAvailability(), "cannot destruct validator");
 
@@ -127,7 +130,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         revert("not implemented");
     }
 
-    // TODO: add local pool
+    // TODO: add local pool & double destroy prevention
     function validatorDestructionAvailability() public view returns (bool) {
         revert("not implemented");
     }
