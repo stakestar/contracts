@@ -2,9 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import {IStakingPool} from "./IStakingPool.sol";
 import {StakeStarRegistry} from "./StakeStarRegistry.sol";
@@ -15,6 +16,8 @@ import {IDepositContract} from "./IDepositContract.sol";
 import {ISSVNetwork} from "./ISSVNetwork.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
+    using SafeMath for uint256;
+
     struct ValidatorParams {
         bytes publicKey;
         bytes withdrawalCredentials;
@@ -34,6 +37,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
+
+    mapping(address => uint256) public pendingUnstake;
+    uint256 public pendingUnstakeSum;
 
     function initialize(
         address depositContractAddress,
@@ -55,25 +61,38 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     receive() external payable {}
 
     function stake() public payable {
-        require(msg.value > 0, "SS S");
+        require(msg.value > 0, "no eth transferred");
         stakeStarETH.mint(msg.sender, msg.value);
     }
 
-    // receive StakeStarETH from msg.sender
-    // burn StakeStarETH
-    // initiate unstake operation
-    function unstake(uint256 amount) public {
-        revert("not implemented");
+    function unstake(uint256 eth) public {
+        require(pendingUnstake[msg.sender] == 0, "unstake already pending");
+
+        pendingUnstake[msg.sender] = eth;
+        pendingUnstakeSum = pendingUnstakeSum.add(eth);
+
+        stakeStarETH.burn(msg.sender, eth);
     }
 
-    // transfer ETH to msg.sender
-    // complete unstake operation
     function claim() public {
-        revert("not implemented");
+        require(pendingUnstake[msg.sender] > 0, "no pending unstake");
+
+        uint256 eth = pendingUnstake[msg.sender];
+        delete pendingUnstake[msg.sender];
+        pendingUnstakeSum = pendingUnstakeSum.sub(eth);
+
+        (bool status,) = msg.sender.call{value: eth}("");
+        require(status, "failed to send Ether");
     }
 
+    function unstakeAndClaim(uint256 eth) public {
+        unstake(eth);
+        claim();
+    }
+
+    // TODO: add local pool
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
-        require(validatorCreationAvailability(), "SS CV");
+        require(validatorCreationAvailability(), "cannot create validator");
 
         stakeStarRegistry.createValidator(validatorParams.publicKey);
 
@@ -94,34 +113,35 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
+    // TODO: add local pool
     function validatorCreationAvailability() public view returns (bool) {
         return address(this).balance >= 32 ether;
     }
 
-    // TBD
+    // TODO: add local pool
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
-        require(validatorDestructionAvailability(), "SS DV");
+        require(validatorDestructionAvailability(), "cannot destruct validator");
 
         stakeStarRegistry.destroyValidator(publicKey);
 
         revert("not implemented");
     }
 
-    // TBD
+    // TODO: add local pool
     function validatorDestructionAvailability() public view returns (bool) {
         revert("not implemented");
     }
 
     function applyRewards() public {
         uint256 amount = address(stakeStarRewards).balance;
-        require(amount > 0, "SS AR");
+        require(amount > 0, "no rewards available");
 
         stakeStarRewards.pull();
         stakeStarETH.updateRate(amount, true);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(amount > 0, "SS AP");
+        require(amount > 0, "cannot apply zero penalty");
         stakeStarETH.updateRate(amount, false);
     }
 }

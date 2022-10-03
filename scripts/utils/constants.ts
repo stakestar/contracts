@@ -1,4 +1,5 @@
 import { ChainId, Environment } from "./types";
+import { BigNumber } from "ethers";
 
 const ADDRESSES: Record<
   ChainId,
@@ -79,6 +80,7 @@ export function operatorPublicKeysFor(chainId: ChainId) {
   }
 }
 
+export const ZERO = BigNumber.from(0);
 export const ZERO_PRIVATE_KEY =
   "0000000000000000000000000000000000000000000000000000000000000000";
 export const RANDOM_PRIVATE_KEY =
