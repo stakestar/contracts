@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
 import { ZERO_PRIVATE_KEY } from "./scripts/utils";
+import "./scripts/tasks/grant-ManagerRole";
 
 const HARDHAT_NETWORK = "http://127.0.0.1:8545/";
 
