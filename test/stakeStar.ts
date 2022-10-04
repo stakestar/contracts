@@ -55,7 +55,7 @@ describe("StakeStar", function () {
 
   describe("Stake", function () {
     it("Should send ETH to the contract", async function () {
-      const { stakeStarPublic, otherAccount } = await loadFixture(
+      const { stakeStarPublic, stakeStarETH, otherAccount } = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -63,89 +63,11 @@ describe("StakeStar", function () {
         [otherAccount, stakeStarPublic],
         [-1, 1]
       );
-    });
-
-    it("Should mint msg.value of ssETH if rate is 1:1", async function () {
-      const { stakeStarPublic, stakeStarETH, otherAccount } = await loadFixture(
-        deployStakeStarFixture
-      );
 
       await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
         stakeStarETH,
         otherAccount,
         1
-      );
-
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
-      );
-
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
-      );
-
-      expect(await stakeStarETH.rate()).to.equal("1000000000000000000");
-      expect(await stakeStarETH.totalSupply()).to.equal("3");
-    });
-
-    it("Should mint msg.value * 2 of ssETH if rate 0.5", async function () {
-      const { stakeStarOwner, stakeStarPublic, stakeStarETH, otherAccount } =
-        await loadFixture(deployStakeStarFixture);
-
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
-      );
-
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
-      );
-
-      await stakeStarOwner.applyPenalties(1);
-
-      expect(await stakeStarETH.rate()).to.equal("500000000000000000");
-      expect(await stakeStarETH.totalSupply()).to.equal("2");
-
-      await expect(stakeStarPublic.stake({ value: 2 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        4
-      );
-    });
-
-    it("Should mint msg.value / 2 of ssETH if rate is 2", async function () {
-      const { stakeStarPublic, stakeStarETH, stakeStarRewards, otherAccount } =
-        await loadFixture(deployStakeStarFixture);
-
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
-      );
-
-      await expect(
-        otherAccount.sendTransaction({ to: stakeStarRewards.address, value: 1 })
-      ).to.changeEtherBalances([otherAccount, stakeStarRewards], [-1, 1]);
-
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalances(
-        [stakeStarRewards, stakeStarPublic],
-        [-1, 1]
-      );
-
-      expect(await stakeStarETH.rate()).to.equal("2000000000000000000");
-      expect(await stakeStarETH.totalSupply()).to.equal("1");
-
-      await expect(stakeStarPublic.stake({ value: 4 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        2
       );
     });
   });
