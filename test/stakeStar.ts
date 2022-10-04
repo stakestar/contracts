@@ -21,9 +21,10 @@ describe("StakeStar", function () {
     const addresses = ADDRESSES[currentNetwork(hre)];
 
     // Contracts are deployed using the first signer/account by default
-    const [owner, otherAccount] = await ethers.getSigners();
+    const [owner, manager, otherAccount] = await ethers.getSigners();
 
-    console.log(`Deployer ${owner.address}`);
+    console.log(`Owner ${owner.address}`);
+    console.log(`Manager ${manager.address}`);
 
     const StakeStarRegistry = await ethers.getContractFactory(
       "StakeStarRegistry"
@@ -32,32 +33,35 @@ describe("StakeStar", function () {
     await stakeStarRegistry.deployed();
 
     const StakeStar = await ethers.getContractFactory("StakeStar");
-    const stakeStar = await upgrades.deployProxy(StakeStar, [
+    const stakeStarOwner = await upgrades.deployProxy(StakeStar, [
       addresses.depositContract,
       addresses.ssvNetwork,
       addresses.ssvToken,
       stakeStarRegistry.address,
     ]);
-    await stakeStar.deployed();
-    const stakeStarPublic = stakeStar.connect(otherAccount);
+    await stakeStarOwner.deployed();
+    const stakeStarManager = stakeStarOwner.connect(manager);
+    const stakeStarPublic = stakeStarOwner.connect(otherAccount);
 
-    await stakeStar.grantRole(await stakeStar.MANAGER_ROLE(), owner.address);
-
+    await stakeStarOwner.grantRole(
+      await stakeStarOwner.MANAGER_ROLE(),
+      manager.address
+    );
     await stakeStarRegistry.grantRole(
       await stakeStarRegistry.STAKE_STAR_ROLE(),
-      stakeStar.address
+      stakeStarOwner.address
     );
 
     const StakeStarETH = await ethers.getContractFactory("StakeStarETH");
     const stakeStarETH = await StakeStarETH.attach(
-      await stakeStar.stakeStarETH()
+      await stakeStarOwner.stakeStarETH()
     );
 
     const StakeStarRewards = await ethers.getContractFactory(
       "StakeStarRewards"
     );
     const stakeStarRewards = await StakeStarRewards.attach(
-      await stakeStar.stakeStarRewards()
+      await stakeStarOwner.stakeStarRewards()
     );
 
     const ERC20 = await ethers.getContractFactory("ERC20");
@@ -65,45 +69,54 @@ describe("StakeStar", function () {
 
     return {
       hre,
-      stakeStar,
-      stakeStarRegistry,
+      stakeStarOwner,
+      stakeStarManager,
       stakeStarPublic,
+      stakeStarRegistry,
       stakeStarETH,
       stakeStarRewards,
       ssvToken,
       owner,
+      manager,
       otherAccount,
     };
   }
 
   describe("Deployment", function () {
     it("Should set the right owner", async function () {
-      const { stakeStar, owner } = await loadFixture(deployStakeStarFixture);
+      const { stakeStarPublic, owner } = await loadFixture(
+        deployStakeStarFixture
+      );
 
       expect(
-        await stakeStar.hasRole(
-          await stakeStar.DEFAULT_ADMIN_ROLE(),
+        await stakeStarPublic.hasRole(
+          await stakeStarPublic.DEFAULT_ADMIN_ROLE(),
           owner.address
         )
       ).to.equal(true);
     });
 
     it("Should set the right manager", async function () {
-      const { stakeStar, owner } = await loadFixture(deployStakeStarFixture);
+      const { stakeStarPublic, manager } = await loadFixture(
+        deployStakeStarFixture
+      );
 
       expect(
-        await stakeStar.hasRole(await stakeStar.MANAGER_ROLE(), owner.address)
+        await stakeStarPublic.hasRole(
+          await stakeStarPublic.MANAGER_ROLE(),
+          manager.address
+        )
       ).to.equal(true);
     });
 
     it("Should set the right owner for ssETH", async function () {
-      const { stakeStar, stakeStarETH } = await loadFixture(
+      const { stakeStarPublic, stakeStarETH } = await loadFixture(
         deployStakeStarFixture
       );
       expect(
         await stakeStarETH.hasRole(
           await stakeStarETH.STAKE_STAR_ROLE(),
-          stakeStar.address
+          stakeStarPublic.address
         )
       ).to.equal(true);
     });
@@ -149,7 +162,7 @@ describe("StakeStar", function () {
     });
 
     it("Should mint msg.value * 2 of ssETH if rate 0.5", async function () {
-      const { stakeStar, stakeStarPublic, stakeStarETH, otherAccount } =
+      const { stakeStarOwner, stakeStarPublic, stakeStarETH, otherAccount } =
         await loadFixture(deployStakeStarFixture);
 
       await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
@@ -164,7 +177,7 @@ describe("StakeStar", function () {
         1
       );
 
-      await stakeStar.applyPenalties(1);
+      await stakeStarOwner.applyPenalties(1);
 
       expect(await stakeStarETH.rate()).to.equal("500000000000000000");
       expect(await stakeStarETH.totalSupply()).to.equal("2");
@@ -290,16 +303,25 @@ describe("StakeStar", function () {
 
   describe("CreateValidator", function () {
     it("Should create a validator", async function () {
-      const { hre, stakeStar, stakeStarRewards, ssvToken, owner } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        hre,
+        stakeStarManager,
+        stakeStarRewards,
+        ssvToken,
+        owner,
+        manager,
+      } = await loadFixture(deployStakeStarFixture);
 
-      await owner.sendTransaction({
-        to: stakeStar.address,
+      await manager.sendTransaction({
+        to: stakeStarManager.address,
         value: ethers.utils.parseEther("99"),
       });
       await ssvToken
         .connect(owner)
-        .transfer(stakeStar.address, await ssvToken.balanceOf(owner.address));
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
 
       const validatorParams = await generateValidatorParams(
         RANDOM_PRIVATE_KEY,
@@ -308,9 +330,9 @@ describe("StakeStar", function () {
         stakeStarRewards.address
       );
 
-      await stakeStar.createValidator(
+      await stakeStarManager.createValidator(
         validatorParams,
-        await ssvToken.balanceOf(stakeStar.address)
+        await ssvToken.balanceOf(stakeStarManager.address)
       );
     });
   });
