@@ -15,6 +15,10 @@ import {StakeStarRewards} from "./StakeStarRewards.sol";
 import {IDepositContract} from "./IDepositContract.sol";
 import {ISSVNetwork} from "./ISSVNetwork.sol";
 
+// TODO Maintain SSV position in SSVNetwork contract
+// TODO Create validator destruction conditions
+// TODO Prevent double validator destroy
+// TODO Add local pool filling on validator destroy
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     using SafeMath for uint256;
 
