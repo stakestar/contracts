@@ -1,11 +1,12 @@
 import { task } from "hardhat/config";
-import { addressesFor, currentEnvironment } from "../utils";
+import { ADDRESSES, currentNetwork } from "../utils";
 
 task("grant-ManagerRole", "Grants a MANAGER_ROLE to an address")
   .addPositionalParam("address")
   .setAction(async (args, hre) => {
-    const chainId = (await hre.ethers.provider.getNetwork()).chainId;
-    const addresses = addressesFor(chainId, currentEnvironment());
+    const network = currentNetwork(hre);
+    const addresses = ADDRESSES[network];
+    console.log(`Network: ${network}`);
 
     const StakeStar = await hre.ethers.getContractFactory("StakeStar");
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
