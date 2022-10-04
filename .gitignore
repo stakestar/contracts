@@ -1,4 +1,4 @@
-.openzeppelin/unknown-31337.json
+.openzeppelin/unknown-*.json
 
 build
 dist

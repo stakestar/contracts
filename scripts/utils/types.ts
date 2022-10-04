@@ -1,11 +1,7 @@
-export enum ChainId {
-  Goerli = 5,
-}
-
-export enum Environment {
-  TESTNET,
-  TENDERLY,
-  LOCALNET,
+export enum Network {
+  GOERLI = "goerli",
+  TENDERLY = "tenderly",
+  HARDHAT = "hardhat",
 }
 
 export enum ValidatorStatus {

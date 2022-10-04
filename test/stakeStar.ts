@@ -3,11 +3,11 @@ import { ethers, upgrades } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import {
-  addressesFor,
-  Environment,
+  ADDRESSES,
+  currentNetwork,
   generateValidatorParams,
-  operatorIdsFor,
-  operatorPublicKeysFor,
+  OPERATOR_IDS,
+  OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY,
   ZERO,
 } from "../scripts/utils";
@@ -17,10 +17,8 @@ describe("StakeStar", function () {
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
   async function deployStakeStarFixture() {
-    const chainId = (await ethers.provider.getNetwork()).chainId;
-    const addresses = addressesFor(chainId, Environment.LOCALNET);
-
-    console.log(`Chain ID ${chainId}`);
+    const hre = require("hardhat");
+    const addresses = ADDRESSES[currentNetwork(hre)];
 
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
@@ -66,7 +64,7 @@ describe("StakeStar", function () {
     const ssvToken = await ERC20.attach(addresses.ssvToken);
 
     return {
-      chainId,
+      hre,
       stakeStar,
       stakeStarRegistry,
       stakeStarPublic,
@@ -292,7 +290,7 @@ describe("StakeStar", function () {
 
   describe("CreateValidator", function () {
     it("Should create a validator", async function () {
-      const { chainId, stakeStar, stakeStarRewards, ssvToken, owner } =
+      const { hre, stakeStar, stakeStarRewards, ssvToken, owner } =
         await loadFixture(deployStakeStarFixture);
 
       await owner.sendTransaction({
@@ -305,8 +303,8 @@ describe("StakeStar", function () {
 
       const validatorParams = await generateValidatorParams(
         RANDOM_PRIVATE_KEY,
-        operatorPublicKeysFor(chainId),
-        operatorIdsFor(chainId),
+        OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
+        OPERATOR_IDS[currentNetwork(hre)],
         stakeStarRewards.address
       );
 

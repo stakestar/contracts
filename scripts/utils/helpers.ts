@@ -1,18 +1,20 @@
 import "dotenv/config";
 import { AbiCoder } from "@ethersproject/abi";
 import { StakeStar } from "../../typechain-types";
-import { Environment } from "./types";
+import { Network } from "./types";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export function currentEnvironment() {
-  switch (process.env.ENVIRONMENT) {
-    case "testnet":
-      return Environment.TESTNET;
+export function currentNetwork(hre: HardhatRuntimeEnvironment) {
+  switch (hre.network.name) {
+    case "hardhat":
+      return Network.HARDHAT;
+    case "goerli":
+      return Network.GOERLI;
     case "tenderly":
-      return Environment.TENDERLY;
-    case "localnet":
-      return Environment.LOCALNET;
+      return Network.TENDERLY;
+
     default:
-      return Environment.LOCALNET;
+      throw "Unsupported network";
   }
 }
 
