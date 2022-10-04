@@ -4,6 +4,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
 import { ZERO_PRIVATE_KEY } from "./scripts/utils";
 import "./scripts/tasks/grant-ManagerRole";
+import "./scripts/tasks/print";
 
 const HARDHAT_NETWORK = "http://127.0.0.1:8545/";
 
@@ -13,15 +14,15 @@ const config: HardhatUserConfig = {
     hardhat: {
       chainId: 5,
       forking: {
-        url: process.env.INFURA_GOERLI_RPC || HARDHAT_NETWORK,
+        url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
       },
     },
     goerli: {
-      url: process.env.INFURA_GOERLI_RPC || HARDHAT_NETWORK,
+      url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
       accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || ZERO_PRIVATE_KEY],
     },
     tenderly: {
-      url: process.env.INFURA_TENDERLY_RPC || HARDHAT_NETWORK,
+      url: process.env.TENDERLY_RPC || HARDHAT_NETWORK,
       accounts: [process.env.TENDERLY_DEPLOYER_PRIVKEY || ZERO_PRIVATE_KEY],
     },
   },
