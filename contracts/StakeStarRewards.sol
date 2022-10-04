@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract StakeStarRewards is AccessControl {
+    event Pull(address to, uint256 amount);
+
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
 
     constructor() {
@@ -13,6 +15,8 @@ contract StakeStarRewards is AccessControl {
     receive() external payable {}
 
     function pull() public onlyRole(STAKE_STAR_ROLE) {
-        payable(msg.sender).transfer(address(this).balance);
+        uint256 amount = address(this).balance;
+        payable(msg.sender).transfer(amount);
+        emit Pull(msg.sender, amount);
     }
 }

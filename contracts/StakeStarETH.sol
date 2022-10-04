@@ -34,8 +34,8 @@ contract StakeStarETH is ERC20, AccessControl {
     }
 
     function updateRate(uint256 ethChange, bool positiveOrNegative) public onlyRole(STAKE_STAR_ROLE) {
-        uint256 ETH = ssETH_to_ETH(totalSupply());
-        rate = _rate(positiveOrNegative ? ETH.add(ethChange) : ETH.sub(ethChange), totalSupply());
+        uint256 eth = ssETH_to_ETH(totalSupply());
+        rate = _rate(positiveOrNegative ? eth.add(ethChange) : eth.sub(ethChange), totalSupply());
         emit UpdateRate(rate);
     }
 

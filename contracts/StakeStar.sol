@@ -18,6 +18,15 @@ import {ISSVNetwork} from "./ISSVNetwork.sol";
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     using SafeMath for uint256;
 
+    event SetLocalPoolSize(uint256 size);
+    event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
+    event DestroyValidator(bytes publicKey);
+    event Stake(address who, uint256 amount);
+    event Unstake(address who, uint256 amount);
+    event Claim(address who, uint256 amount);
+    event ApplyRewards(uint256 amount);
+    event ApplyPenalties(uint256 amount);
+
     struct ValidatorParams {
         bytes publicKey;
         bytes withdrawalCredentials;
@@ -62,6 +71,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setLocalPoolSize(uint256 size) public onlyRole(DEFAULT_ADMIN_ROLE) {
         localPoolSize = size;
+        emit SetLocalPoolSize(size);
     }
 
     receive() external payable {}
@@ -69,6 +79,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function stake() public payable {
         require(msg.value > 0, "no eth transferred");
         stakeStarETH.mint(msg.sender, msg.value);
+        emit Stake(msg.sender, msg.value);
     }
 
     function unstake(uint256 eth) public {
@@ -78,6 +89,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         pendingUnstakeSum = pendingUnstakeSum.add(eth);
 
         stakeStarETH.burn(msg.sender, eth);
+        emit Unstake(msg.sender, eth);
     }
 
     function claim() public {
@@ -89,6 +101,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         (bool status,) = msg.sender.call{value: eth}("");
         require(status, "failed to send Ether");
+        emit Claim(msg.sender, eth);
     }
 
     function unstakeAndClaim(uint256 eth) public {
@@ -116,6 +129,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.sharesEncrypted,
             ssvDepositAmount
         );
+        emit CreateValidator(validatorParams, ssvDepositAmount);
     }
 
     function validatorCreationAvailability() public view returns (bool) {
@@ -126,6 +140,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(validatorDestructionAvailability(), "cannot destruct validator");
 
         stakeStarRegistry.destroyValidator(publicKey);
+        emit DestroyValidator(publicKey);
 
         revert("not implemented");
     }
@@ -141,10 +156,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         stakeStarRewards.pull();
         stakeStarETH.updateRate(amount, true);
+        emit ApplyRewards(amount);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(amount > 0, "cannot apply zero penalty");
         stakeStarETH.updateRate(amount, false);
+        emit ApplyPenalties(amount);
     }
 }
