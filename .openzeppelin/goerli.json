@@ -1,25 +1,25 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0xd68F1b592A7C34183e1171076e21E4603c64F169",
-    "txHash": "0xed8a8920ca78cfb90b5f9e6c1db63e3fb80b312f3892303da699552ea23be637"
+    "address": "0x036Fe59792EB9d986302A11328A4fa89f6F28838",
+    "txHash": "0x5141359210e3f9e21b72fc3dfe751da2050dfb169ad8eec3465b30ab3c5d2b23"
   },
   "proxies": [
     {
-      "address": "0x963bc8c2541Ca26Ab652D1aE5303dfa632976551",
-      "txHash": "0xe212ad5db84d5e2075f9e4f78952295786d7faabaf9b37b41f9d3112b5283996",
+      "address": "0x73635a1E63c997947DF9569981500E7f2da51Ae0",
+      "txHash": "0x701d07d41142e962e4fd680f8565a00159ea6b9a83ba0a35742d16e37b34bf9e",
       "kind": "transparent"
     },
     {
-      "address": "0x42D3c0b1d9d1C649c35601b033bFc4f48db0F073",
-      "txHash": "0x651d12191d5d38b4222291e7c2233363c67af780f5ebaa98fd5c76da9fdac4fa",
+      "address": "0xb720418d6848D2ED43943d1EB985Af2E5035a09E",
+      "txHash": "0x4eab95ca0cf2c71be4c65c918d2dfb8534998aca9eb8825e874c45f2b2509b97",
       "kind": "transparent"
     }
   ],
   "impls": {
     "cebeb7a46bf6285c213160b57d203cf957e4f5aa5503dffce2477f0b4754bdad": {
-      "address": "0xc132F5D843e8C19bB6bca47fa554F9d271Df030B",
-      "txHash": "0x7200c4ee5d302bc78d8722652bcd9eb5ba16fd5a6c91e05812ac267ab7164d15",
+      "address": "0xA4035899844481975e2a1A3202BBaffA2aFF8Ebb",
+      "txHash": "0x575a359029c384c1e6959128ee20de08d5627fd48a77a5a1dd28f7a4ebc3c153",
       "layout": {
         "storage": [
           {
@@ -83,7 +83,7 @@
             "label": "validatorStatuses",
             "offset": 0,
             "slot": "152",
-            "type": "t_mapping(t_bytes_memory_ptr,t_enum(ValidatorStatus)4239)",
+            "type": "t_mapping(t_bytes_memory_ptr,t_enum(ValidatorStatus)4320)",
             "contract": "StakeStarRegistry",
             "src": "contracts/StakeStarRegistry.sol:22"
           },
@@ -129,7 +129,7 @@
             "label": "bytes",
             "numberOfBytes": "32"
           },
-          "t_enum(ValidatorStatus)4239": {
+          "t_enum(ValidatorStatus)4320": {
             "label": "enum StakeStarRegistry.ValidatorStatus",
             "members": [
               "MISSING",
@@ -146,7 +146,7 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes_memory_ptr,t_enum(ValidatorStatus)4239)": {
+          "t_mapping(t_bytes_memory_ptr,t_enum(ValidatorStatus)4320)": {
             "label": "mapping(bytes => enum StakeStarRegistry.ValidatorStatus)",
             "numberOfBytes": "32"
           },
@@ -187,9 +187,9 @@
         }
       }
     },
-    "be617e3ab7bcfcd89d4228e6e04c9c6ed00b22f6f91695572db82f53279c6fc8": {
-      "address": "0x38d3957C5be4c0E0b5DCBc83458f0A013a522014",
-      "txHash": "0x1493e759b2a44bf8ec46d85cf06c790eef027e2788db80fe2afb92d8b806a6e4",
+    "119a2323f50a379e40ad53da05407b4e0b7d544a645bcc734792093792df3afa": {
+      "address": "0x2BefB45Eb3dB97813186526aE9160cF284dD3C48",
+      "txHash": "0x8ae8676be109c8d8cd4d92ac8845b8555093a8e9651d9fe46129109d43a4df07",
       "layout": {
         "storage": [
           {
@@ -245,25 +245,25 @@
             "label": "stakeStarRegistry",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(StakeStarRegistry)4393",
+            "type": "t_contract(StakeStarRegistry)4592",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:28"
+            "src": "contracts/StakeStar.sol:46"
           },
           {
             "label": "stakeStarETH",
             "offset": 0,
             "slot": "152",
-            "type": "t_contract(StakeStarETH)4091",
+            "type": "t_contract(StakeStarETH)4290",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:29"
+            "src": "contracts/StakeStar.sol:47"
           },
           {
             "label": "stakeStarRewards",
             "offset": 0,
             "slot": "153",
-            "type": "t_contract(StakeStarRewards)4433",
+            "type": "t_contract(StakeStarRewards)4653",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:30"
+            "src": "contracts/StakeStar.sol:48"
           },
           {
             "label": "depositContract",
@@ -271,7 +271,7 @@
             "slot": "154",
             "type": "t_contract(IDepositContract)2849",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:32"
+            "src": "contracts/StakeStar.sol:50"
           },
           {
             "label": "ssvNetwork",
@@ -279,7 +279,7 @@
             "slot": "155",
             "type": "t_contract(ISSVNetwork)3340",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:33"
+            "src": "contracts/StakeStar.sol:51"
           },
           {
             "label": "ssvToken",
@@ -287,192 +287,7 @@
             "slot": "156",
             "type": "t_contract(IERC20)2187",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:34"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address",
-            "numberOfBytes": "20"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]",
-            "numberOfBytes": "1568"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_bool": {
-            "label": "bool",
-            "numberOfBytes": "1"
-          },
-          "t_bytes32": {
-            "label": "bytes32",
-            "numberOfBytes": "32"
-          },
-          "t_contract(IDepositContract)2849": {
-            "label": "contract IDepositContract",
-            "numberOfBytes": "20"
-          },
-          "t_contract(IERC20)2187": {
-            "label": "contract IERC20",
-            "numberOfBytes": "20"
-          },
-          "t_contract(ISSVNetwork)3340": {
-            "label": "contract ISSVNetwork",
-            "numberOfBytes": "20"
-          },
-          "t_contract(StakeStarETH)4091": {
-            "label": "contract StakeStarETH",
-            "numberOfBytes": "20"
-          },
-          "t_contract(StakeStarRegistry)4393": {
-            "label": "contract StakeStarRegistry",
-            "numberOfBytes": "20"
-          },
-          "t_contract(StakeStarRewards)4433": {
-            "label": "contract StakeStarRewards",
-            "numberOfBytes": "20"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
-            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
-            "numberOfBytes": "32"
-          },
-          "t_struct(RoleData)34_storage": {
-            "label": "struct AccessControlUpgradeable.RoleData",
-            "members": [
-              {
-                "label": "members",
-                "type": "t_mapping(t_address,t_bool)",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "adminRole",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "1"
-              }
-            ],
-            "numberOfBytes": "64"
-          },
-          "t_uint256": {
-            "label": "uint256",
-            "numberOfBytes": "32"
-          },
-          "t_uint8": {
-            "label": "uint8",
-            "numberOfBytes": "1"
-          }
-        }
-      }
-    },
-    "20d0f45be057a58f388b39c81e6d53ab71a6c0391502c50be81bdf5be40dbc61": {
-      "address": "0x77a22af2Fc0B1088812f1e6cef5A0e136834f1bc",
-      "txHash": "0xaa8f7c38dea842e633f1e2915c959c13a0fa725de6ca0f785a352c442ae38474",
-      "layout": {
-        "storage": [
-          {
-            "label": "_initialized",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_uint8",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
-            "retypedFrom": "bool"
-          },
-          {
-            "label": "_initializing",
-            "offset": 1,
-            "slot": "0",
-            "type": "t_bool",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "1",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "51",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC165Upgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
-          },
-          {
-            "label": "_roles",
-            "offset": 0,
-            "slot": "101",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
-            "contract": "AccessControlUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "102",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "AccessControlUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
-          },
-          {
-            "label": "stakeStarRegistry",
-            "offset": 0,
-            "slot": "151",
-            "type": "t_contract(StakeStarRegistry)4511",
-            "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:33"
-          },
-          {
-            "label": "stakeStarETH",
-            "offset": 0,
-            "slot": "152",
-            "type": "t_contract(StakeStarETH)4209",
-            "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:34"
-          },
-          {
-            "label": "stakeStarRewards",
-            "offset": 0,
-            "slot": "153",
-            "type": "t_contract(StakeStarRewards)4556",
-            "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:35"
-          },
-          {
-            "label": "depositContract",
-            "offset": 0,
-            "slot": "154",
-            "type": "t_contract(IDepositContract)2849",
-            "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:37"
-          },
-          {
-            "label": "ssvNetwork",
-            "offset": 0,
-            "slot": "155",
-            "type": "t_contract(ISSVNetwork)3340",
-            "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:38"
-          },
-          {
-            "label": "ssvToken",
-            "offset": 0,
-            "slot": "156",
-            "type": "t_contract(IERC20)2187",
-            "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:39"
+            "src": "contracts/StakeStar.sol:52"
           },
           {
             "label": "pendingUnstake",
@@ -480,7 +295,7 @@
             "slot": "157",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:41"
+            "src": "contracts/StakeStar.sol:54"
           },
           {
             "label": "pendingUnstakeSum",
@@ -488,7 +303,7 @@
             "slot": "158",
             "type": "t_uint256",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:42"
+            "src": "contracts/StakeStar.sol:55"
           },
           {
             "label": "localPoolSize",
@@ -496,7 +311,7 @@
             "slot": "159",
             "type": "t_uint256",
             "contract": "StakeStar",
-            "src": "contracts/StakeStar.sol:44"
+            "src": "contracts/StakeStar.sol:57"
           }
         ],
         "types": {
@@ -532,15 +347,15 @@
             "label": "contract ISSVNetwork",
             "numberOfBytes": "20"
           },
-          "t_contract(StakeStarETH)4209": {
+          "t_contract(StakeStarETH)4290": {
             "label": "contract StakeStarETH",
             "numberOfBytes": "20"
           },
-          "t_contract(StakeStarRegistry)4511": {
+          "t_contract(StakeStarRegistry)4592": {
             "label": "contract StakeStarRegistry",
             "numberOfBytes": "20"
           },
-          "t_contract(StakeStarRewards)4556": {
+          "t_contract(StakeStarRewards)4653": {
             "label": "contract StakeStarRewards",
             "numberOfBytes": "20"
           },
