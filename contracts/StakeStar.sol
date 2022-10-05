@@ -103,7 +103,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         delete pendingUnstake[msg.sender];
         pendingUnstakeSum = pendingUnstakeSum.sub(eth);
 
-        (bool status,) = msg.sender.call{value: eth}("");
+        (bool status,) = msg.sender.call{value : eth}("");
         require(status, "failed to send Ether");
         emit Claim(msg.sender, eth);
     }
@@ -137,16 +137,15 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance.add(localPoolSize).sub(pendingUnstakeSum) >= 32 ether;
+        return address(this).balance.sub(localPoolSize).sub(pendingUnstakeSum) >= 32 ether;
     }
 
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+        revert("not implemented");
         require(validatorDestructionAvailability(), "cannot destruct validator");
 
         stakeStarRegistry.destroyValidator(publicKey);
         emit DestroyValidator(publicKey);
-
-        revert("not implemented");
     }
 
     // TODO: add local pool & double destroy prevention
