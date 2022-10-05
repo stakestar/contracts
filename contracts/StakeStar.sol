@@ -137,7 +137,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance.sub(localPoolSize).sub(pendingUnstakeSum) >= 32 ether;
+        return address(this).balance >= uint256(32 ether).add(localPoolSize).add(pendingUnstakeSum);
     }
 
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
