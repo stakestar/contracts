@@ -2,14 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import {
-  currentNetwork,
-  generateValidatorParams,
-  OPERATOR_IDS,
-  OPERATOR_PUBLIC_KEYS,
-  RANDOM_PRIVATE_KEY,
-  ZERO,
-} from "../scripts/utils";
+import { ZERO } from "../scripts/utils";
 import { deployStakeStarFixture } from "./fixture";
 
 describe("StakeStar", function () {
@@ -156,14 +149,8 @@ describe("StakeStar", function () {
 
   describe("CreateValidator", function () {
     it("Should create a validator", async function () {
-      const {
-        hre,
-        stakeStarManager,
-        stakeStarRewards,
-        ssvToken,
-        owner,
-        manager,
-      } = await loadFixture(deployStakeStarFixture);
+      const { stakeStarManager, ssvToken, validatorParams, owner, manager } =
+        await loadFixture(deployStakeStarFixture);
 
       await manager.sendTransaction({
         to: stakeStarManager.address,
@@ -175,13 +162,6 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
-
-      const validatorParams = await generateValidatorParams(
-        RANDOM_PRIVATE_KEY,
-        OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
-        OPERATOR_IDS[currentNetwork(hre)],
-        stakeStarRewards.address
-      );
 
       await stakeStarManager.createValidator(
         validatorParams,

@@ -70,6 +70,7 @@ export const OPERATOR_PUBLIC_KEYS: Record<Network, string[]> = {
 };
 
 export const ZERO = BigNumber.from(0);
+export const ZERO_BYTES_STRING = "0x";
 export const ZERO_PRIVATE_KEY =
   "0000000000000000000000000000000000000000000000000000000000000000";
 export const RANDOM_PRIVATE_KEY =

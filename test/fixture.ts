@@ -1,4 +1,11 @@
-import { ADDRESSES, currentNetwork } from "../scripts/utils";
+import {
+  ADDRESSES,
+  currentNetwork,
+  generateValidatorParams,
+  OPERATOR_IDS,
+  OPERATOR_PUBLIC_KEYS,
+  RANDOM_PRIVATE_KEY,
+} from "../scripts/utils";
 import hre, { ethers, upgrades } from "hardhat";
 
 // We define a fixture to reuse the same setup in every test.
@@ -9,9 +16,6 @@ export async function deployStakeStarFixture() {
 
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await ethers.getSigners();
-
-  console.log(`Owner ${owner.address}`);
-  console.log(`Manager ${manager.address}`);
 
   const StakeStarRegistry = await ethers.getContractFactory(
     "StakeStarRegistry"
@@ -52,6 +56,13 @@ export async function deployStakeStarFixture() {
   const ERC20 = await ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);
 
+  const validatorParams = await generateValidatorParams(
+    RANDOM_PRIVATE_KEY,
+    OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
+    OPERATOR_IDS[currentNetwork(hre)],
+    stakeStarRewards.address
+  );
+
   return {
     hre,
     stakeStarOwner,
@@ -61,6 +72,7 @@ export async function deployStakeStarFixture() {
     stakeStarETH,
     stakeStarRewards,
     ssvToken,
+    validatorParams,
     owner,
     manager,
     otherAccount,

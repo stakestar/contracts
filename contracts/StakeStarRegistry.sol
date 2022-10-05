@@ -27,26 +27,26 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable {
     }
 
     function addOperatorToAllowList(uint32 operatorId) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(!allowListOfOperators[operatorId], "SSR AO");
+        require(!allowListOfOperators[operatorId], "operator already added");
         allowListOfOperators[operatorId] = true;
         emit AddOperatorToAllowList(operatorId);
     }
 
     function removeOperatorFromAllowList(uint32 operatorId) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(allowListOfOperators[operatorId], "SSR RO");
+        require(allowListOfOperators[operatorId], "operator not added");
         delete allowListOfOperators[operatorId];
         emit RemoveOperatorFromAllowList(operatorId);
     }
 
     function createValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.MISSING, "SSR CV");
+        require(validatorStatuses[publicKey] == ValidatorStatus.MISSING, "validator status not MISSING");
         validatorStatuses[publicKey] = ValidatorStatus.CREATED;
         validatorPublicKeys.push(publicKey);
         emit CreateValidator(publicKey);
     }
 
     function destroyValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.CREATED, "SSR DV");
+        require(validatorStatuses[publicKey] == ValidatorStatus.CREATED, "validator status not CREATED");
         validatorStatuses[publicKey] = ValidatorStatus.DESTROYED;
         emit DestroyValidator(publicKey);
     }
