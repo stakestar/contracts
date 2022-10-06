@@ -7,7 +7,8 @@ import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/print";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
-import { Network, ZERO_PRIVATE_KEY } from "./scripts/utils";
+import { ZERO_PRIVATE_KEY } from "./scripts/constants";
+import { Network } from "./scripts/types";
 
 const HARDHAT_NETWORK = "http://127.0.0.1:8545/";
 

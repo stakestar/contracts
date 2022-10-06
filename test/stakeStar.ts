@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { ZERO } from "../scripts/utils";
+import { ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture";
 
 describe("StakeStar", function () {
