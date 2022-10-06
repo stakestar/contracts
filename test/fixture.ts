@@ -1,12 +1,11 @@
 import {
   ADDRESSES,
-  currentNetwork,
-  generateValidatorParams,
   OPERATOR_IDS,
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY,
 } from "../scripts/utils";
 import hre, { ethers, upgrades } from "hardhat";
+import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,

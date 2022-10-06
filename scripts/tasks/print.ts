@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
-import { ADDRESSES, currentNetwork } from "../utils";
+import { ADDRESSES } from "../constants";
+import { currentNetwork } from "../helpers";
 
 task("print", "Prints useful metadata from the contracts").setAction(
   async (args, hre) => {
