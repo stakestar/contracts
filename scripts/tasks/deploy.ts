@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { ADDRESSES } from "../utils";
+import { ADDRESSES } from "../constants";
 import { currentNetwork } from "../helpers";
 
 task("deploy", "Deploys all StakeStar contracts").setAction(

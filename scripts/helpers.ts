@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { AbiCoder } from "@ethersproject/abi";
 import { StakeStar } from "../typechain-types";
-import { Network } from "./utils";
+import { Network } from "./types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export function currentNetwork(hre: HardhatRuntimeEnvironment) {

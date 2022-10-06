@@ -1,2 +1,2 @@
-export * as utils from "./scripts/utils";
+export * from "./scripts";
 export * from "./typechain-types";
