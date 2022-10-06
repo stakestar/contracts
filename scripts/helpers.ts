@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { AbiCoder } from "@ethersproject/abi";
 import { StakeStar } from "../typechain-types";
 import { Network } from "./types";
