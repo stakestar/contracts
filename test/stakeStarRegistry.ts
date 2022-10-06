@@ -1,8 +1,9 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "./fixture";
-import { ValidatorStatus, ZERO_BYTES_STRING } from "../scripts/utils";
 import { Wallet } from "ethers";
+import { ZERO_BYTES_STRING } from "../scripts/constants";
+import { ValidatorStatus } from "../scripts/types";
 
 describe("StakeStarRegistry", function () {
   describe("Deployment", function () {

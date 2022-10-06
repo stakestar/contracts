@@ -3,9 +3,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist/index.*",
+    "dist/scripts/constants.*",
+    "dist/scripts/types.*",
     "dist/typechain-types/**/*",
-    "dist/scripts/utils/**/*",
+    "dist/index.*",
     "artifacts/contracts/**/*"
   ],
   "version": "0.5.0",
@@ -20,7 +21,6 @@
     "prettier": "prettier --write ."
   },
   "dependencies": {
-    "@ethersproject/abi": "^5.7.0",
     "ethers": "^5.7.1"
   },
   "devDependencies": {

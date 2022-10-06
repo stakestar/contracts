@@ -3,7 +3,7 @@ import {
   OPERATOR_IDS,
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY,
-} from "../scripts/utils";
+} from "../scripts/constants";
 import hre, { ethers, upgrades } from "hardhat";
 import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
 
