@@ -1,8 +1,10 @@
-name: Test
+name: Yarn Test
 on:
-  push:
-    branches:
-      - ci_yarn_test
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
 jobs:
   test:
     runs-on: ubuntu-latest
