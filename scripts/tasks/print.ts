@@ -11,6 +11,7 @@ task("print", "Prints useful metadata from the contracts").setAction(
     const StakeStar = await hre.ethers.getContractFactory("StakeStar");
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
+    console.log("StakeStar", stakeStar.address);
     console.log("StakeStarRegistry", await stakeStar.stakeStarRegistry());
     console.log("StakeStarETH", await stakeStar.stakeStarETH());
     console.log("StakeStarRewards", await stakeStar.stakeStarRewards());
