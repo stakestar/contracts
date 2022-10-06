@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
-import { ADDRESSES, currentNetwork } from "../utils";
+import { ADDRESSES } from "../utils";
+import { currentNetwork } from "../helpers";
 
 task(
   "upgrade-StakeStarRegistry",
