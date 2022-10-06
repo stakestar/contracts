@@ -6,7 +6,7 @@ task(
   "upgrade-StakeStarRegistry",
   "Upgrades StakeStarRegistry contract"
 ).setAction(async (args, hre) => {
-  const network = currentNetwork(require("hardhat"));
+  const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
   console.log(`Network: ${network}`);
 
