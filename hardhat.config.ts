@@ -25,10 +25,6 @@ const config: HardhatUserConfig = {
       url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
       accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || ZERO_PRIVATE_KEY],
     },
-    [Network.TENDERLY]: {
-      url: process.env.TENDERLY_RPC || HARDHAT_NETWORK,
-      accounts: [process.env.TENDERLY_DEPLOYER_PRIVKEY || ZERO_PRIVATE_KEY],
-    },
   },
   solidity: {
     version: "0.8.9",

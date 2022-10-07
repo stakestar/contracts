@@ -1,6 +1,5 @@
 export enum Network {
   GOERLI = "goerli",
-  TENDERLY = "tenderly",
   HARDHAT = "hardhat",
 }
 
