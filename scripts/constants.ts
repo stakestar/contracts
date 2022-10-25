@@ -11,6 +11,7 @@ export const ADDRESSES: Record<
     stakeStarETH: string;
     stakeStarRewards: string;
     stakeStar: string;
+    mockRewardsProvider: string;
   }
 > = {
   [Network.GOERLI]: {
@@ -21,6 +22,7 @@ export const ADDRESSES: Record<
     stakeStarRewards: "0x3e2F13C8CfB5951180Eb14bcBd1bfADaC72794d6",
     stakeStarETH: "0x1f28824d247d808F6950522C10d6C14ba7d0bA5D",
     stakeStar: "0x1724357253751A4c6c703642784128bB9Cf90e7A",
+    mockRewardsProvider: "0x512762aa421f5cd9883c3a0ae8369ea00b70a5f7",
   },
   [Network.HARDHAT]: {
     depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
@@ -30,6 +32,7 @@ export const ADDRESSES: Record<
     stakeStarRewards: "",
     stakeStarETH: "",
     stakeStar: "",
+    mockRewardsProvider: "",
   },
 };
 

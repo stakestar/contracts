@@ -784,6 +784,29 @@
           }
         }
       }
+    },
+    "d6ea48d89d68147e8df7551c75fd6d544af1ffe6af682ecfbfe00dc3e9b1046f": {
+      "address": "0x512762aa421f5cD9883C3a0AE8369EA00B70a5F7",
+      "txHash": "0xaeef6e607a6387698202bca355472a14b2f85d8d2303c9ec06c1eb33d2cd66d6",
+      "layout": {
+        "solcVersion": "0.8.9",
+        "storage": [
+          {
+            "label": "totalRewards",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_int256",
+            "contract": "MockRewardsProvider",
+            "src": "contracts/MockRewardsProvider.sol:9"
+          }
+        ],
+        "types": {
+          "t_int256": {
+            "label": "int256",
+            "numberOfBytes": "32"
+          }
+        }
+      }
     }
   }
 }
