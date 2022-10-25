@@ -5,21 +5,21 @@ import { Wallet } from "ethers";
 import { ZERO_BYTES_STRING } from "../scripts/constants";
 import { ValidatorStatus } from "../scripts/types";
 
-describe("StakeStarRewardsProvider", function () {
+describe("MockRewardsProvider", function () {
   describe("Deployment", function () {
     it("Should set the right roles", async function () {
-      const { stakeStarRewardsProvider, owner, otherAccount } =
+      const { mockRewardsProvider, owner, otherAccount } =
         await loadFixture(deployStakeStarFixture);
 
       expect(
-        await stakeStarRewardsProvider.hasRole(
-          await stakeStarRewardsProvider.DEFAULT_ADMIN_ROLE(),
+        await mockRewardsProvider.hasRole(
+          await mockRewardsProvider.DEFAULT_ADMIN_ROLE(),
           owner.address
         )
       ).to.equal(true);
       expect(
-        await stakeStarRewardsProvider.hasRole(
-          await stakeStarRewardsProvider.DEFAULT_ADMIN_ROLE(),
+        await mockRewardsProvider.hasRole(
+          await mockRewardsProvider.DEFAULT_ADMIN_ROLE(),
           otherAccount.address
         )
       ).to.equal(false);
@@ -28,31 +28,31 @@ describe("StakeStarRewardsProvider", function () {
 
   describe("AccessControl", function () {
     it("Should not allow call methods without admin role", async function () {
-      const { stakeStarRewardsProvider, otherAccount } = await loadFixture(
+      const { mockRewardsProvider, otherAccount } = await loadFixture(
         deployStakeStarFixture
       );
 
       await expect(
-        stakeStarRewardsProvider.connect(otherAccount).provideRewards(123)
+        mockRewardsProvider.connect(otherAccount).provideRewards(123)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRewardsProvider.DEFAULT_ADMIN_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await mockRewardsProvider.DEFAULT_ADMIN_ROLE()}`
       );
     });
   });
 
   describe("Provide rewards", function () {
     it("Should store updated rewards", async function () {
-      const { stakeStarRewardsProvider, owner } = await loadFixture(
+      const { mockRewardsProvider, owner } = await loadFixture(
         deployStakeStarFixture
       );
 
       const rewards = 123;
 
-      await expect(stakeStarRewardsProvider.connect(owner).provideRewards(123))
-        .to.emit(stakeStarRewardsProvider, "ProvideRewards")
+      await expect(mockRewardsProvider.connect(owner).provideRewards(123))
+        .to.emit(mockRewardsProvider, "ProvideRewards")
         .withArgs(123);
 
-      expect(await stakeStarRewardsProvider.getRewards()).to.equal(123);
+      expect(await mockRewardsProvider.getRewards()).to.equal(123);
     });
   });
 });

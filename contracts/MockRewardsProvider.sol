@@ -5,7 +5,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IRewardsProvider} from "./IRewardsProvider.sol";
 
-contract StakeStarRewardsProvider is IRewardsProvider, Initializable, AccessControlUpgradeable {
+contract MockRewardsProvider is IRewardsProvider, Initializable, AccessControlUpgradeable {
     event ProvideRewards(int256 rewards);
 
     int256 public totalRewards;

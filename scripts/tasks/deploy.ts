@@ -8,16 +8,16 @@ task("deploy", "Deploys all StakeStar contracts").setAction(
     const addresses = ADDRESSES[network];
     console.log(`Network: ${network}`);
 
-    /* StakeStarRewardsProvider */
-    const stakeStarRewardsProviderFactory = await hre.ethers.getContractFactory(
-      "StakeStarRewardsProvider"
+    /* MockRewardsProvider */
+    const mockRewardsProviderFactory = await hre.ethers.getContractFactory(
+      "MockRewardsProvider"
     );
-    const stakeStarRewardsProvider = await hre.upgrades.deployProxy(
-      stakeStarRewardsProviderFactory
+    const mockRewardsProvider = await hre.upgrades.deployProxy(
+      mockRewardsProviderFactory
     );
-    await stakeStarRewardsProvider.deployed();
+    await mockRewardsProvider.deployed();
     console.log(
-      `StakeStarRewardsProvider is deployed to ${stakeStarRewardsProvider.address}`
+      `MockRewardsProvider is deployed to ${mockRewardsProvider.address}`
     );
 
     const StakeStarRegistry = await hre.ethers.getContractFactory(

@@ -22,13 +22,13 @@ export async function deployStakeStarFixture() {
   const stakeStarRegistry = await upgrades.deployProxy(StakeStarRegistry);
   await stakeStarRegistry.deployed();
 
-  const stakeStarRewardsProviderFactory = await ethers.getContractFactory(
-    "StakeStarRewardsProvider"
+  const mockRewardsProviderFactory = await ethers.getContractFactory(
+    "MockRewardsProvider"
   );
-  const stakeStarRewardsProvider = await upgrades.deployProxy(
-    stakeStarRewardsProviderFactory
+  const mockRewardsProvider = await upgrades.deployProxy(
+    mockRewardsProviderFactory
   );
-  await stakeStarRewardsProvider.deployed();
+  await mockRewardsProvider.deployed();
 
   const StakeStar = await ethers.getContractFactory("StakeStar");
   const stakeStarOwner = await upgrades.deployProxy(StakeStar, [
@@ -78,7 +78,7 @@ export async function deployStakeStarFixture() {
     stakeStarRegistry,
     stakeStarETH,
     stakeStarRewards,
-    stakeStarRewardsProvider,
+    mockRewardsProvider,
     ssvToken,
     validatorParams,
     owner,
