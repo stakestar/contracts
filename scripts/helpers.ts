@@ -19,10 +19,10 @@ export async function generateValidatorParams(
   privateKey: string,
   operatorPublicKeys: string[],
   operatorIds: number[],
-  withdrawalAddress: string
+  withdrawalAddress: string,
+  genesisForkVersion: string
 ): Promise<StakeStar.ValidatorParamsStruct> {
   const {
-    DEFAULT_GENESIS_FORK_VERSION,
     generateDepositData,
     split,
     hexToBytes,
@@ -32,7 +32,7 @@ export async function generateValidatorParams(
   const data = generateDepositData(
     hexToBytes(privateKey),
     withdrawalAddress,
-    DEFAULT_GENESIS_FORK_VERSION
+    genesisForkVersion
   );
   const coder = new AbiCoder();
 
