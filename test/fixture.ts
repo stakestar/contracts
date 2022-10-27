@@ -1,5 +1,5 @@
 import {
-  ADDRESSES,
+  ADDRESSES, GENESIS_FORK_VERSIONS,
   OPERATOR_IDS,
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY,
@@ -67,7 +67,8 @@ export async function deployStakeStarFixture() {
     RANDOM_PRIVATE_KEY,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     OPERATOR_IDS[currentNetwork(hre)],
-    stakeStarRewards.address
+    stakeStarRewards.address,
+    GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
 
   return {
