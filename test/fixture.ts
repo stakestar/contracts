@@ -23,12 +23,10 @@ export async function deployStakeStarFixture() {
   const stakeStarRegistry = await upgrades.deployProxy(StakeStarRegistry);
   await stakeStarRegistry.deployed();
 
-  const mockRewardsProviderFactory = await ethers.getContractFactory(
+  const MockRewardsProvider = await ethers.getContractFactory(
     "MockRewardsProvider"
   );
-  const mockRewardsProvider = await upgrades.deployProxy(
-    mockRewardsProviderFactory
-  );
+  const mockRewardsProvider = await MockRewardsProvider.deploy();
   await mockRewardsProvider.deployed();
 
   const StakeStar = await ethers.getContractFactory("StakeStar");
