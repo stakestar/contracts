@@ -18,11 +18,11 @@ export const ADDRESSES: Record<
     depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    stakeStarRegistry: "0x0577ED190f8bD26Ee7c9709ae160a0E80b669C75",
-    stakeStarRewards: "0x3e2F13C8CfB5951180Eb14bcBd1bfADaC72794d6",
-    stakeStarETH: "0x1f28824d247d808F6950522C10d6C14ba7d0bA5D",
-    stakeStar: "0x1724357253751A4c6c703642784128bB9Cf90e7A",
-    mockRewardsProvider: "0x512762aa421f5cd9883c3a0ae8369ea00b70a5f7",
+    stakeStarRegistry: "0xFE0816D01F1aD0A75dB4146b3a4585B36Ef3BC6c",
+    stakeStarRewards: "0x4b290dF6d4e5f1e0aec996dcE4A10F11a95A6991",
+    stakeStarETH: "0xd441832960b287cEB280b8701601B8fbfF1Ecc55",
+    stakeStar: "0x5Be3e691af7b2ED804D9859E9B978E1468C4796D",
+    mockRewardsProvider: "0x02A8EA7c3f4F630D61745e9b4c6ca175e27C2040",
   },
   [Network.HARDHAT]: {
     depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
@@ -56,10 +56,10 @@ export const OPERATOR_PUBLIC_KEYS: Record<Network, string[]> = {
   ],
 };
 
-export const GENESIS_FORK_VERSIONS : Record<Network, string> = {
+export const GENESIS_FORK_VERSIONS: Record<Network, string> = {
   [Network.GOERLI]: "0x00001020",
   [Network.HARDHAT]: "0x00001020",
-}
+};
 
 export const ZERO = BigNumber.from(0);
 export const ZERO_BYTES_STRING = "0x";

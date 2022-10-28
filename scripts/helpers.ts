@@ -22,11 +22,9 @@ export async function generateValidatorParams(
   withdrawalAddress: string,
   genesisForkVersion: string
 ): Promise<StakeStar.ValidatorParamsStruct> {
-  const {
-    generateDepositData,
-    split,
-    hexToBytes,
-  } = await import("@stakestar/lib");
+  const { generateDepositData, split, hexToBytes } = await import(
+    "@stakestar/lib"
+  );
 
   const shares = await split(hexToBytes(privateKey), operatorPublicKeys);
   const data = generateDepositData(
