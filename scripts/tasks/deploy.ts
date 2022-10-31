@@ -1,6 +1,6 @@
-import { task } from "hardhat/config";
-import { ADDRESSES } from "../constants";
-import { currentNetwork } from "../helpers";
+import {task} from "hardhat/config";
+import {ADDRESSES} from "../constants";
+import {currentNetwork} from "../helpers";
 
 task("deploy", "Deploys all StakeStar contracts").setAction(
   async (args, hre) => {
@@ -41,5 +41,8 @@ task("deploy", "Deploys all StakeStar contracts").setAction(
       stakeStar.address
     );
     console.log(`STAKE_STAR_ROLE is granted to StakeStar contract`);
+
+    await stakeStar.grantRole(await stakeStar.MANAGER_ROLE(), addresses.stakeStarBot);
+    console.log(`MANAGER_ROLE is granted to StakeStarBot ${addresses.stakeStarBot}`);
   }
 );

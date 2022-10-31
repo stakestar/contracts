@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
     [Network.GOERLI]: {
       url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
       accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || ZERO_PRIVATE_KEY],
-      timeout: 600000,
+      timeout: 3000000,
     },
   },
   solidity: {

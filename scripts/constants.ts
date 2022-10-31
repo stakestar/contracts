@@ -11,27 +11,30 @@ export const ADDRESSES: Record<
     stakeStarETH: string;
     stakeStarRewards: string;
     stakeStar: string;
+    stakeStarBot: string;
     mockRewardsProvider: string;
   }
 > = {
   [Network.GOERLI]: {
-    depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
+    depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    stakeStarRegistry: "0xFE0816D01F1aD0A75dB4146b3a4585B36Ef3BC6c",
-    stakeStarRewards: "0x4b290dF6d4e5f1e0aec996dcE4A10F11a95A6991",
-    stakeStarETH: "0xd441832960b287cEB280b8701601B8fbfF1Ecc55",
-    stakeStar: "0x5Be3e691af7b2ED804D9859E9B978E1468C4796D",
-    mockRewardsProvider: "0x02A8EA7c3f4F630D61745e9b4c6ca175e27C2040",
+    stakeStarRegistry: "0x981D1B3e33d78e1Af39Fc3CBb232Aa863324935c",
+    stakeStarRewards: "0x9C1d0D2548de4A46ab0f580EC66A0577cA250ff0",
+    stakeStarETH: "0xe6aB6ADb4b45bF84841e32592cF114E7C357da89",
+    stakeStar: "0x9D8fCCaF293b7126Ae80953112a29C7ebA04DfC3",
+    stakeStarBot: "0xD57A255522D8a2575cF49A8dB17e5d4b33c65De1",
+    mockRewardsProvider: "0x2838cA6C93aC645BAc88556D6365d1aeEa6D4B7B",
   },
   [Network.HARDHAT]: {
-    depositContract: "0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC",
+    depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarRegistry: "",
     stakeStarRewards: "",
     stakeStarETH: "",
     stakeStar: "",
+    stakeStarBot: "",
     mockRewardsProvider: "",
   },
 };
