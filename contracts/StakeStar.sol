@@ -24,6 +24,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     event SetLocalPoolSize(uint256 size);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
+    event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
     event Stake(address who, uint256 amount);
     event Unstake(address who, uint256 amount);
@@ -134,6 +135,23 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             ssvDepositAmount
         );
         emit CreateValidator(validatorParams, ssvDepositAmount);
+    }
+
+    function updateValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(
+            stakeStarRegistry.validatorStatuses(validatorParams.publicKey) == StakeStarRegistry.ValidatorStatus.CREATED,
+            "validator not created"
+        );
+
+        ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
+        ssvNetwork.updateValidator(
+            validatorParams.publicKey,
+            validatorParams.operatorIds,
+            validatorParams.sharesPublicKeys,
+            validatorParams.sharesEncrypted,
+            ssvDepositAmount
+        );
+        emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
     function validatorCreationAvailability() public view returns (bool) {

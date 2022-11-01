@@ -1,14 +1,14 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import {expect} from "chai";
+import {ethers} from "hardhat";
+import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 
-import { ZERO } from "../scripts/constants";
-import { deployStakeStarFixture } from "./fixture";
+import {ZERO} from "../scripts/constants";
+import {deployStakeStarFixture} from "./fixture";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
     it("Should set the right owner", async function () {
-      const { stakeStarPublic, owner } = await loadFixture(
+      const {stakeStarPublic, owner} = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -21,7 +21,7 @@ describe("StakeStar", function () {
     });
 
     it("Should set the right manager", async function () {
-      const { stakeStarPublic, manager } = await loadFixture(
+      const {stakeStarPublic, manager} = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -34,7 +34,7 @@ describe("StakeStar", function () {
     });
 
     it("Should set the right owner for ssETH", async function () {
-      const { stakeStarPublic, stakeStarETH } = await loadFixture(
+      const {stakeStarPublic, stakeStarETH} = await loadFixture(
         deployStakeStarFixture
       );
       expect(
@@ -48,7 +48,7 @@ describe("StakeStar", function () {
 
   describe("AccessControl", function () {
     it("Should not allow to call methods without corresponding roles", async function () {
-      const { stakeStarPublic, validatorParams, otherAccount } =
+      const {stakeStarPublic, validatorParams, otherAccount} =
         await loadFixture(deployStakeStarFixture);
 
       const defaultAdminRole = await stakeStarPublic.DEFAULT_ADMIN_ROLE();
@@ -63,6 +63,11 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
       await expect(
+        stakeStarPublic.updateValidator(validatorParams, 1)
+      ).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
+      await expect(
         stakeStarPublic.destroyValidator(validatorParams.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
@@ -75,7 +80,7 @@ describe("StakeStar", function () {
 
   describe("Stake", function () {
     it("Should send ETH to the contract", async function () {
-      const { stakeStarPublic, stakeStarETH, otherAccount } = await loadFixture(
+      const {stakeStarPublic, stakeStarETH, otherAccount} = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -83,18 +88,18 @@ describe("StakeStar", function () {
         "no eth transferred"
       );
 
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeEtherBalances(
+      await expect(stakeStarPublic.stake({value: 1})).to.changeEtherBalances(
         [otherAccount, stakeStarPublic],
         [-1, 1]
       );
 
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
+      await expect(stakeStarPublic.stake({value: 1})).to.changeTokenBalance(
         stakeStarETH,
         otherAccount,
         1
       );
 
-      await expect(stakeStarPublic.stake({ value: 1 }))
+      await expect(stakeStarPublic.stake({value: 1}))
         .to.emit(stakeStarPublic, "Stake")
         .withArgs(otherAccount.address, 1);
     });
@@ -102,12 +107,12 @@ describe("StakeStar", function () {
 
   describe("Unstake", function () {
     it("Should create pendingUnstake", async function () {
-      const { stakeStarPublic, otherAccount, stakeStarETH } = await loadFixture(
+      const {stakeStarPublic, otherAccount, stakeStarETH} = await loadFixture(
         deployStakeStarFixture
       );
 
       const stakeAmount = ethers.utils.parseEther("2");
-      await stakeStarPublic.stake({ value: stakeAmount });
+      await stakeStarPublic.stake({value: stakeAmount});
       const ssEthAmount = await stakeStarETH.balanceOf(otherAccount.address);
 
       expect(await stakeStarETH.totalSupply()).to.equal(ssEthAmount);
@@ -161,7 +166,7 @@ describe("StakeStar", function () {
         "no pending unstake"
       );
 
-      await stakeStarPublic.stake({ value: stakeAmount });
+      await stakeStarPublic.stake({value: stakeAmount});
 
       await ssvToken
         .connect(owner)
@@ -204,14 +209,14 @@ describe("StakeStar", function () {
 
   describe("UnstakeAndClaim", function () {
     it("Should unstake and claim in a single tx", async function () {
-      const { stakeStarPublic, otherAccount } = await loadFixture(
+      const {stakeStarPublic, otherAccount} = await loadFixture(
         deployStakeStarFixture
       );
 
       const stakeAmount = ethers.utils.parseEther("2");
       const unstakeAndClaimAmount = stakeAmount.div(2);
 
-      await stakeStarPublic.stake({ value: stakeAmount });
+      await stakeStarPublic.stake({value: stakeAmount});
 
       await expect(
         stakeStarPublic.unstakeAndClaim(unstakeAndClaimAmount)
@@ -229,7 +234,7 @@ describe("StakeStar", function () {
 
   describe("CreateValidator", function () {
     it("Should create a validator", async function () {
-      const { stakeStarManager, ssvToken, validatorParams, owner, manager } =
+      const {stakeStarManager, ssvToken, validatorParams, owner, manager} =
         await loadFixture(deployStakeStarFixture);
 
       await ssvToken
@@ -292,7 +297,7 @@ describe("StakeStar", function () {
         true
       );
 
-      await stakeStarPublic.stake({ value: ethers.utils.parseEther("32") });
+      await stakeStarPublic.stake({value: ethers.utils.parseEther("32")});
 
       await ssvToken
         .connect(owner)
@@ -320,9 +325,40 @@ describe("StakeStar", function () {
     });
   });
 
+  describe("UpdateValidator", function () {
+    it("Should update existing validator", async function () {
+      const {stakeStarOwner, stakeStarManager, ssvToken, validatorParams, owner, manager} =
+        await loadFixture(deployStakeStarFixture);
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarOwner.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      const ssvBalance = await ssvToken.balanceOf(stakeStarOwner.address);
+
+      await manager.sendTransaction({
+        to: stakeStarOwner.address,
+        value: ethers.utils.parseEther("99"),
+      });
+
+      await expect(
+        stakeStarOwner.updateValidator(validatorParams, ssvBalance)
+      ).to.be.revertedWith("validator not created");
+      await expect(
+        stakeStarManager.createValidator(validatorParams, ssvBalance.div(2))
+      ).to.emit(stakeStarManager, "CreateValidator");
+      validatorParams.operatorIds[0] = 127;
+      await expect(
+        stakeStarOwner.updateValidator(validatorParams, ssvBalance.div(2))
+      ).to.emit(stakeStarOwner, "UpdateValidator");
+    });
+  });
+
   describe("DestroyValidator", function () {
     it("Should revert unless implemented", async function () {
-      const { stakeStarManager, validatorParams } = await loadFixture(
+      const {stakeStarManager, validatorParams} = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -337,7 +373,7 @@ describe("StakeStar", function () {
 
   describe("applyRewards", function () {
     it("Should pull rewards from StakeStarRewards", async function () {
-      const { stakeStarPublic, stakeStarRewards, stakeStarETH, otherAccount } =
+      const {stakeStarPublic, stakeStarRewards, stakeStarETH, otherAccount} =
         await loadFixture(deployStakeStarFixture);
 
       await expect(stakeStarPublic.applyRewards()).to.be.revertedWith(
@@ -346,7 +382,7 @@ describe("StakeStar", function () {
 
       const rateBefore = await stakeStarETH.rate();
 
-      await stakeStarPublic.stake({ value: 1 });
+      await stakeStarPublic.stake({value: 1});
 
       await otherAccount.sendTransaction({
         to: stakeStarRewards.address,
@@ -372,7 +408,7 @@ describe("StakeStar", function () {
 
   describe("applyPenalties", function () {
     it("Should decrease StakeStarETH rate", async function () {
-      const { stakeStarOwner, stakeStarETH } = await loadFixture(
+      const {stakeStarOwner, stakeStarETH} = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -380,7 +416,7 @@ describe("StakeStar", function () {
         "cannot apply zero penalty"
       );
 
-      await stakeStarOwner.stake({ value: 100 });
+      await stakeStarOwner.stake({value: 100});
 
       const rateBefore = await stakeStarETH.rate();
 
