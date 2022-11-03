@@ -320,7 +320,7 @@ describe("StakeStarRegistry", function () {
       await stakeStarRegistryOwner.createValidator(publicKey4);
 
       expect(await stakeStarRegistry.getPoRAddressList(1, 0)).to.eql([]);
-      expect(await stakeStarRegistry.getPoRAddressList(100, 0)).to.eql([]);
+      expect(await stakeStarRegistry.getPoRAddressList(100, 100)).to.eql([]);
 
       expect(await stakeStarRegistry.getPoRAddressList(0, 1)).to.eql([
         publicKey1,
