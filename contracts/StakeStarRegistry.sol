@@ -88,7 +88,9 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         }
 
         uint256 normalizedEndIndex = endIndex < length - 1 ? endIndex : length - 1;
-        require(startIndex <= normalizedEndIndex, "startIndex must be less than or equal to normalizedEndIndex");
+        if (startIndex > normalizedEndIndex) {
+            return new string[](0);
+        }
 
         string[] memory addressList = new string[](normalizedEndIndex - startIndex + 1);
         bytes[] memory publicKeys = getValidatorPublicKeys(ValidatorStatus.CREATED);

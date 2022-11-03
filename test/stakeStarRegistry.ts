@@ -319,16 +319,8 @@ describe("StakeStarRegistry", function () {
       await stakeStarRegistryOwner.createValidator(publicKey3);
       await stakeStarRegistryOwner.createValidator(publicKey4);
 
-      await expect(
-        stakeStarRegistry.getPoRAddressList(1, 0)
-      ).to.be.revertedWith(
-        "startIndex must be less than or equal to normalizedEndIndex"
-      );
-      await expect(
-        stakeStarRegistry.getPoRAddressList(100, 100)
-      ).to.be.revertedWith(
-        "startIndex must be less than or equal to normalizedEndIndex"
-      );
+      expect(await stakeStarRegistry.getPoRAddressList(1, 0)).to.eql([]);
+      expect(await stakeStarRegistry.getPoRAddressList(100, 0)).to.eql([]);
 
       expect(await stakeStarRegistry.getPoRAddressList(0, 1)).to.eql([
         publicKey1,
