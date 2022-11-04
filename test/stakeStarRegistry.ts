@@ -247,7 +247,11 @@ describe("StakeStarRegistry", function () {
         await stakeStarRegistry.countValidatorPublicKeys(
           ValidatorStatus.CREATED
         )
-      ).to.equal(3);
+      ).to.equal(1);
+
+      expect(await stakeStarRegistry.getValidatorPublicKeysLength()).to.equal(
+        3
+      );
 
       expect(
         await stakeStarRegistry.getValidatorPublicKeys(
@@ -259,6 +263,102 @@ describe("StakeStarRegistry", function () {
           ValidatorStatus.DESTROYED
         )
       ).to.equal(2);
+    });
+  });
+
+  describe("ChainLinkInterface", function () {
+    it("getPoRAddressListLength", async function () {
+      const { stakeStarRegistry, owner } = await loadFixture(
+        deployStakeStarFixture
+      );
+      const stakeStarRegistryOwner = stakeStarRegistry.connect(owner);
+
+      await stakeStarRegistry
+        .connect(owner)
+        .grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), owner.address);
+
+      const publicKey1 = Wallet.createRandom().publicKey;
+      const publicKey2 = Wallet.createRandom().publicKey;
+      const publicKey3 = Wallet.createRandom().publicKey;
+
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(0);
+      await stakeStarRegistryOwner.createValidator(publicKey1);
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(1);
+      await stakeStarRegistryOwner.createValidator(publicKey2);
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(2);
+      await stakeStarRegistryOwner.createValidator(publicKey3);
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(3);
+
+      await expect(stakeStarRegistryOwner.destroyValidator(publicKey1));
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(2);
+      await expect(stakeStarRegistryOwner.destroyValidator(publicKey2));
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(1);
+      await expect(stakeStarRegistryOwner.destroyValidator(publicKey3));
+      expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(0);
+    });
+
+    it("getPoRAddressList", async function () {
+      const { stakeStarRegistry, owner } = await loadFixture(
+        deployStakeStarFixture
+      );
+      const stakeStarRegistryOwner = stakeStarRegistry.connect(owner);
+
+      await stakeStarRegistry
+        .connect(owner)
+        .grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), owner.address);
+
+      expect(await stakeStarRegistry.getPoRAddressList(0, 1)).to.eql([]);
+
+      const publicKey1 = Wallet.createRandom().publicKey;
+      const publicKey2 = Wallet.createRandom().publicKey;
+      const publicKey3 = Wallet.createRandom().publicKey;
+      const publicKey4 = Wallet.createRandom().publicKey;
+
+      await stakeStarRegistryOwner.createValidator(publicKey1);
+      await stakeStarRegistryOwner.createValidator(publicKey2);
+      await stakeStarRegistryOwner.createValidator(publicKey3);
+      await stakeStarRegistryOwner.createValidator(publicKey4);
+
+      expect(await stakeStarRegistry.getPoRAddressList(1, 0)).to.eql([]);
+      expect(await stakeStarRegistry.getPoRAddressList(100, 100)).to.eql([]);
+
+      expect(await stakeStarRegistry.getPoRAddressList(0, 1)).to.eql([
+        publicKey1,
+        publicKey2,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(0, 3)).to.eql([
+        publicKey1,
+        publicKey2,
+        publicKey3,
+        publicKey4,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(1, 3)).to.eql([
+        publicKey2,
+        publicKey3,
+        publicKey4,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(2, 3)).to.eql([
+        publicKey3,
+        publicKey4,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(0, 10)).to.eql([
+        publicKey1,
+        publicKey2,
+        publicKey3,
+        publicKey4,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(0, 0)).to.eql([
+        publicKey1,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(1, 1)).to.eql([
+        publicKey2,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(2, 2)).to.eql([
+        publicKey3,
+      ]);
+      expect(await stakeStarRegistry.getPoRAddressList(3, 3)).to.eql([
+        publicKey4,
+      ]);
     });
   });
 });

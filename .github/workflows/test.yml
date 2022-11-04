@@ -1,10 +1,5 @@
 name: Run tests on pull request
-on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - reopened
+on: pull_request
 jobs:
   test:
     runs-on: ubuntu-latest
