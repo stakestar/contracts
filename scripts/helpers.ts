@@ -40,13 +40,10 @@ export async function generateValidatorParams(
     signature: data.depositData.signature,
     depositDataRoot: data.depositDataRoot,
     operatorIds: operatorIds,
-    sharesPublicKeys: shares.map((share: any) =>
-      coder.encode(
-        ["string"],
-        [Buffer.from(share.publicKey).toString("base64")]
-      )
+    sharesPublicKeys: shares.map((share) =>
+      share.publicKey
     ),
-    sharesEncrypted: shares.map((share: any) =>
+    sharesEncrypted: shares.map((share) =>
       coder.encode(["string"], [share.privateKey])
     ),
   };
