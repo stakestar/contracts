@@ -7,13 +7,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import {IStakingPool} from "./IStakingPool.sol";
-import {StakeStarRegistry} from "./StakeStarRegistry.sol";
-import {StakeStarETH} from "./StakeStarETH.sol";
-import {StakeStarRewards} from "./StakeStarRewards.sol";
+import "./IStakingPool.sol";
+import "./StakeStarRegistry.sol";
+import "./StakeStarETH.sol";
+import "./StakeStarRewards.sol";
+import "./StakeStarTreasury.sol";
 
-import {IDepositContract} from "./IDepositContract.sol";
-import {ISSVNetwork} from "./ISSVNetwork.sol";
+import "./IDepositContract.sol";
+import "./ISSVNetwork.sol";
 
 // TODO Maintain SSV position in SSVNetwork contract
 // TODO Create validator destruction conditions
@@ -47,6 +48,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     StakeStarRegistry public stakeStarRegistry;
     StakeStarETH public stakeStarETH;
     StakeStarRewards public stakeStarRewards;
+    StakeStarTreasury public stakeStarTreasury;
 
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
@@ -61,13 +63,15 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
-        address stakeStarRegistryAddress
+        address stakeStarRegistryAddress,
+        address stakeStarTreasuryAddress
     ) public initializer {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
+        stakeStarTreasury = StakeStarTreasury(payable(stakeStarTreasuryAddress));
         stakeStarETH = new StakeStarETH();
         stakeStarRewards = new StakeStarRewards();
 
@@ -174,10 +178,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function applyRewards() public {
         uint256 amount = address(stakeStarRewards).balance;
         require(amount > 0, "no rewards available");
-
         stakeStarRewards.pull();
-        stakeStarETH.updateRate(amount, true);
-        emit ApplyRewards(amount);
+
+        uint256 treasuryCommission = stakeStarTreasury.commission(amount);
+        payable(stakeStarTreasury).transfer(treasuryCommission);
+
+        uint256 rewards = amount.sub(treasuryCommission);
+        stakeStarETH.updateRate(rewards, true);
+        emit ApplyRewards(rewards);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {

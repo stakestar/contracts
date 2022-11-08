@@ -7,6 +7,7 @@ export const ADDRESSES: Record<
     depositContract: string;
     ssvNetwork: string;
     ssvToken: string;
+    stakeStarTreasury: string;
     stakeStarRegistry: string;
     stakeStarETH: string;
     stakeStarRewards: string;
@@ -19,6 +20,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
+    stakeStarTreasury: "",
     stakeStarRegistry: "0x981D1B3e33d78e1Af39Fc3CBb232Aa863324935c",
     stakeStarRewards: "0x9C1d0D2548de4A46ab0f580EC66A0577cA250ff0",
     stakeStarETH: "0xe6aB6ADb4b45bF84841e32592cF114E7C357da89",
@@ -30,6 +32,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
+    stakeStarTreasury: "",
     stakeStarRegistry: "",
     stakeStarRewards: "",
     stakeStarETH: "",

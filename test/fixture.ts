@@ -41,6 +41,7 @@ export async function deployStakeStarFixture() {
     addresses.ssvNetwork,
     addresses.ssvToken,
     stakeStarRegistry.address,
+    stakeStarTreasury.address,
   ]);
   await stakeStarOwner.deployed();
   const stakeStarManager = stakeStarOwner.connect(manager);

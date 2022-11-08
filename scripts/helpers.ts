@@ -26,7 +26,11 @@ export async function generateValidatorParams(
     "@stakestar/lib"
   );
 
-  const shares = await splitPrivateKey(hexToBytes(privateKey), operatorIds, operatorPublicKeys);
+  const shares = await splitPrivateKey(
+    hexToBytes(privateKey),
+    operatorIds,
+    operatorPublicKeys
+  );
   const data = generateDepositData(
     hexToBytes(privateKey),
     withdrawalAddress,
@@ -40,9 +44,7 @@ export async function generateValidatorParams(
     signature: data.depositData.signature,
     depositDataRoot: data.depositDataRoot,
     operatorIds: operatorIds,
-    sharesPublicKeys: shares.map((share) =>
-      share.publicKey
-    ),
+    sharesPublicKeys: shares.map((share) => share.publicKey),
     sharesEncrypted: shares.map((share) =>
       coder.encode(["string"], [share.privateKey])
     ),
