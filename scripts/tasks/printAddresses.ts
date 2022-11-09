@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { ADDRESSES } from "../constants";
 import { currentNetwork } from "../helpers";
 
-task("print", "Prints useful metadata from the contracts").setAction(
+task("printAddresses", "Prints useful metadata from the contracts").setAction(
   async (args, hre) => {
     const network = currentNetwork(hre);
     const addresses = ADDRESSES[network];

@@ -74,7 +74,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   };
 }
 
-task("deploy-all", "Deploys all StakeStar contracts").setAction(
+task("deployAll", "Deploys all StakeStar contracts").setAction(
   async (args, hre) => {
     await deployAll(hre);
   }

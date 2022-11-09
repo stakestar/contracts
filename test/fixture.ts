@@ -7,7 +7,7 @@ import {
 } from "../scripts/constants";
 import hre, { ethers } from "hardhat";
 import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
-import { deployAll } from "../scripts/tasks/deploy-all";
+import { deployAll } from "../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 // We define a fixture to reuse the same setup in every test.
