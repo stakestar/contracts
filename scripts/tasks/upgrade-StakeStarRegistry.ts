@@ -8,7 +8,6 @@ task(
 ).setAction(async (args, hre) => {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
-  console.log(`Network: ${network}`);
 
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"

@@ -45,7 +45,7 @@ describe("StakeStarETH", function () {
           await stakeStarETH.DEFAULT_ADMIN_ROLE(),
           owner.address
         )
-      ).to.equal(false);
+      ).to.equal(true);
       expect(
         await stakeStarETH.hasRole(
           await stakeStarETH.DEFAULT_ADMIN_ROLE(),
