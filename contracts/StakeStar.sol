@@ -154,6 +154,15 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
+    function step1(bytes memory publicKey) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(
+            stakeStarRegistry.validatorStatuses(publicKey) == StakeStarRegistry.ValidatorStatus.CREATED,
+            "validator not created"
+        );
+
+        ssvNetwork.removeValidator(publicKey);
+    }
+
     function validatorCreationAvailability() public view returns (bool) {
         return address(this).balance >= uint256(32 ether).add(localPoolSize).add(pendingUnstakeSum);
     }
