@@ -1,6 +1,6 @@
-import {task} from "hardhat/config";
-import {ADDRESSES} from "../constants";
-import {currentNetwork} from "../helpers";
+import { task } from "hardhat/config";
+import { ADDRESSES } from "../constants";
+import { currentNetwork } from "../helpers";
 
 task("deploy", "Deploys all StakeStar contracts").setAction(
   async (args, hre) => {
@@ -15,6 +15,15 @@ task("deploy", "Deploys all StakeStar contracts").setAction(
     await mockRewardsProvider.deployed();
     console.log(
       `MockRewardsProvider is deployed to ${mockRewardsProvider.address}`
+    );
+
+    const StakeStarTreasury = await hre.ethers.getContractFactory(
+      "StakeStarTreasury"
+    );
+    const stakeStarTreasury = await hre.upgrades.deployProxy(StakeStarTreasury);
+    await stakeStarTreasury.deployed();
+    console.log(
+      `StakeStarTreasury is deployed to ${stakeStarTreasury.address}`
     );
 
     const StakeStarRegistry = await hre.ethers.getContractFactory(
@@ -32,6 +41,7 @@ task("deploy", "Deploys all StakeStar contracts").setAction(
       addresses.ssvNetwork,
       addresses.ssvToken,
       stakeStarRegistry.address,
+      stakeStarTreasury.address,
     ]);
     await stakeStar.deployed();
     console.log(`StakeStar is deployed to ${stakeStar.address}`);
@@ -42,7 +52,12 @@ task("deploy", "Deploys all StakeStar contracts").setAction(
     );
     console.log(`STAKE_STAR_ROLE is granted to StakeStar contract`);
 
-    await stakeStar.grantRole(await stakeStar.MANAGER_ROLE(), addresses.stakeStarBot);
-    console.log(`MANAGER_ROLE is granted to StakeStarBot ${addresses.stakeStarBot}`);
+    await stakeStar.grantRole(
+      await stakeStar.MANAGER_ROLE(),
+      addresses.stakeStarBot
+    );
+    console.log(
+      `MANAGER_ROLE is granted to StakeStarBot ${addresses.stakeStarBot}`
+    );
   }
 );
