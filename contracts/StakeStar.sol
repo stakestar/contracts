@@ -158,17 +158,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
-    function step2(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
-        ssvNetwork.registerValidator(
-            validatorParams.publicKey,
-            validatorParams.operatorIds,
-            validatorParams.sharesPublicKeys,
-            validatorParams.sharesEncrypted,
-            ssvDepositAmount
-        );
-    }
-
     function validatorCreationAvailability() public view returns (bool) {
         return address(this).balance >= uint256(32 ether).add(localPoolSize).add(pendingUnstakeSum);
     }

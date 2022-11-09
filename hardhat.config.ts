@@ -3,7 +3,6 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
 import "./scripts/tasks/deploy";
-import "./scripts/tasks/deploy-step2";
 import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/print";
 import "./scripts/tasks/upgrade-StakeStar";
