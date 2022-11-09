@@ -27,12 +27,14 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
   const stakeStarETH = await StakeStarETH.deploy();
   await stakeStarETH.deployed();
+  console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
 
   const StakeStarRewards = await hre.ethers.getContractFactory(
     "StakeStarRewards"
   );
   const stakeStarRewards = await StakeStarRewards.deploy();
   await stakeStarRewards.deployed();
+  console.log(`StakeStarRewards is deployed to ${stakeStarRewards.address}`);
 
   const StakeStarTreasury = await hre.ethers.getContractFactory(
     "StakeStarTreasury"
