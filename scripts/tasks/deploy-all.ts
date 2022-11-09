@@ -2,11 +2,11 @@ import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
 import { ADDRESSES } from "../constants";
+import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
-  console.log(`Network: ${network}`);
 
   const MockRewardsProvider = await hre.ethers.getContractFactory(
     "MockRewardsProvider"
@@ -56,24 +56,12 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarTreasury.address
   );
 
-  await stakeStarRegistry.grantRole(
-    await stakeStarRegistry.STAKE_STAR_ROLE(),
-    stakeStar.address
-  );
-  console.log(
-    `StakeStarRegistry.STAKE_STAR_ROLE is granted to StakeStar contract`
-  );
-  await stakeStarETH.grantRole(
-    await stakeStarETH.STAKE_STAR_ROLE(),
-    stakeStar.address
-  );
-  console.log(`StakeStarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
-  await stakeStarRewards.grantRole(
-    await stakeStarRewards.STAKE_STAR_ROLE(),
-    stakeStar.address
-  );
-  console.log(
-    `StakeStarRewards.STAKE_STAR_ROLE is granted to StakeStar contract`
+  await grantAllStakeStarRoles(
+    hre,
+    stakeStar.address,
+    stakeStarRegistry.address,
+    stakeStarETH.address,
+    stakeStarRewards.address
   );
 
   return {

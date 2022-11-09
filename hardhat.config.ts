@@ -7,7 +7,6 @@ import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/print";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
-import "./scripts/tasks/deploy-MockRewardsProvider";
 import { ZERO_PRIVATE_KEY } from "./scripts/constants";
 import { Network } from "./scripts/types";
 
