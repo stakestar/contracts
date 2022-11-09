@@ -39,7 +39,7 @@ describe("StakeStarRewards", function () {
           await stakeStarRewards.DEFAULT_ADMIN_ROLE(),
           owner.address
         )
-      ).to.equal(false);
+      ).to.equal(true);
       expect(
         await stakeStarRewards.hasRole(
           await stakeStarRewards.DEFAULT_ADMIN_ROLE(),

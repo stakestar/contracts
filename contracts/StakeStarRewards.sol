@@ -9,7 +9,7 @@ contract StakeStarRewards is AccessControl {
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
 
     constructor() {
-        _setupRole(STAKE_STAR_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     receive() external payable {}

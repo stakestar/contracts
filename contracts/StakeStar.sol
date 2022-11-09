@@ -23,6 +23,15 @@ import "./ISSVNetwork.sol";
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     using SafeMath for uint256;
 
+    event SetAddresses(
+        address depositContractAddress,
+        address ssvNetworkAddress,
+        address ssvTokenAddress,
+        address stakeStarRegistryAddress,
+        address stakeStarETHAddress,
+        address stakeStarRewardsAddress,
+        address stakeStarTreasuryAddress
+    );
     event SetLocalPoolSize(uint256 size);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
@@ -59,23 +68,37 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     uint256 public localPoolSize;
 
-    function initialize(
+    function initialize() public initializer {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function setAddresses(
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
         address stakeStarRegistryAddress,
+        address stakeStarETHAddress,
+        address stakeStarRewardsAddress,
         address stakeStarTreasuryAddress
-    ) public initializer {
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
+        stakeStarETH = StakeStarETH(stakeStarETHAddress);
+        stakeStarRewards = StakeStarRewards(payable(stakeStarRewardsAddress));
         stakeStarTreasury = StakeStarTreasury(payable(stakeStarTreasuryAddress));
-        stakeStarETH = new StakeStarETH();
-        stakeStarRewards = new StakeStarRewards();
 
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        emit SetAddresses(
+            depositContractAddress,
+            ssvNetworkAddress,
+            ssvTokenAddress,
+            stakeStarRegistryAddress,
+            stakeStarETHAddress,
+            stakeStarRewardsAddress,
+            stakeStarTreasuryAddress
+        );
     }
 
     function setLocalPoolSize(uint256 size) public onlyRole(DEFAULT_ADMIN_ROLE) {

@@ -18,7 +18,7 @@ contract StakeStarETH is ERC20, AccessControl {
 
     constructor() ERC20("StakeStar ETH", "ssETH") {
         rate = _rate(1, 1);
-        _setupRole(STAKE_STAR_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function mint(address account, uint256 eth) public onlyRole(STAKE_STAR_ROLE) {
