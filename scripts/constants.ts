@@ -14,8 +14,22 @@ export const ADDRESSES: Record<
     stakeStar: string;
     stakeStarBot: string;
     mockRewardsProvider: string;
+    weth: string;
   }
 > = {
+  [Network.MAINNET]: {
+    depositContract: "",
+    ssvNetwork: "",
+    ssvToken: "",
+    stakeStarTreasury: "",
+    stakeStarRegistry: "",
+    stakeStarRewards: "",
+    stakeStarETH: "",
+    stakeStar: "",
+    stakeStarBot: "",
+    mockRewardsProvider: "",
+    weth: "",
+  },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
@@ -27,6 +41,7 @@ export const ADDRESSES: Record<
     stakeStar: "0x4A4Aa5C43ce5E9d2dD3BeebeaD8762C3d408A7cD",
     stakeStarBot: "0xD57A255522D8a2575cF49A8dB17e5d4b33c65De1",
     mockRewardsProvider: "0x2838cA6C93aC645BAc88556D6365d1aeEa6D4B7B",
+    weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -39,15 +54,18 @@ export const ADDRESSES: Record<
     stakeStar: "",
     stakeStarBot: "",
     mockRewardsProvider: "",
+    weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
   },
 };
 
 export const OPERATOR_IDS: Record<Network, number[]> = {
+  [Network.MAINNET]: [],
   [Network.GOERLI]: [24, 312, 335, 50],
   [Network.HARDHAT]: [24, 312, 335, 50],
 };
 
 export const OPERATOR_PUBLIC_KEYS: Record<Network, string[]> = {
+  [Network.MAINNET]: [],
   [Network.GOERLI]: [
     "LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tCk1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBNW1idlV5Y0VqWlExQUxrLzY3TkQKRzhIWjJETTBMZTRxSXhXOFRFWjhwcFhRNDFhL29EMncrWlUzUVMzZE5EL2xQdlYzOG5sdFp2UVNQaXh1QkthZgpKK2VoemlFbjNwVWl3UWU1bWhuTnhvbUIyMXByUTNiTFYxNlBBSTEybjBIS2ZzYk4rcnVNYXpKTXBScGlqY0kxCkhjdlhwZUdXK2JZaFFVclVjWUMvU2ZiQkcvRHpkL1NlQkpvcjJvbjlJd0VaU1NFbXF5dndyQ1ltREQ2dlNrMS8KMVFEaU42L3JnejJ0UWJwMEZTckVML1lVQ2M1Qjc4UWZzbDNuNll6UlBDbTk2dWxSazdzempnSzRjOG8yVFJKUQpQa2VyREw3MTcydkNmVGNhOTRwYTlOeVU2OSsvUmZ5c3pORTRYTTJzOVQzbEpLNHVhdlNqV1NtZUFQdXk5Rjk0Ckp3SURBUUFCCi0tLS0tRU5EIFJTQSBQVUJMSUMgS0VZLS0tLS0K",
     "LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tCk1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBM1J5dWpYeUxEcTl0aS9BQWdVSHYKc0VXQU90V3F5NW9BS2lmYWVkeGVUR2dWbnl2aUU2OXkyL2FLb0h0NHVPSXFDb0NyZzRsT3lKdHhsaHd4WWdBWQoyVGJMQXdqNUVLRUlMbjVoRWtVQVR2SGY0OEppbngzVzY5ME1DMk5TS2d6Qmh0NHhvdzE0V3FIenFqYzRlTTN1CnZiUFlxajkyNm1JMC9pd1F3S2p5a2RSM0g2akNIQlc1cXI3RjVjZzRVTUttUGs2dUo0RC9ZR2tpbTQ2SENaNEEKS0taL1VSZ2J6OFFMSSttaHRzV2Z5NXJxTGNFbUNGYzJCek1YNWFyamZMclFaTVZOU2tkVlZLanRmTTh2bWFrZgpIOVk5RWdIVGQyMm9qTTA2dDJBUitoMUJ1SXcyaytjM1d3dXpjVzY2QUxPMmJMbkgxV1VHSXRQZGFXK0xETjArClNRSURBUUFCCi0tLS0tRU5EIFJTQSBQVUJMSUMgS0VZLS0tLS0K",
@@ -63,6 +81,7 @@ export const OPERATOR_PUBLIC_KEYS: Record<Network, string[]> = {
 };
 
 export const GENESIS_FORK_VERSIONS: Record<Network, string> = {
+  [Network.MAINNET]: "",
   [Network.GOERLI]: "0x00001020",
   [Network.HARDHAT]: "0x00001020",
 };

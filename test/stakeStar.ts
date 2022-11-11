@@ -4,6 +4,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture";
+import { BigNumber } from "ethers";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -48,7 +49,7 @@ describe("StakeStar", function () {
 
   describe("AccessControl", function () {
     it("Should not allow to call methods without corresponding roles", async function () {
-      const { stakeStarPublic, validatorParams, otherAccount } =
+      const { stakeStarPublic, validatorParams, otherAccount, addresses } =
         await loadFixture(deployStakeStarFixture);
 
       const defaultAdminRole = await stakeStarPublic.DEFAULT_ADMIN_ROLE();
@@ -73,6 +74,11 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
       await expect(stakeStarPublic.applyPenalties(1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
+      await expect(
+        stakeStarPublic.buySSV(addresses.weth, 3000, 0, 0)
+      ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
     });
@@ -448,6 +454,34 @@ describe("StakeStar", function () {
 
       const rateAfter = await stakeStarETH.rate();
       expect(rateAfter.lt(rateBefore)).to.equal(true);
+    });
+  });
+
+  describe("buySSV", function () {
+    it("Should buy SSV token on UNI V3", async function () {
+      const { stakeStarOwner, addresses, ssvToken, ssvNetwork } =
+        await loadFixture(deployStakeStarFixture);
+
+      expect(await ssvNetwork.getAddressBalance(stakeStarOwner.address)).to.eq(
+        0
+      );
+
+      const amountIn = BigNumber.from("100000000000000000"); // 0.1 eth
+      const expectedAmountOut = BigNumber.from("14000000000000000000"); // 14 SSV
+      const precision = BigNumber.from(1e7);
+
+      await stakeStarOwner.stake({ value: amountIn });
+      await stakeStarOwner.buySSV(
+        addresses.weth,
+        3000,
+        amountIn,
+        expectedAmountOut
+      );
+
+      expect(
+        await ssvNetwork.getAddressBalance(stakeStarOwner.address)
+      ).to.be.gte(expectedAmountOut);
+      expect(await ssvToken.balanceOf(stakeStarOwner.address)).to.lt(precision);
     });
   });
 });
