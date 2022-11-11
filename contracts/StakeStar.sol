@@ -7,6 +7,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
+import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+
 import "./IStakingPool.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarETH.sol";
@@ -196,6 +199,27 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // TODO: add local pool & double destroy prevention
     function validatorDestructionAvailability() public view returns (bool) {
         revert("not implemented");
+    }
+
+    function buySSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ISwapRouter swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+
+        ISwapRouter.ExactInputSingleParams memory params =
+        ISwapRouter.ExactInputSingleParams({
+        tokenIn : WETH,
+        tokenOut : address(ssvToken),
+        fee : fee,
+        recipient : address(this),
+        deadline : block.timestamp,
+        amountIn : amountIn,
+        amountOutMinimum : amountOutMinimum,
+        sqrtPriceLimitX96 : 0
+        });
+
+        uint256 amountOut = swapRouter.exactInputSingle{value : amountIn}(params);
+        uint256 depositAmount = ssvToken.balanceOf(address(this)).div(1e7).mul(1e7);
+        ssvToken.approve(address(ssvNetwork), depositAmount);
+        ssvNetwork.deposit(address(this), depositAmount);
     }
 
     function applyRewards() public {
