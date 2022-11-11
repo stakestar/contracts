@@ -49,7 +49,7 @@ describe("StakeStar", function () {
 
   describe("AccessControl", function () {
     it("Should not allow to call methods without corresponding roles", async function () {
-      const { stakeStarPublic, validatorParams, otherAccount } =
+      const { stakeStarPublic, validatorParams, otherAccount, addresses } =
         await loadFixture(deployStakeStarFixture);
 
       const defaultAdminRole = await stakeStarPublic.DEFAULT_ADMIN_ROLE();
@@ -74,6 +74,11 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
       await expect(stakeStarPublic.applyPenalties(1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
+      await expect(
+        stakeStarPublic.buySSV(addresses.weth, 3000, 0, 0)
+      ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
     });
