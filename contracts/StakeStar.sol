@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
 
 import "./IStakingPool.sol";
 import "./StakeStarRegistry.sol";
