@@ -36,9 +36,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
-    event Stake(address who, uint256 amount);
-    event Unstake(address who, uint256 amount);
-    event Claim(address who, uint256 amount);
+    event Stake(address indexed who, uint256 amount);
+    event Unstake(address indexed who, uint256 amount);
+    event Claim(address indexed who, uint256 amount);
     event ApplyRewards(uint256 amount);
     event ApplyPenalties(uint256 amount);
 
@@ -67,6 +67,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint256 public pendingUnstakeSum;
 
     uint256 public localPoolSize;
+
+    int256 public previous_staking_reward_balance1;
+    uint256 public previous_staking_reward_balance_timestamp1;
+
+    int256 public previous_staking_reward_balance2;
+    uint256 public previous_staking_reward_balance_timestamp2;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -110,35 +116,41 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function stake() public payable {
         require(msg.value > 0, "no eth transferred");
-        stakeStarETH.mint(msg.sender, msg.value);
+
+        uint256 ssETH = ETH_to_ssETH_approximate(msg.value);
+        stakeStarETH.mint(msg.sender, ssETH);
+
         emit Stake(msg.sender, msg.value);
     }
 
-    function unstake(uint256 eth) public {
-        require(pendingUnstake[msg.sender] == 0, "unstake already pending");
+    function unstake(uint256 ssETH) public returns (uint256 unstakedEth) {
+        stakeStarETH.burn(msg.sender, ssETH);
 
-        pendingUnstake[msg.sender] = eth;
-        pendingUnstakeSum = pendingUnstakeSum.add(eth);
+        unstakedEth = ssETH_to_ETH_approximate(ssETH);
+        pendingUnstake[msg.sender] += unstakedEth;
+        pendingUnstakeSum += unstakedEth;
 
-        stakeStarETH.burn(msg.sender, eth);
-        emit Unstake(msg.sender, eth);
+        emit Unstake(msg.sender, unstakedEth);
     }
 
-    function claim() public {
-        require(pendingUnstake[msg.sender] > 0, "no pending unstake");
+    function getPendingUnstake(address user) public view returns (uint256) {
+        return pendingUnstake[user];
+    }
 
-        uint256 eth = pendingUnstake[msg.sender];
-        delete pendingUnstake[msg.sender];
-        pendingUnstakeSum = pendingUnstakeSum.sub(eth);
+    function claim(uint256 claimedEth) public {
+        require(pendingUnstake[msg.sender] >= claimedEth, "not enough pending unstake");
 
-        (bool status,) = msg.sender.call{value : eth}("");
+        pendingUnstake[msg.sender] -= claimedEth;
+        pendingUnstakeSum -= claimedEth;
+
+        (bool status,) = msg.sender.call{value : claimedEth}("");
         require(status, "failed to send Ether");
-        emit Claim(msg.sender, eth);
+        emit Claim(msg.sender, claimedEth);
     }
 
-    function unstakeAndClaim(uint256 eth) public {
-        unstake(eth);
-        claim();
+    function unstakeAndClaim(uint256 ssETH) public {
+        uint256 unstakedEth = unstake(ssETH);
+        claim(unstakedEth);
     }
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
@@ -182,7 +194,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance >= uint256(32 ether).add(localPoolSize).add(pendingUnstakeSum);
+        return address(this).balance >= (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
     }
 
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
@@ -198,6 +210,48 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         revert("not implemented");
     }
 
+    function applyConsolidationRewards(int256 current_total_staking_reward_balance,
+                                       uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(timestamp > previous_staking_reward_balance_timestamp2);
+
+        previous_staking_reward_balance1 = previous_staking_reward_balance2;
+        previous_staking_reward_balance_timestamp1 = previous_staking_reward_balance_timestamp2;
+
+        previous_staking_reward_balance2 = current_total_staking_reward_balance;
+        previous_staking_reward_balance_timestamp2 = timestamp;
+
+        int256 balance_change = previous_staking_reward_balance2 - previous_staking_reward_balance1;
+        stakeStarETH.updateRate(balance_change);
+    }
+
+    function getApproximateConsolidationReward(uint256 timestamp) public view returns(int256) {
+        require(previous_staking_reward_balance_timestamp1 > 0 &&
+                previous_staking_reward_balance_timestamp1 < previous_staking_reward_balance_timestamp2);
+        require(previous_staking_reward_balance_timestamp2 < timestamp);
+
+        return (previous_staking_reward_balance2 - previous_staking_reward_balance1)
+                    * (int256(timestamp) - int256(previous_staking_reward_balance_timestamp2))
+                    / (int256(previous_staking_reward_balance_timestamp2) -
+                       int256(previous_staking_reward_balance_timestamp1))
+                + previous_staking_reward_balance2;
+    }
+
+    function currentApproximateRate() public view returns (uint256) {
+        int256 approximateReward = getApproximateConsolidationReward(block.timestamp);
+        int256 approximateEthChange = approximateReward - previous_staking_reward_balance2;
+
+        return stakeStarETH.rateAfterUpdate(approximateEthChange);
+    }
+
+    function ssETH_to_ETH_approximate(uint256 ssETH) public view returns (uint256) {
+        return ssETH * currentApproximateRate() / 1 ether;
+    }
+
+    function ETH_to_ssETH_approximate(uint256 eth) public view returns (uint256) {
+        return eth * 1 ether / currentApproximateRate();
+    }
+
+
     function applyRewards() public {
         uint256 amount = address(stakeStarRewards).balance;
         require(amount > 0, "no rewards available");
@@ -206,14 +260,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 treasuryCommission = stakeStarTreasury.commission(amount);
         payable(stakeStarTreasury).transfer(treasuryCommission);
 
-        uint256 rewards = amount.sub(treasuryCommission);
-        stakeStarETH.updateRate(rewards, true);
+        uint256 rewards = amount - treasuryCommission;
+        stakeStarETH.updateRate(int256(rewards));
         emit ApplyRewards(rewards);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(amount > 0, "cannot apply zero penalty");
-        stakeStarETH.updateRate(amount, false);
+        stakeStarETH.updateRate(-int256(amount));
         emit ApplyPenalties(amount);
     }
 }

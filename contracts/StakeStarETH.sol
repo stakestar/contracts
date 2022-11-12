@@ -10,7 +10,7 @@ contract StakeStarETH is ERC20, AccessControl {
 
     event Mint(address indexed to, uint256 ssETH, uint256 rate);
     event Burn(address indexed from, uint256 ssETH, uint256 rate);
-    event UpdateRate(uint256 rate);
+    event RateUpdated(uint256 newRate, int256 ethChange);
 
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
 
@@ -21,33 +21,42 @@ contract StakeStarETH is ERC20, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function mint(address account, uint256 eth) public onlyRole(STAKE_STAR_ROLE) {
-        uint256 ssETH = ETH_to_ssETH(eth);
+    function mint(address account, uint256 ssETH) public onlyRole(STAKE_STAR_ROLE) {
         _mint(account, ssETH);
         emit Mint(account, ssETH, rate);
     }
 
-    function burn(address account, uint256 eth) public onlyRole(STAKE_STAR_ROLE) {
-        uint256 ssETH = ETH_to_ssETH(eth);
+    function burn(address account, uint256 ssETH) public onlyRole(STAKE_STAR_ROLE) {
         _burn(account, ssETH);
         emit Burn(account, ssETH, rate);
     }
 
-    function updateRate(uint256 ethChange, bool positiveOrNegative) public onlyRole(STAKE_STAR_ROLE) {
-        uint256 eth = ssETH_to_ETH(totalSupply());
-        rate = _rate(positiveOrNegative ? eth.add(ethChange) : eth.sub(ethChange), totalSupply());
-        emit UpdateRate(rate);
+    function totalSupplyEth() public view returns (uint256) {
+        return ssETH_to_ETH(totalSupply());
+    }
+
+    function updateRate(int256 ethChange) public onlyRole(STAKE_STAR_ROLE) {
+        rate = rateAfterUpdate(ethChange);
+        emit RateUpdated(rate, ethChange);
+    }
+
+    function rateAfterUpdate(int256 ethChange) public view returns (uint256) {
+        int256 newTotalSupplyEth = int256(totalSupplyEth()) + ethChange;
+        require(newTotalSupplyEth >= 0);
+
+        return _rate(uint256(newTotalSupplyEth), totalSupply());
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
-        return ssETH.mul(rate).div(1 ether);
+        return ssETH * rate / 1 ether;
     }
 
     function ETH_to_ssETH(uint256 eth) public view returns (uint256) {
-        return eth.mul(1 ether).div(rate);
+        return eth * 1 ether / rate;
     }
 
     function _rate(uint256 eth, uint256 ssETH) private pure returns (uint256) {
-        return eth.mul(1 ether).div(ssETH);
+        return eth * 1 ether / ssETH;
     }
+
 }
