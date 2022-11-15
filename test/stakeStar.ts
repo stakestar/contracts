@@ -450,4 +450,41 @@ describe("StakeStar", function () {
       expect(rateAfter.lt(rateBefore)).to.equal(true);
     });
   });
+
+  // insert assertions where needed
+  describe("Linear approximation", function () {
+    it("Should approximate ssETH rate", async function () {
+      const { hre, stakeStarOwner, stakeStarPublic } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      const provider = hre.ethers.getDefaultProvider();
+      const currentTimestamp = (
+        await provider.getBlock(await provider.getBlockNumber())
+      ).timestamp;
+
+      await stakeStarOwner.applyConsolidationRewards(
+        100,
+        currentTimestamp - 100
+      );
+      await stakeStarOwner.applyConsolidationRewards(
+        100,
+        currentTimestamp - 50
+      );
+
+      await stakeStarPublic.stake({ value: 100 });
+
+      const currentTimestampAfterStake = (
+        await provider.getBlock(await provider.getBlockNumber())
+      ).timestamp;
+
+      await stakeStarOwner.applyConsolidationRewards(
+        100,
+        currentTimestampAfterStake
+      );
+
+      await stakeStarPublic.unstake(100);
+      await stakeStarPublic.claim();
+    });
+  });
 });

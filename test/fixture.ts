@@ -5,7 +5,7 @@ import {
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY,
 } from "../scripts/constants";
-import hre, { ethers } from "hardhat";
+import hre from "hardhat";
 import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
 import { deployAll } from "../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
@@ -26,7 +26,7 @@ export async function deployStakeStarFixture() {
   } = await deployAll(hre);
 
   // Contracts are deployed using the first signer/account by default
-  const [owner, manager, otherAccount] = await ethers.getSigners();
+  const [owner, manager, otherAccount] = await hre.ethers.getSigners();
 
   const stakeStarOwner = stakeStar.connect(owner);
   const stakeStarManager = stakeStarOwner.connect(manager);
@@ -37,7 +37,7 @@ export async function deployStakeStarFixture() {
     manager.address
   );
 
-  const ERC20 = await ethers.getContractFactory("ERC20");
+  const ERC20 = await hre.ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);
 
   const validatorParams = await generateValidatorParams(
