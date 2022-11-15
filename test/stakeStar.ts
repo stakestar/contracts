@@ -111,40 +111,37 @@ describe("StakeStar", function () {
         deployStakeStarFixture
       );
 
-      const stakeAmount = ethers.utils.parseEther("2");
-      await stakeStarPublic.stake({ value: stakeAmount });
+      const stakeAmountEth = ethers.utils.parseEther("2");
+      await stakeStarPublic.stake({ value: stakeAmountEth });
       const ssEthAmount = await stakeStarETH.balanceOf(otherAccount.address);
 
       expect(await stakeStarETH.totalSupply()).to.equal(ssEthAmount);
 
-      const unstakeAmount = stakeAmount.div(2);
-      const shouldBeBurnt = ssEthAmount.div(2);
+      const unstakeAmountSS = ssEthAmount.div(2);
+      const unstakeAmountEth = await stakeStarETH.ssETH_to_ETH(unstakeAmountSS);
+      const shouldBeBurntSS = unstakeAmountSS;
 
       await expect(
-        stakeStarPublic.unstake(unstakeAmount)
+        stakeStarPublic.unstake(unstakeAmountSS)
       ).to.changeTokenBalance(
         stakeStarETH,
         otherAccount,
-        shouldBeBurnt.mul(-1)
-      );
-
-      await expect(stakeStarPublic.unstake(unstakeAmount)).to.be.revertedWith(
-        "unstake already pending"
+        shouldBeBurntSS.mul(-1)
       );
 
       expect(await stakeStarETH.totalSupply()).to.equal(
-        ssEthAmount.sub(shouldBeBurnt)
+        ssEthAmount.sub(shouldBeBurntSS)
       );
-      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(unstakeAmount);
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(unstakeAmountEth);
       expect(
         await stakeStarPublic.pendingUnstake(otherAccount.address)
-      ).to.equal(unstakeAmount);
+      ).to.equal(unstakeAmountEth);
 
       await stakeStarPublic.claim();
 
-      await expect(stakeStarPublic.unstake(unstakeAmount))
+      await expect(stakeStarPublic.unstake(unstakeAmountSS))
         .to.emit(stakeStarPublic, "Unstake")
-        .withArgs(otherAccount.address, unstakeAmount);
+        .withArgs(otherAccount.address, unstakeAmountSS);
     });
   });
 
@@ -454,36 +451,43 @@ describe("StakeStar", function () {
   // insert assertions where needed
   describe("Linear approximation", function () {
     it("Should approximate ssETH rate", async function () {
-      const { hre, stakeStarOwner, stakeStarPublic } = await loadFixture(
+      const { hre, stakeStarOwner, stakeStarPublic, otherAccount, stakeStarETH } = await loadFixture(
         deployStakeStarFixture
       );
+
+      await stakeStarPublic.stake({ value: 10 });
 
       const provider = hre.ethers.getDefaultProvider();
       const currentTimestamp = (
         await provider.getBlock(await provider.getBlockNumber())
       ).timestamp;
 
-      await stakeStarOwner.applyConsolidationRewards(
-        100,
+      await stakeStarOwner.applyConsensusRewards(
+        1,
         currentTimestamp - 100
       );
-      await stakeStarOwner.applyConsolidationRewards(
-        100,
+      await stakeStarOwner.applyConsensusRewards(
+        1,
         currentTimestamp - 50
       );
 
-      await stakeStarPublic.stake({ value: 100 });
+      console.log(await stakeStarETH.balanceOf(otherAccount.address));
+      console.log(await stakeStarPublic.currentApproximateRate());
+      await stakeStarPublic.stake({ value: 10 });
+      console.log(await stakeStarPublic.currentApproximateRate());
 
       const currentTimestampAfterStake = (
         await provider.getBlock(await provider.getBlockNumber())
       ).timestamp;
 
       await stakeStarOwner.applyConsolidationRewards(
-        100,
+        1,
         currentTimestampAfterStake
       );
+      console.log(await stakeStarPublic.currentApproximateRate());
 
-      await stakeStarPublic.unstake(100);
+      await stakeStarPublic.unstake(10);
+      console.log(await stakeStarPublic.currentApproximateRate());
       await stakeStarPublic.claim();
     });
   });

@@ -6,5 +6,5 @@ interface IStakingPool {
 
     function unstake(uint256 ssETH) external returns (uint256 unstakedEth);
 
-    function claim(uint256 eth) external;
+    function claim() external;
 }

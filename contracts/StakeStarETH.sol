@@ -10,7 +10,7 @@ contract StakeStarETH is ERC20, AccessControl {
 
     event Mint(address indexed to, uint256 ssETH, uint256 rate);
     event Burn(address indexed from, uint256 ssETH, uint256 rate);
-    event RateUpdated(uint256 newRate, int256 ethChange);
+    event UpdateRate(uint256 newRate, int256 ethChange);
 
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
 
@@ -37,7 +37,7 @@ contract StakeStarETH is ERC20, AccessControl {
 
     function updateRate(int256 ethChange) public onlyRole(STAKE_STAR_ROLE) {
         rate = rateAfterUpdate(ethChange);
-        emit RateUpdated(rate, ethChange);
+        emit UpdateRate(rate, ethChange);
     }
 
     function rateAfterUpdate(int256 ethChange) public view returns (uint256) {
@@ -56,6 +56,9 @@ contract StakeStarETH is ERC20, AccessControl {
     }
 
     function _rate(uint256 eth, uint256 ssETH) private pure returns (uint256) {
+        if (eth == 0 && ssETH == 0) {
+            return 1 ether;
+        }
         return eth * 1 ether / ssETH;
     }
 

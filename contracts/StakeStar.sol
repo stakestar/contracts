@@ -133,14 +133,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit Unstake(msg.sender, unstakedEth);
     }
 
-    function getPendingUnstake(address user) public view returns (uint256) {
-        return pendingUnstake[user];
-    }
+    function claim() public {
+        require(pendingUnstake[msg.sender] > 0, "no pending unstake");
 
-    function claim(uint256 claimedEth) public {
-        require(pendingUnstake[msg.sender] >= claimedEth, "not enough pending unstake");
-
-        pendingUnstake[msg.sender] -= claimedEth;
+        uint256 claimedEth = pendingUnstake[msg.sender];
+        delete pendingUnstake[msg.sender];
         pendingUnstakeSum -= claimedEth;
 
         (bool status,) = msg.sender.call{value : claimedEth}("");
@@ -149,8 +146,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function unstakeAndClaim(uint256 ssETH) public {
-        uint256 unstakedEth = unstake(ssETH);
-        claim(unstakedEth);
+        unstake(ssETH);
+        claim();
     }
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
@@ -210,8 +207,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         revert("not implemented");
     }
 
-    function applyConsolidationRewards(int256 current_total_staking_reward_balance,
-                                       uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function applyConsensusRewards(int256 current_total_staking_reward_balance,
+                                   uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(timestamp > previous_staking_reward_balance_timestamp2);
 
         previous_staking_reward_balance1 = previous_staking_reward_balance2;
@@ -224,9 +221,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarETH.updateRate(balance_change);
     }
 
-    function getApproximateConsolidationReward(uint256 timestamp) public view returns(int256) {
-        require(previous_staking_reward_balance_timestamp1 > 0 &&
-                previous_staking_reward_balance_timestamp1 < previous_staking_reward_balance_timestamp2);
+    function getApproximateConsensusReward(uint256 timestamp) public view returns(int256) {
+        if (previous_staking_reward_balance_timestamp2 == 0) {
+            return 0;
+        }
+
+        require(previous_staking_reward_balance_timestamp1 < previous_staking_reward_balance_timestamp2);
         require(previous_staking_reward_balance_timestamp2 < timestamp);
 
         return (previous_staking_reward_balance2 - previous_staking_reward_balance1)
@@ -237,7 +237,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function currentApproximateRate() public view returns (uint256) {
-        int256 approximateReward = getApproximateConsolidationReward(block.timestamp);
+        int256 approximateReward = getApproximateConsensusReward(block.timestamp);
         int256 approximateEthChange = approximateReward - previous_staking_reward_balance2;
 
         return stakeStarETH.rateAfterUpdate(approximateEthChange);
