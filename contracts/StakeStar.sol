@@ -221,13 +221,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarETH.updateRate(balance_change);
     }
 
-    function getApproximateConsensusReward(uint256 timestamp) public view returns(int256) {
+    function getApproximateConsensusReward(uint256 timestamp) public view returns (int256) {
         if (previous_staking_reward_balance_timestamp2 == 0) {
             return 0;
         }
 
-        require(previous_staking_reward_balance_timestamp1 < previous_staking_reward_balance_timestamp2);
-        require(previous_staking_reward_balance_timestamp2 < timestamp);
+        require(previous_staking_reward_balance_timestamp1 < previous_staking_reward_balance_timestamp2, "timestamp1 must be < timestamp2");
+        require(previous_staking_reward_balance_timestamp2 < timestamp, "timestamp2 must be < timestamp");
 
         return (previous_staking_reward_balance2 - previous_staking_reward_balance1)
                     * (int256(timestamp) - int256(previous_staking_reward_balance_timestamp2))
