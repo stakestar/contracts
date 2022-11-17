@@ -132,7 +132,9 @@ describe("StakeStar", function () {
       expect(await stakeStarETH.totalSupply()).to.equal(
         ssEthAmount.sub(shouldBeBurntSS)
       );
-      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(unstakeAmountEth);
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(
+        unstakeAmountEth
+      );
       expect(
         await stakeStarPublic.pendingUnstake(otherAccount.address)
       ).to.equal(unstakeAmountEth);
@@ -451,25 +453,26 @@ describe("StakeStar", function () {
   // insert assertions where needed
   describe("Linear approximation", function () {
     it("Should approximate ssETH rate", async function () {
-      const { hre, stakeStarOwner, stakeStarPublic, otherAccount, stakeStarETH } = await loadFixture(
-        deployStakeStarFixture
-      );
+      const {
+        hre,
+        stakeStarOwner,
+        stakeStarPublic,
+        otherAccount,
+        stakeStarETH,
+      } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarPublic.stake({ value: 10 });
 
-      const provider = hre.ethers.getDefaultProvider();
       const currentTimestamp = (
-        await provider.getBlock(await provider.getBlockNumber())
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
       ).timestamp;
 
-      await stakeStarOwner.applyConsensusRewards(
-        1,
-        currentTimestamp - 100
-      );
-      await stakeStarOwner.applyConsensusRewards(
-        1,
-        currentTimestamp - 50
-      );
+      await stakeStarOwner.applyConsensusRewards(1, currentTimestamp - 100);
+      await stakeStarOwner.applyConsensusRewards(1, currentTimestamp - 50);
+
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
 
       console.log(await stakeStarETH.balanceOf(otherAccount.address));
       console.log(await stakeStarPublic.currentApproximateRate());
@@ -477,13 +480,12 @@ describe("StakeStar", function () {
       console.log(await stakeStarPublic.currentApproximateRate());
 
       const currentTimestampAfterStake = (
-        await provider.getBlock(await provider.getBlockNumber())
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
       ).timestamp;
 
-      await stakeStarOwner.applyConsolidationRewards(
-        1,
-        currentTimestampAfterStake
-      );
+      await stakeStarOwner.applyConsensusRewards(1, currentTimestampAfterStake);
       console.log(await stakeStarPublic.currentApproximateRate());
 
       await stakeStarPublic.unstake(10);
