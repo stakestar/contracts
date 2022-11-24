@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./IStakingPool.sol";
 import "./StakeStarRegistry.sol";
@@ -254,15 +255,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
                 + previous_staking_reward_balance2;
     }
 
-    function currentApproximateRate() public view returns (uint256) {
+    function getApproximateRate(uint256 timestamp) public view returns (uint256) {
         if (previous_staking_reward_balance_timestamp1 == 0) {  // not initialized yet or initialized only one point
             return stakeStarETH.rate();
         }
 
-        int256 approximateReward = getApproximateConsensusReward(block.timestamp);
+        int256 approximateReward = getApproximateConsensusReward(timestamp);
         int256 approximateEthChange = approximateReward - previous_staking_reward_balance2;
 
         return stakeStarETH.rateAfterUpdate(approximateEthChange);
+    }
+
+    function currentApproximateRate() public view returns (uint256) {
+        return getApproximateRate(block.timestamp);
     }
 
     function ssETH_to_ETH_approximate(uint256 ssETH) public view returns (uint256) {
