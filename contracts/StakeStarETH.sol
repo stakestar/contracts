@@ -3,11 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract StakeStarETH is ERC20, AccessControl {
-    using SafeMath for uint256;
-
     event Mint(address indexed to, uint256 ssETH, uint256 rate);
     event Burn(address indexed from, uint256 ssETH, uint256 rate);
     event UpdateRate(uint256 newRate, int256 ethChange);

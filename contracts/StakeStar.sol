@@ -5,7 +5,6 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
@@ -23,8 +22,6 @@ import "./ISSVNetwork.sol";
 // TODO Prevent double validator destroy
 // TODO Add local pool filling on validator destroy
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
-    using SafeMath for uint256;
-
     event SetAddresses(
         address depositContractAddress,
         address ssvNetworkAddress,
@@ -127,14 +124,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit Stake(msg.sender, msg.value);
     }
 
-    function unstake(uint256 ssETH) public returns (uint256 unstakedEth) {
+    function unstake(uint256 ssETH) public returns (uint256 eth) {
         stakeStarETH.burn(msg.sender, ssETH);
 
-        unstakedEth = ssETH_to_ETH_approximate(ssETH);
-        pendingUnstake[msg.sender] += unstakedEth;
-        pendingUnstakeSum += unstakedEth;
+        eth = ssETH_to_ETH_approximate(ssETH);
+        pendingUnstake[msg.sender] += eth;
+        pendingUnstakeSum += eth;
 
-        emit Unstake(msg.sender, unstakedEth);
+        emit Unstake(msg.sender, eth);
     }
 
     function claim() public {
@@ -227,7 +224,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         });
 
         uint256 amountOut = swapRouter.exactInputSingle{value : amountIn}(params);
-        uint256 depositAmount = ssvToken.balanceOf(address(this)).div(1e7).mul(1e7);
+        uint256 depositAmount = ssvToken.balanceOf(address(this)) / 1e7 * 1e7;
         ssvToken.approve(address(ssvNetwork), depositAmount);
         ssvNetwork.deposit(address(this), depositAmount);
     }
