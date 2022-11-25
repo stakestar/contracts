@@ -7,14 +7,14 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 contract StakeStarETH is ERC20, AccessControl {
     event Mint(address indexed to, uint256 ssETH, uint256 rate);
     event Burn(address indexed from, uint256 ssETH, uint256 rate);
-    event UpdateRate(uint256 newRate, int256 ethChange);
+    event UpdateRate(uint256 rate, int256 ethChange);
 
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
 
     uint256 public rate; // ETH = ssETH * rate
 
     constructor() ERC20("StakeStar ETH", "ssETH") {
-        rate = _rate(1, 1);
+        rate = _rate(0, 0);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -33,15 +33,15 @@ contract StakeStarETH is ERC20, AccessControl {
     }
 
     function updateRate(int256 ethChange) public onlyRole(STAKE_STAR_ROLE) {
-        rate = rateAfterUpdate(ethChange);
+        rate = estimateRate(ethChange);
         emit UpdateRate(rate, ethChange);
     }
 
-    function rateAfterUpdate(int256 ethChange) public view returns (uint256) {
-        int256 newTotalSupplyEth = int256(totalSupplyEth()) + ethChange;
-        require(newTotalSupplyEth >= 0);
+    function estimateRate(int256 ethChange) public view returns (uint256) {
+        int256 totalSupplyEth = int256(totalSupplyEth()) + ethChange;
+        require(totalSupplyEth >= 0, "pool cannot have negative balance");
 
-        return _rate(uint256(newTotalSupplyEth), totalSupply());
+        return _rate(uint256(totalSupplyEth), totalSupply());
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
@@ -53,10 +53,7 @@ contract StakeStarETH is ERC20, AccessControl {
     }
 
     function _rate(uint256 eth, uint256 ssETH) private pure returns (uint256) {
-        if (eth == 0 && ssETH == 0) {
-            return 1 ether;
-        }
-        return eth * 1 ether / ssETH;
+        if (eth == 0 && ssETH == 0) return 1 ether;
+        else return eth * 1 ether / ssETH;
     }
-
 }

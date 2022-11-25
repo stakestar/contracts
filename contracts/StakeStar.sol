@@ -282,7 +282,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         int256 approximateReward = getApproximateConsensusReward(timestamp);
         int256 approximateEthChange = approximateReward - previous_staking_reward_balance2;
 
-        return stakeStarETH.rateAfterUpdate(approximateEthChange);
+        return stakeStarETH.estimateRate(approximateEthChange);
     }
 
     function currentApproximateRate() public view returns (uint256) {
