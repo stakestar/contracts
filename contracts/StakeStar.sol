@@ -67,13 +67,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     uint256 public localPoolSize;
 
-    int256 public previous_staking_reward_balance1;
-    uint256 public previous_staking_reward_balance_timestamp1;
-
-    int256 public previous_staking_reward_balance2;
-    uint256 public previous_staking_reward_balance_timestamp2;
-
-    uint256 constant minimum_staking_reward_time_distance = 180;
+    int256 public normalizedStakingBalanceA;
+    uint256 public timestampA;
+    int256 public normalizedStakingBalanceB;
+    uint256 public timestampB;
+    uint256 constant minimumTimestampDistance = 180;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -234,64 +232,50 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork.deposit(address(this), depositAmount);
     }
 
-    function applyConsensusRewards(int256 current_total_staking_reward_balance,
-        uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(timestamp >= previous_staking_reward_balance_timestamp2 + minimum_staking_reward_time_distance,
-            "small timestamp distance");
+    function commitNormalizedStakingBalance(int256 currentNormalizedStakingBalance, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
 
-        bool point1_was_init = previous_staking_reward_balance_timestamp1 != 0;
-        bool point2_was_init = previous_staking_reward_balance_timestamp2 != 0;
+        bool pointAInitialized = timestampA != 0;
+        bool pointBInitialized = timestampB != 0;
 
-        previous_staking_reward_balance1 = previous_staking_reward_balance2;
-        previous_staking_reward_balance_timestamp1 = previous_staking_reward_balance_timestamp2;
+        normalizedStakingBalanceA = normalizedStakingBalanceB;
+        timestampA = timestampB;
 
-        previous_staking_reward_balance2 = current_total_staking_reward_balance;
-        previous_staking_reward_balance_timestamp2 = timestamp;
+        normalizedStakingBalanceB = currentNormalizedStakingBalance;
+        timestampB = timestamp;
 
-        if (point2_was_init) {
-            if (!point1_was_init) {// first time init
-                stakeStarETH.updateRate(current_total_staking_reward_balance);
+        if (pointBInitialized) {
+            if (pointAInitialized) {
+                int256 ethChange = normalizedStakingBalanceB - normalizedStakingBalanceA;
+                stakeStarETH.updateRate(ethChange);
             } else {
-                int256 balance_change = previous_staking_reward_balance2 - previous_staking_reward_balance1;
-                stakeStarETH.updateRate(balance_change);
+                stakeStarETH.updateRate(currentNormalizedStakingBalance);
             }
         }
     }
 
-    function getApproximateConsensusReward(uint256 timestamp) public view returns (int256) {
-        if (previous_staking_reward_balance_timestamp1 == 0) {// not initialized yet or initialized only one point
-            return 0;
-        }
+    function approximateNormalizedStakingBalance(uint256 timestamp) public view returns (int256) {
+        require(timestampA * timestampB > 0, "point A or B not initialized");
+        require(timestampA + minimumTimestampDistance <= timestampB, "timestamp distance too short");
+        require(timestampB <= timestamp, "timestamp in the past");
 
-        require(previous_staking_reward_balance_timestamp1 + minimum_staking_reward_time_distance
-            <= previous_staking_reward_balance_timestamp2, "invalid timestamp distance");
+        if (timestampB == timestamp) return normalizedStakingBalanceB;
 
-        require(previous_staking_reward_balance_timestamp2 <= timestamp, "timestamp in past");
-
-        if (previous_staking_reward_balance_timestamp2 == timestamp) {
-            return previous_staking_reward_balance2;
-        }
-
-        return (previous_staking_reward_balance2 - previous_staking_reward_balance1)
-        * (int256(timestamp) - int256(previous_staking_reward_balance_timestamp2))
-        / (int256(previous_staking_reward_balance_timestamp2) -
-        int256(previous_staking_reward_balance_timestamp1))
-        + previous_staking_reward_balance2;
+        return (normalizedStakingBalanceB - normalizedStakingBalanceA) * (int256(timestamp) - int256(timestampB)) / (int256(timestampB) - int256(timestampA)) + normalizedStakingBalanceB;
     }
 
-    function getApproximateRate(uint256 timestamp) public view returns (uint256) {
-        if (previous_staking_reward_balance_timestamp1 == 0) {// not initialized yet or initialized only one point
-            return stakeStarETH.rate();
-        }
+    function approximateRate(uint256 timestamp) public view returns (uint256) {
+        // not completely initialized yet
+        if (timestampA == 0) return stakeStarETH.rate();
 
-        int256 approximateReward = getApproximateConsensusReward(timestamp);
-        int256 approximateEthChange = approximateReward - previous_staking_reward_balance2;
+        int256 approximateStakingBalance = approximateNormalizedStakingBalance(timestamp);
+        int256 approximateEthChange = approximateStakingBalance - normalizedStakingBalanceB;
 
         return stakeStarETH.estimateRate(approximateEthChange);
     }
 
     function currentApproximateRate() public view returns (uint256) {
-        return getApproximateRate(block.timestamp);
+        return approximateRate(block.timestamp);
     }
 
     function ssETH_to_ETH_approximate(uint256 ssETH) public view returns (uint256) {
@@ -301,7 +285,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function ETH_to_ssETH_approximate(uint256 eth) public view returns (uint256) {
         return eth * 1 ether / currentApproximateRate();
     }
-
 
     function applyRewards() public {
         uint256 amount = address(stakeStarRewards).balance;
