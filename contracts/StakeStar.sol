@@ -110,6 +110,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setLocalPoolSize(uint256 size) public onlyRole(DEFAULT_ADMIN_ROLE) {
         localPoolSize = size;
+
         emit SetLocalPoolSize(size);
     }
 
@@ -137,13 +138,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function claim() public {
         require(pendingUnstake[msg.sender] > 0, "no pending unstake");
 
-        uint256 claimedEth = pendingUnstake[msg.sender];
+        uint256 eth = pendingUnstake[msg.sender];
         delete pendingUnstake[msg.sender];
-        pendingUnstakeSum -= claimedEth;
+        pendingUnstakeSum -= eth;
 
-        (bool status,) = msg.sender.call{value : claimedEth}("");
+        (bool status,) = msg.sender.call{value : eth}("");
         require(status, "failed to send Ether");
-        emit Claim(msg.sender, claimedEth);
+
+        emit Claim(msg.sender, eth);
     }
 
     function unstakeAndClaim(uint256 ssETH) public {
@@ -171,6 +173,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.sharesEncrypted,
             ssvDepositAmount
         );
+
         emit CreateValidator(validatorParams, ssvDepositAmount);
     }
 
@@ -188,6 +191,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.sharesEncrypted,
             ssvDepositAmount
         );
+
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
@@ -200,6 +204,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(validatorDestructionAvailability(), "cannot destruct validator");
 
         stakeStarRegistry.destroyValidator(publicKey);
+
         emit DestroyValidator(publicKey);
     }
 
@@ -304,16 +309,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarRewards.pull();
 
         uint256 treasuryCommission = stakeStarTreasury.commission(amount);
-        payable(stakeStarTreasury).transfer(treasuryCommission);
+        (bool status,) = payable(stakeStarTreasury).call{value : treasuryCommission}("");
+        require(status, "failed to send Ether");
 
         uint256 rewards = amount - treasuryCommission;
         stakeStarETH.updateRate(int256(rewards));
+
         emit ApplyRewards(rewards);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(amount > 0, "cannot apply zero penalty");
         stakeStarETH.updateRate(- int256(amount));
+
         emit ApplyPenalties(amount);
     }
 }
