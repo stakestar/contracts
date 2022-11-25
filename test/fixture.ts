@@ -9,6 +9,7 @@ import hre from "hardhat";
 import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
 import { deployAll } from "../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { Contract } from "ethers";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,
@@ -39,6 +40,13 @@ export async function deployStakeStarFixture() {
 
   const ERC20 = await hre.ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);
+  const ssvNetwork = new Contract(
+    addresses.ssvNetwork,
+    [
+      "function getAddressBalance(address ownerAddress) external view returns (uint256)",
+    ],
+    otherAccount
+  );
 
   const validatorParams = await generateValidatorParams(
     RANDOM_PRIVATE_KEY,
@@ -50,6 +58,7 @@ export async function deployStakeStarFixture() {
 
   return {
     hre,
+    addresses,
     stakeStarOwner,
     stakeStarManager,
     stakeStarPublic,
@@ -59,6 +68,7 @@ export async function deployStakeStarFixture() {
     stakeStarRewards,
     mockRewardsProvider,
     ssvToken,
+    ssvNetwork,
     validatorParams,
     owner,
     manager,

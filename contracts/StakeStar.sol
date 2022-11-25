@@ -6,7 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+
+import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
 import "./IStakingPool.sol";
 import "./StakeStarRegistry.sol";
@@ -210,10 +211,31 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         revert("not implemented");
     }
 
+    function buySSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ISwapRouter swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+
+        ISwapRouter.ExactInputSingleParams memory params =
+        ISwapRouter.ExactInputSingleParams({
+        tokenIn : WETH,
+        tokenOut : address(ssvToken),
+        fee : fee,
+        recipient : address(this),
+        deadline : block.timestamp,
+        amountIn : amountIn,
+        amountOutMinimum : amountOutMinimum,
+        sqrtPriceLimitX96 : 0
+        });
+
+        uint256 amountOut = swapRouter.exactInputSingle{value : amountIn}(params);
+        uint256 depositAmount = ssvToken.balanceOf(address(this)).div(1e7).mul(1e7);
+        ssvToken.approve(address(ssvNetwork), depositAmount);
+        ssvNetwork.deposit(address(this), depositAmount);
+    }
+
     function applyConsensusRewards(int256 current_total_staking_reward_balance,
-                                   uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(timestamp >= previous_staking_reward_balance_timestamp2 + minimum_staking_reward_time_distance,
-                "small timestamp distance");
+            "small timestamp distance");
 
         bool point1_was_init = previous_staking_reward_balance_timestamp1 != 0;
         bool point2_was_init = previous_staking_reward_balance_timestamp2 != 0;
@@ -225,7 +247,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         previous_staking_reward_balance_timestamp2 = timestamp;
 
         if (point2_was_init) {
-            if (!point1_was_init) {  // first time init
+            if (!point1_was_init) {// first time init
                 stakeStarETH.updateRate(current_total_staking_reward_balance);
             } else {
                 int256 balance_change = previous_staking_reward_balance2 - previous_staking_reward_balance1;
@@ -235,7 +257,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function getApproximateConsensusReward(uint256 timestamp) public view returns (int256) {
-        if (previous_staking_reward_balance_timestamp1 == 0) {  // not initialized yet or initialized only one point
+        if (previous_staking_reward_balance_timestamp1 == 0) {// not initialized yet or initialized only one point
             return 0;
         }
 
@@ -249,14 +271,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
 
         return (previous_staking_reward_balance2 - previous_staking_reward_balance1)
-                    * (int256(timestamp) - int256(previous_staking_reward_balance_timestamp2))
-                    / (int256(previous_staking_reward_balance_timestamp2) -
-                       int256(previous_staking_reward_balance_timestamp1))
-                + previous_staking_reward_balance2;
+        * (int256(timestamp) - int256(previous_staking_reward_balance_timestamp2))
+        / (int256(previous_staking_reward_balance_timestamp2) -
+        int256(previous_staking_reward_balance_timestamp1))
+        + previous_staking_reward_balance2;
     }
 
     function getApproximateRate(uint256 timestamp) public view returns (uint256) {
-        if (previous_staking_reward_balance_timestamp1 == 0) {  // not initialized yet or initialized only one point
+        if (previous_staking_reward_balance_timestamp1 == 0) {// not initialized yet or initialized only one point
             return stakeStarETH.rate();
         }
 
@@ -294,7 +316,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(amount > 0, "cannot apply zero penalty");
-        stakeStarETH.updateRate(-int256(amount));
+        stakeStarETH.updateRate(- int256(amount));
         emit ApplyPenalties(amount);
     }
 }
