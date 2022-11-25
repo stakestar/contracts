@@ -268,8 +268,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         // not completely initialized yet
         if (timestampA == 0) return stakeStarETH.rate();
 
-        int256 approximateStakingBalance = approximateNormalizedStakingBalance(timestamp);
-        int256 approximateEthChange = approximateStakingBalance - normalizedStakingBalanceB;
+        int256 approximateNormalizedStakingBalance = approximateNormalizedStakingBalance(timestamp);
+        int256 approximateEthChange = approximateNormalizedStakingBalance - normalizedStakingBalanceB;
 
         return stakeStarETH.estimateRate(approximateEthChange);
     }
