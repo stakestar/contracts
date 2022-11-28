@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
-    using SafeMath for uint256;
-
     event SetCommission(uint256 numerator);
     event Withdraw(uint256 amount);
 
@@ -32,6 +29,6 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     }
 
     function commission(uint256 amount) public view returns (uint256) {
-        return amount.mul(commissionNumerator).div(commissionDenominator);
+        return amount * commissionNumerator / commissionDenominator;
     }
 }

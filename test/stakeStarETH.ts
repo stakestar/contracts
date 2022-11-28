@@ -78,7 +78,7 @@ describe("StakeStarETH", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${stakeStarRole}`
       );
       await expect(
-        stakeStarETH.connect(otherAccount).updateRate(1, true)
+        stakeStarETH.connect(otherAccount).updateRate(1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${stakeStarRole}`
       );

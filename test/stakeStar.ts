@@ -117,40 +117,39 @@ describe("StakeStar", function () {
         deployStakeStarFixture
       );
 
-      const stakeAmount = ethers.utils.parseEther("2");
-      await stakeStarPublic.stake({ value: stakeAmount });
+      const stakeAmountEth = ethers.utils.parseEther("2");
+      await stakeStarPublic.stake({ value: stakeAmountEth });
       const ssEthAmount = await stakeStarETH.balanceOf(otherAccount.address);
 
       expect(await stakeStarETH.totalSupply()).to.equal(ssEthAmount);
 
-      const unstakeAmount = stakeAmount.div(2);
-      const shouldBeBurnt = ssEthAmount.div(2);
+      const unstakeAmountSS = ssEthAmount.div(2);
+      const unstakeAmountEth = await stakeStarETH.ssETH_to_ETH(unstakeAmountSS);
+      const shouldBeBurntSS = unstakeAmountSS;
 
       await expect(
-        stakeStarPublic.unstake(unstakeAmount)
+        stakeStarPublic.unstake(unstakeAmountSS)
       ).to.changeTokenBalance(
         stakeStarETH,
         otherAccount,
-        shouldBeBurnt.mul(-1)
-      );
-
-      await expect(stakeStarPublic.unstake(unstakeAmount)).to.be.revertedWith(
-        "unstake already pending"
+        shouldBeBurntSS.mul(-1)
       );
 
       expect(await stakeStarETH.totalSupply()).to.equal(
-        ssEthAmount.sub(shouldBeBurnt)
+        ssEthAmount.sub(shouldBeBurntSS)
       );
-      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(unstakeAmount);
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(
+        unstakeAmountEth
+      );
       expect(
         await stakeStarPublic.pendingUnstake(otherAccount.address)
-      ).to.equal(unstakeAmount);
+      ).to.equal(unstakeAmountEth);
 
       await stakeStarPublic.claim();
 
-      await expect(stakeStarPublic.unstake(unstakeAmount))
+      await expect(stakeStarPublic.unstake(unstakeAmountSS))
         .to.emit(stakeStarPublic, "Unstake")
-        .withArgs(otherAccount.address, unstakeAmount);
+        .withArgs(otherAccount.address, unstakeAmountSS);
     });
   });
 
@@ -482,6 +481,160 @@ describe("StakeStar", function () {
         await ssvNetwork.getAddressBalance(stakeStarOwner.address)
       ).to.be.gte(expectedAmountOut);
       expect(await ssvToken.balanceOf(stakeStarOwner.address)).to.lt(precision);
+    });
+  });
+
+  describe("Linear approximation", function () {
+    it("Should approximate ssETH rate", async function () {
+      const {
+        hre,
+        stakeStarOwner,
+        stakeStarPublic,
+        otherAccount,
+        stakeStarETH,
+      } = await loadFixture(deployStakeStarFixture);
+
+      const one = ethers.utils.parseEther("1");
+
+      // some stake required because of division by zero
+      await stakeStarPublic.stake({ value: ethers.utils.parseEther("100") });
+      // one to one
+      const balance1 = await stakeStarETH.balanceOf(otherAccount.address);
+      expect(balance1).to.equal(ethers.utils.parseEther("100"));
+
+      const getTime = async function () {
+        return (
+          await hre.ethers.provider.getBlock(
+            await hre.ethers.provider.getBlockNumber()
+          )
+        ).timestamp;
+      };
+      const initialTimestamp = await getTime();
+
+      // not initialized yet
+      await expect(
+        stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+      ).to.be.revertedWith("point A or B not initialized");
+      expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
+
+      // distribute 0.01 first time
+      await stakeStarOwner.commitStakingSurplus(
+        ethers.utils.parseEther("0.01"),
+        initialTimestamp - 300
+      );
+      // still not initialized yet (only one point)
+      await expect(
+        stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+      ).to.be.revertedWith("point A or B not initialized");
+      expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
+
+      // distribute another 0.01
+      await stakeStarOwner.commitStakingSurplus(
+        ethers.utils.parseEther("0.02"),
+        initialTimestamp - 50
+      );
+
+      // two points initialized. If timestamp = last point, reward = last reward
+      expect(
+        await stakeStarPublic.approximateStakingSurplus(initialTimestamp - 50)
+      ).to.equal(ethers.utils.parseEther("0.02"));
+
+      // 0.02 will be distributed by 100 staked ethers
+      expect(await stakeStarETH.rate()).to.equal(
+        ethers.utils
+          .parseEther("100.02")
+          .mul(one)
+          .div(ethers.utils.parseEther("100"))
+      );
+
+      // 50 seconds spent with rate 0.01 ether / 250 seconds
+      expect(
+        await stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+      ).to.equal(ethers.utils.parseEther("0.022"));
+
+      const getCurrentRate = async function (
+        totalStakedEth: BigNumber,
+        tm: number | undefined = undefined,
+        totalStakedSS: BigNumber | undefined = undefined
+      ) {
+        totalStakedSS = totalStakedSS
+          ? totalStakedSS
+          : await stakeStarETH.totalSupply();
+        tm = tm ? tm : await getTime();
+
+        // current reward = 0.01 / 250 * timedelta + 0.02
+        const currentReward = ethers.utils
+          .parseEther("0.01")
+          .div(250)
+          .mul(tm - initialTimestamp + 50)
+          .add(ethers.utils.parseEther("0.02"));
+        expect(await stakeStarPublic.approximateStakingSurplus(tm)).to.equal(
+          currentReward
+        );
+
+        // so rate (totalStakedEth + currentReward) / total staked
+        const currentRate = totalStakedEth
+          .add(currentReward)
+          .mul(one)
+          .div(totalStakedSS);
+
+        return [currentRate, currentReward];
+      };
+
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      let [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
+      expect(await stakeStarPublic.currentApproximateRate()).to.equal(
+        currentRate
+      );
+
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
+      expect(await stakeStarPublic.currentApproximateRate()).to.equal(
+        currentRate
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        initialTimestamp + 100,
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      await getCurrentRate(ethers.utils.parseEther("100"));
+
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        balance1
+      );
+
+      // Another Stake 100
+      const constRateBeforeStake = await stakeStarETH.rate();
+      const tx = await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("100"),
+      });
+      // staking shouldn't change constant rate
+      expect(await stakeStarETH.rate()).to.be.equal(constRateBeforeStake);
+      const tx_timestamp = (await hre.ethers.provider.getBlock(tx.blockNumber))
+        .timestamp;
+      const tx_rate = await stakeStarPublic.approximateRate(tx_timestamp);
+
+      let [currentRateB] = await getCurrentRate(
+        ethers.utils.parseEther("100"),
+        tx_timestamp,
+        balance1
+      );
+
+      let newStaked = ethers.utils.parseEther("100").mul(one).div(currentRateB);
+      const balance2 = await stakeStarETH.balanceOf(otherAccount.address);
+      expect(balance2).to.equal(newStaked.add(balance1));
+
+      const totalStakedEth = balance2.mul(constRateBeforeStake).div(one);
+      expect(totalStakedEth).to.be.equal(await stakeStarETH.totalSupplyEth());
+      let [currentRateC] = await getCurrentRate(
+        totalStakedEth.sub(ethers.utils.parseEther("0.02")),
+        tx_timestamp,
+        balance2
+      );
+      expect(currentRateC).to.be.equal(tx_rate);
+
+      await stakeStarPublic.unstake(newStaked);
+      await stakeStarPublic.claim();
     });
   });
 });

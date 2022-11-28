@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
@@ -23,7 +22,16 @@ import "./ISSVNetwork.sol";
 // TODO Prevent double validator destroy
 // TODO Add local pool filling on validator destroy
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
-    using SafeMath for uint256;
+
+    struct ValidatorParams {
+        bytes publicKey;
+        bytes withdrawalCredentials;
+        bytes signature;
+        bytes32 depositDataRoot;
+        uint32[] operatorIds;
+        bytes[] sharesPublicKeys;
+        bytes[] sharesEncrypted;
+    }
 
     event SetAddresses(
         address depositContractAddress,
@@ -38,21 +46,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
-    event Stake(address who, uint256 amount);
-    event Unstake(address who, uint256 amount);
-    event Claim(address who, uint256 amount);
+    event Stake(address indexed who, uint256 amount);
+    event Unstake(address indexed who, uint256 amount);
+    event Claim(address indexed who, uint256 amount);
     event ApplyRewards(uint256 amount);
     event ApplyPenalties(uint256 amount);
-
-    struct ValidatorParams {
-        bytes publicKey;
-        bytes withdrawalCredentials;
-        bytes signature;
-        bytes32 depositDataRoot;
-        uint32[] operatorIds;
-        bytes[] sharesPublicKeys;
-        bytes[] sharesEncrypted;
-    }
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
@@ -69,6 +67,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint256 public pendingUnstakeSum;
 
     uint256 public localPoolSize;
+
+    int256 public stakingSurplusA;
+    uint256 public timestampA;
+    int256 public stakingSurplusB;
+    uint256 public timestampB;
+    uint256 constant minimumTimestampDistance = 180;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -105,6 +109,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setLocalPoolSize(uint256 size) public onlyRole(DEFAULT_ADMIN_ROLE) {
         localPoolSize = size;
+
         emit SetLocalPoolSize(size);
     }
 
@@ -112,17 +117,20 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function stake() public payable {
         require(msg.value > 0, "no eth transferred");
-        stakeStarETH.mint(msg.sender, msg.value);
+
+        uint256 ssETH = ETH_to_ssETH_approximate(msg.value);
+        stakeStarETH.mint(msg.sender, ssETH);
+
         emit Stake(msg.sender, msg.value);
     }
 
-    function unstake(uint256 eth) public {
-        require(pendingUnstake[msg.sender] == 0, "unstake already pending");
+    function unstake(uint256 ssETH) public returns (uint256 eth) {
+        stakeStarETH.burn(msg.sender, ssETH);
 
-        pendingUnstake[msg.sender] = eth;
-        pendingUnstakeSum = pendingUnstakeSum.add(eth);
+        eth = ssETH_to_ETH_approximate(ssETH);
+        pendingUnstake[msg.sender] += eth;
+        pendingUnstakeSum += eth;
 
-        stakeStarETH.burn(msg.sender, eth);
         emit Unstake(msg.sender, eth);
     }
 
@@ -131,15 +139,16 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         uint256 eth = pendingUnstake[msg.sender];
         delete pendingUnstake[msg.sender];
-        pendingUnstakeSum = pendingUnstakeSum.sub(eth);
+        pendingUnstakeSum -= eth;
 
         (bool status,) = msg.sender.call{value : eth}("");
         require(status, "failed to send Ether");
+
         emit Claim(msg.sender, eth);
     }
 
-    function unstakeAndClaim(uint256 eth) public {
-        unstake(eth);
+    function unstakeAndClaim(uint256 ssETH) public {
+        unstake(ssETH);
         claim();
     }
 
@@ -163,6 +172,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.sharesEncrypted,
             ssvDepositAmount
         );
+
         emit CreateValidator(validatorParams, ssvDepositAmount);
     }
 
@@ -180,11 +190,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.sharesEncrypted,
             ssvDepositAmount
         );
+
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance >= uint256(32 ether).add(localPoolSize).add(pendingUnstakeSum);
+        return address(this).balance >= (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
     }
 
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
@@ -192,6 +203,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(validatorDestructionAvailability(), "cannot destruct validator");
 
         stakeStarRegistry.destroyValidator(publicKey);
+
         emit DestroyValidator(publicKey);
     }
 
@@ -216,9 +228,63 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         });
 
         uint256 amountOut = swapRouter.exactInputSingle{value : amountIn}(params);
-        uint256 depositAmount = ssvToken.balanceOf(address(this)).div(1e7).mul(1e7);
+        uint256 depositAmount = ssvToken.balanceOf(address(this)) / 1e7 * 1e7;
         ssvToken.approve(address(ssvNetwork), depositAmount);
         ssvNetwork.deposit(address(this), depositAmount);
+    }
+
+    function commitStakingSurplus(int256 currentStakingSurplus, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
+
+        bool pointAInitialized = timestampA != 0;
+        bool pointBInitialized = timestampB != 0;
+
+        stakingSurplusA = stakingSurplusB;
+        timestampA = timestampB;
+
+        stakingSurplusB = currentStakingSurplus;
+        timestampB = timestamp;
+
+        if (pointBInitialized) {
+            if (pointAInitialized) {
+                int256 ethChange = stakingSurplusB - stakingSurplusA;
+                stakeStarETH.updateRate(ethChange);
+            } else {
+                stakeStarETH.updateRate(currentStakingSurplus);
+            }
+        }
+    }
+
+    function approximateStakingSurplus(uint256 timestamp) public view returns (int256) {
+        require(timestampA * timestampB > 0, "point A or B not initialized");
+        require(timestampA + minimumTimestampDistance <= timestampB, "timestamp distance too short");
+        require(timestampB <= timestamp, "timestamp in the past");
+
+        if (timestampB == timestamp) return stakingSurplusB;
+
+        return (stakingSurplusB - stakingSurplusA) * (int256(timestamp) - int256(timestampB)) / (int256(timestampB) - int256(timestampA)) + stakingSurplusB;
+    }
+
+    function approximateRate(uint256 timestamp) public view returns (uint256) {
+        // not completely initialized yet
+        if (timestampA == 0) return stakeStarETH.rate();
+
+        int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
+        int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
+
+        return stakeStarETH.estimateRate(approximateEthChange);
+    }
+
+    function currentApproximateRate() public view returns (uint256) {
+        return approximateRate(block.timestamp);
+    }
+
+    function ssETH_to_ETH_approximate(uint256 ssETH) public view returns (uint256) {
+        return ssETH * currentApproximateRate() / 1 ether;
+    }
+
+    function ETH_to_ssETH_approximate(uint256 eth) public view returns (uint256) {
+        return eth * 1 ether / currentApproximateRate();
     }
 
     function applyRewards() public {
@@ -227,16 +293,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarRewards.pull();
 
         uint256 treasuryCommission = stakeStarTreasury.commission(amount);
-        payable(stakeStarTreasury).transfer(treasuryCommission);
+        (bool status,) = payable(stakeStarTreasury).call{value : treasuryCommission}("");
+        require(status, "failed to send Ether");
 
-        uint256 rewards = amount.sub(treasuryCommission);
-        stakeStarETH.updateRate(rewards, true);
+        uint256 rewards = amount - treasuryCommission;
+        stakeStarETH.updateRate(int256(rewards));
+
         emit ApplyRewards(rewards);
     }
 
     function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(amount > 0, "cannot apply zero penalty");
-        stakeStarETH.updateRate(amount, false);
+        stakeStarETH.updateRate(- int256(amount));
+
         emit ApplyPenalties(amount);
     }
 }

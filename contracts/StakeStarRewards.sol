@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
@@ -16,7 +16,10 @@ contract StakeStarRewards is AccessControl {
 
     function pull() public onlyRole(STAKE_STAR_ROLE) {
         uint256 amount = address(this).balance;
-        payable(msg.sender).transfer(amount);
+
+        (bool status,) = payable(msg.sender).call{value : amount}("");
+        require(status, "failed to send Ether");
+
         emit Pull(msg.sender, amount);
     }
 }
