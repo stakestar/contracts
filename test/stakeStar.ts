@@ -513,32 +513,30 @@ describe("StakeStar", function () {
 
       // not initialized yet
       await expect(
-        stakeStarPublic.approximateNormalizedStakingBalance(initialTimestamp)
+        stakeStarPublic.approximateStakingSurplus(initialTimestamp)
       ).to.be.revertedWith("point A or B not initialized");
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute 0.01 first time
-      await stakeStarOwner.commitNormalizedStakingBalance(
+      await stakeStarOwner.commitStakingSurplus(
         ethers.utils.parseEther("0.01"),
         initialTimestamp - 300
       );
       // still not initialized yet (only one point)
       await expect(
-        stakeStarPublic.approximateNormalizedStakingBalance(initialTimestamp)
+        stakeStarPublic.approximateStakingSurplus(initialTimestamp)
       ).to.be.revertedWith("point A or B not initialized");
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute another 0.01
-      await stakeStarOwner.commitNormalizedStakingBalance(
+      await stakeStarOwner.commitStakingSurplus(
         ethers.utils.parseEther("0.02"),
         initialTimestamp - 50
       );
 
       // two points initialized. If timestamp = last point, reward = last reward
       expect(
-        await stakeStarPublic.approximateNormalizedStakingBalance(
-          initialTimestamp - 50
-        )
+        await stakeStarPublic.approximateStakingSurplus(initialTimestamp - 50)
       ).to.equal(ethers.utils.parseEther("0.02"));
 
       // 0.02 will be distributed by 100 staked ethers
@@ -551,9 +549,7 @@ describe("StakeStar", function () {
 
       // 50 seconds spent with rate 0.01 ether / 250 seconds
       expect(
-        await stakeStarPublic.approximateNormalizedStakingBalance(
-          initialTimestamp
-        )
+        await stakeStarPublic.approximateStakingSurplus(initialTimestamp)
       ).to.equal(ethers.utils.parseEther("0.022"));
 
       const getCurrentRate = async function (
@@ -572,9 +568,9 @@ describe("StakeStar", function () {
           .div(250)
           .mul(tm - initialTimestamp + 50)
           .add(ethers.utils.parseEther("0.02"));
-        expect(
-          await stakeStarPublic.approximateNormalizedStakingBalance(tm)
-        ).to.equal(currentReward);
+        expect(await stakeStarPublic.approximateStakingSurplus(tm)).to.equal(
+          currentReward
+        );
 
         // so rate (totalStakedEth + currentReward) / total staked
         const currentRate = totalStakedEth
@@ -586,17 +582,13 @@ describe("StakeStar", function () {
       };
 
       await hre.network.provider.request({ method: "evm_mine", params: [] });
-      let [currentRate, _currentReward] = await getCurrentRate(
-        ethers.utils.parseEther("100")
-      );
+      let [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(
         currentRate
       );
 
       await hre.network.provider.request({ method: "evm_mine", params: [] });
-      [currentRate, _currentReward] = await getCurrentRate(
-        ethers.utils.parseEther("100")
-      );
+      [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(
         currentRate
       );
@@ -605,9 +597,7 @@ describe("StakeStar", function () {
         initialTimestamp + 100,
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
-      let [currentRateA, currentRewardA] = await getCurrentRate(
-        ethers.utils.parseEther("100")
-      );
+      await getCurrentRate(ethers.utils.parseEther("100"));
 
       expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
         balance1
@@ -624,7 +614,7 @@ describe("StakeStar", function () {
         .timestamp;
       const tx_rate = await stakeStarPublic.approximateRate(tx_timestamp);
 
-      let [currentRateB, currentRewardB] = await getCurrentRate(
+      let [currentRateB] = await getCurrentRate(
         ethers.utils.parseEther("100"),
         tx_timestamp,
         balance1
@@ -636,7 +626,7 @@ describe("StakeStar", function () {
 
       const totalStakedEth = balance2.mul(constRateBeforeStake).div(one);
       expect(totalStakedEth).to.be.equal(await stakeStarETH.totalSupplyEth());
-      let [currentRateC, currentRewardC] = await getCurrentRate(
+      let [currentRateC] = await getCurrentRate(
         totalStakedEth.sub(ethers.utils.parseEther("0.02")),
         tx_timestamp,
         balance2

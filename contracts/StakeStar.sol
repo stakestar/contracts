@@ -67,9 +67,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     uint256 public localPoolSize;
 
-    int256 public normalizedStakingBalanceA;
+    int256 public stakingSurplusA;
     uint256 public timestampA;
-    int256 public normalizedStakingBalanceB;
+    int256 public stakingSurplusB;
     uint256 public timestampB;
     uint256 constant minimumTimestampDistance = 180;
 
@@ -232,44 +232,44 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork.deposit(address(this), depositAmount);
     }
 
-    function commitNormalizedStakingBalance(int256 currentNormalizedStakingBalance, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function commitStakingSurplus(int256 currentStakingSurplus, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
 
         bool pointAInitialized = timestampA != 0;
         bool pointBInitialized = timestampB != 0;
 
-        normalizedStakingBalanceA = normalizedStakingBalanceB;
+        stakingSurplusA = stakingSurplusB;
         timestampA = timestampB;
 
-        normalizedStakingBalanceB = currentNormalizedStakingBalance;
+        stakingSurplusB = currentStakingSurplus;
         timestampB = timestamp;
 
         if (pointBInitialized) {
             if (pointAInitialized) {
-                int256 ethChange = normalizedStakingBalanceB - normalizedStakingBalanceA;
+                int256 ethChange = stakingSurplusB - stakingSurplusA;
                 stakeStarETH.updateRate(ethChange);
             } else {
-                stakeStarETH.updateRate(currentNormalizedStakingBalance);
+                stakeStarETH.updateRate(currentStakingSurplus);
             }
         }
     }
 
-    function approximateNormalizedStakingBalance(uint256 timestamp) public view returns (int256) {
+    function approximateStakingSurplus(uint256 timestamp) public view returns (int256) {
         require(timestampA * timestampB > 0, "point A or B not initialized");
         require(timestampA + minimumTimestampDistance <= timestampB, "timestamp distance too short");
         require(timestampB <= timestamp, "timestamp in the past");
 
-        if (timestampB == timestamp) return normalizedStakingBalanceB;
+        if (timestampB == timestamp) return stakingSurplusB;
 
-        return (normalizedStakingBalanceB - normalizedStakingBalanceA) * (int256(timestamp) - int256(timestampB)) / (int256(timestampB) - int256(timestampA)) + normalizedStakingBalanceB;
+        return (stakingSurplusB - stakingSurplusA) * (int256(timestamp) - int256(timestampB)) / (int256(timestampB) - int256(timestampA)) + stakingSurplusB;
     }
 
     function approximateRate(uint256 timestamp) public view returns (uint256) {
         // not completely initialized yet
         if (timestampA == 0) return stakeStarETH.rate();
 
-        int256 approximateNormalizedStakingBalance = approximateNormalizedStakingBalance(timestamp);
-        int256 approximateEthChange = approximateNormalizedStakingBalance - normalizedStakingBalanceB;
+        int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
+        int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
 
         return stakeStarETH.estimateRate(approximateEthChange);
     }
