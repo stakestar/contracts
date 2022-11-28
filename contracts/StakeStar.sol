@@ -22,6 +22,17 @@ import "./ISSVNetwork.sol";
 // TODO Prevent double validator destroy
 // TODO Add local pool filling on validator destroy
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
+
+    struct ValidatorParams {
+        bytes publicKey;
+        bytes withdrawalCredentials;
+        bytes signature;
+        bytes32 depositDataRoot;
+        uint32[] operatorIds;
+        bytes[] sharesPublicKeys;
+        bytes[] sharesEncrypted;
+    }
+
     event SetAddresses(
         address depositContractAddress,
         address ssvNetworkAddress,
@@ -40,16 +51,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Claim(address indexed who, uint256 amount);
     event ApplyRewards(uint256 amount);
     event ApplyPenalties(uint256 amount);
-
-    struct ValidatorParams {
-        bytes publicKey;
-        bytes withdrawalCredentials;
-        bytes signature;
-        bytes32 depositDataRoot;
-        uint32[] operatorIds;
-        bytes[] sharesPublicKeys;
-        bytes[] sharesEncrypted;
-    }
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
