@@ -52,6 +52,14 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         emit DestroyValidator(publicKey);
     }
 
+    function verifyOperators(uint32[] memory operatorIds) public view returns (bool) {
+        for (uint8 i = 0; i < operatorIds.length; i++) {
+            if (!allowListOfOperators[operatorIds[i]]) return false;
+        }
+
+        return true;
+    }
+
     function getValidatorPublicKeysLength() public view returns (uint256) {
         return validatorPublicKeys.length;
     }

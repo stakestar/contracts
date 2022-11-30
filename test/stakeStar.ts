@@ -158,11 +158,18 @@ describe("StakeStar", function () {
       const {
         stakeStarManager,
         stakeStarPublic,
+        stakeStarRegistry,
         ssvToken,
         validatorParams,
         owner,
         otherAccount,
       } = await loadFixture(deployStakeStarFixture);
+
+      for (const operatorId of validatorParams.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
 
       const stakeAmount = ethers.utils.parseEther("32");
       const unstakeAmount = stakeAmount.div(2);
@@ -239,8 +246,14 @@ describe("StakeStar", function () {
 
   describe("CreateValidator", function () {
     it("Should create a validator", async function () {
-      const { stakeStarManager, ssvToken, validatorParams, owner, manager } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        stakeStarManager,
+        ssvToken,
+        stakeStarRegistry,
+        validatorParams,
+        owner,
+        manager,
+      } = await loadFixture(deployStakeStarFixture);
 
       await ssvToken
         .connect(owner)
@@ -261,6 +274,16 @@ describe("StakeStar", function () {
 
       await expect(
         stakeStarManager.createValidator(validatorParams, ssvBalance)
+      ).to.be.revertedWith("some operators not allowListed");
+
+      for (const operatorId of validatorParams.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+
+      await expect(
+        stakeStarManager.createValidator(validatorParams, ssvBalance)
       ).to.emit(stakeStarManager, "CreateValidator");
     });
 
@@ -269,10 +292,17 @@ describe("StakeStar", function () {
         stakeStarOwner,
         stakeStarManager,
         stakeStarPublic,
+        stakeStarRegistry,
         ssvToken,
         validatorParams,
         owner,
       } = await loadFixture(deployStakeStarFixture);
+
+      for (const operatorId of validatorParams.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
 
       expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
         false
@@ -335,6 +365,7 @@ describe("StakeStar", function () {
       const {
         stakeStarOwner,
         stakeStarManager,
+        stakeStarRegistry,
         ssvToken,
         validatorParams,
         owner,
@@ -357,10 +388,25 @@ describe("StakeStar", function () {
       await expect(
         stakeStarOwner.updateValidator(validatorParams, ssvBalance)
       ).to.be.revertedWith("validator not created");
+
+      for (const operatorId of validatorParams.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+
       await expect(
         stakeStarManager.createValidator(validatorParams, ssvBalance.div(2))
       ).to.emit(stakeStarManager, "CreateValidator");
+
       validatorParams.operatorIds[0] = 127;
+
+      await expect(
+        stakeStarOwner.updateValidator(validatorParams, ssvBalance)
+      ).to.be.revertedWith("some operators not allowListed");
+
+      await stakeStarRegistry.connect(owner).addOperatorToAllowList(127);
+
       await expect(
         stakeStarOwner.updateValidator(validatorParams, ssvBalance.div(2))
       ).to.emit(stakeStarOwner, "UpdateValidator");

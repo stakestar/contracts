@@ -118,6 +118,44 @@ describe("StakeStarRegistry", function () {
         false
       );
     });
+
+    it("Should verify operators using the allow list", async function () {
+      const { stakeStarRegistry, owner } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      const operatorId_1 = 1;
+      const operatorId_2 = 2;
+
+      expect(await stakeStarRegistry.verifyOperators([operatorId_1])).to.be
+        .false;
+      await stakeStarRegistry
+        .connect(owner)
+        .addOperatorToAllowList(operatorId_1);
+      expect(await stakeStarRegistry.verifyOperators([operatorId_1])).to.be
+        .true;
+      await stakeStarRegistry
+        .connect(owner)
+        .removeOperatorFromAllowList(operatorId_1);
+      expect(await stakeStarRegistry.verifyOperators([operatorId_1])).to.be
+        .false;
+
+      await stakeStarRegistry
+        .connect(owner)
+        .addOperatorToAllowList(operatorId_1);
+      await stakeStarRegistry
+        .connect(owner)
+        .addOperatorToAllowList(operatorId_2);
+      expect(
+        await stakeStarRegistry.verifyOperators([operatorId_1, operatorId_2])
+      ).to.be.true;
+      await stakeStarRegistry
+        .connect(owner)
+        .removeOperatorFromAllowList(operatorId_1);
+      expect(
+        await stakeStarRegistry.verifyOperators([operatorId_1, operatorId_2])
+      ).to.be.false;
+    });
   });
 
   describe("Validators", function () {
