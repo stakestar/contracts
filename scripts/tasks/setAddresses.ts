@@ -13,7 +13,7 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    addresses.consensusFeed,
+    addresses.consensusDataProvider,
     addresses.stakeStarRegistry,
     addresses.stakeStarETH,
     addresses.stakeStarRewards,

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/IStakingPool.sol";
+import "./interfaces/IConsensusDataProvider.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarETH.sol";
 import "./StakeStarRewards.sol";
@@ -15,7 +16,6 @@ import "./StakeStarTreasury.sol";
 import "./interfaces/IDepositContract.sol";
 import "./interfaces/ISSVNetwork.sol";
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 // TODO Maintain SSV position in SSVNetwork contract
 // TODO Create validator destruction conditions
@@ -37,7 +37,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
-        address consensusFeedAddress,
+        address consensusDataProviderAddress,
         address stakeStarRegistryAddress,
         address stakeStarETHAddress,
         address stakeStarRewardsAddress,
@@ -64,7 +64,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
 
-    AggregatorV3Interface public consensusFeed;
+    IConsensusDataProvider public consensusDataProvider;
 
     mapping(address => uint256) public pendingUnstake;
     uint256 public pendingUnstakeSum;
@@ -85,7 +85,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
-        address consensusFeedAddress,
+        address consensusDataProviderAddress,
         address stakeStarRegistryAddress,
         address stakeStarETHAddress,
         address stakeStarRewardsAddress,
@@ -95,7 +95,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
 
-        consensusFeed = AggregatorV3Interface(consensusFeedAddress);
+        consensusDataProvider = IConsensusDataProvider(consensusDataProviderAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarETH = StakeStarETH(stakeStarETHAddress);
@@ -106,7 +106,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             depositContractAddress,
             ssvNetworkAddress,
             ssvTokenAddress,
-            consensusFeedAddress,
+            consensusDataProviderAddress,
             stakeStarRegistryAddress,
             stakeStarETHAddress,
             stakeStarRewardsAddress,
