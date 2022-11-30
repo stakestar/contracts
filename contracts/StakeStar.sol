@@ -39,6 +39,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
+        address consensusFeedAddress,
         address stakeStarRegistryAddress,
         address stakeStarETHAddress,
         address stakeStarRewardsAddress,
@@ -86,6 +87,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
+        address consensusFeedAddress,
         address stakeStarRegistryAddress,
         address stakeStarETHAddress,
         address stakeStarRewardsAddress,
@@ -94,6 +96,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
+
+        consensusFeed = AggregatorV3Interface(consensusFeedAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarETH = StakeStarETH(stakeStarETHAddress);
@@ -104,6 +108,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             depositContractAddress,
             ssvNetworkAddress,
             ssvTokenAddress,
+            consensusFeedAddress,
             stakeStarRegistryAddress,
             stakeStarETHAddress,
             stakeStarRewardsAddress,
