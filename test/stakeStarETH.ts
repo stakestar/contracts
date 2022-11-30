@@ -116,8 +116,13 @@ describe("StakeStarETH", function () {
     });
 
     it("Should mint msg.value * 2 of ssETH if rate 0.5", async function () {
-      const { stakeStarOwner, stakeStarPublic, stakeStarETH, otherAccount } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        stakeStarOwner,
+        stakeStarPublic,
+        stakeStarETH,
+        otherAccount,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
 
       await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
         stakeStarETH,
@@ -131,7 +136,22 @@ describe("StakeStarETH", function () {
         1
       );
 
-      await stakeStarOwner.applyPenalties(1);
+      await stakeStarOwner.commitStakingSurplus(
+        0,
+        (
+          await hre.ethers.provider.getBlock(
+            await hre.ethers.provider.getBlockNumber()
+          )
+        ).timestamp - 1000
+      );
+      await stakeStarOwner.commitStakingSurplus(
+        -1,
+        (
+          await hre.ethers.provider.getBlock(
+            await hre.ethers.provider.getBlockNumber()
+          )
+        ).timestamp
+      );
 
       expect(await stakeStarETH.rate()).to.equal(500000000000000000n);
       expect(await stakeStarETH.totalSupply()).to.equal("2");
@@ -157,7 +177,7 @@ describe("StakeStarETH", function () {
         otherAccount.sendTransaction({ to: stakeStarRewards.address, value: 1 })
       ).to.changeEtherBalances([otherAccount, stakeStarRewards], [-1, 1]);
 
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalances(
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
         [stakeStarRewards, stakeStarPublic],
         [-1, 1]
       );

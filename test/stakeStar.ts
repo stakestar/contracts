@@ -73,9 +73,6 @@ describe("StakeStar", function () {
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
-      await expect(stakeStarPublic.applyPenalties(1)).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
-      );
       await expect(
         stakeStarPublic.buySSV(addresses.weth, 3000, 0, 0)
       ).to.be.revertedWith(
@@ -428,7 +425,7 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("applyRewards", function () {
+  describe("harvest", function () {
     it("Should pull rewards from StakeStarRewards", async function () {
       const {
         stakeStarPublic,
@@ -440,7 +437,7 @@ describe("StakeStar", function () {
 
       await stakeStarTreasury.setCommission(5000); // 5%
 
-      await expect(stakeStarPublic.applyRewards()).to.be.revertedWith(
+      await expect(stakeStarPublic.harvest()).to.be.revertedWith(
         "no rewards available"
       );
 
@@ -452,7 +449,7 @@ describe("StakeStar", function () {
         to: stakeStarRewards.address,
         value: 100,
       });
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalances(
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
         [stakeStarPublic, stakeStarRewards],
         [95, -100]
       );
@@ -464,41 +461,18 @@ describe("StakeStar", function () {
         to: stakeStarRewards.address,
         value: 100,
       });
-      await expect(stakeStarPublic.applyRewards())
-        .to.emit(stakeStarPublic, "ApplyRewards")
+      await expect(stakeStarPublic.harvest())
+        .to.emit(stakeStarPublic, "Harvest")
         .withArgs(95);
 
       await otherAccount.sendTransaction({
         to: stakeStarRewards.address,
         value: 100,
       });
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalance(
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalance(
         stakeStarTreasury,
         5
       );
-    });
-  });
-
-  describe("applyPenalties", function () {
-    it("Should decrease StakeStarETH rate", async function () {
-      const { stakeStarOwner, stakeStarETH } = await loadFixture(
-        deployStakeStarFixture
-      );
-
-      await expect(stakeStarOwner.applyPenalties(0)).to.be.revertedWith(
-        "cannot apply zero penalty"
-      );
-
-      await stakeStarOwner.stake({ value: 100 });
-
-      const rateBefore = await stakeStarETH.rate();
-
-      await expect(stakeStarOwner.applyPenalties(1))
-        .to.emit(stakeStarOwner, "ApplyPenalties")
-        .withArgs(1);
-
-      const rateAfter = await stakeStarETH.rate();
-      expect(rateAfter.lt(rateBefore)).to.equal(true);
     });
   });
 
