@@ -17,6 +17,8 @@ import "./StakeStarTreasury.sol";
 import "./IDepositContract.sol";
 import "./ISSVNetwork.sol";
 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
 // TODO Maintain SSV position in SSVNetwork contract
 // TODO Create validator destruction conditions
 // TODO Prevent double validator destroy
@@ -62,6 +64,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
+
+    AggregatorV3Interface public consensusFeed;
 
     mapping(address => uint256) public pendingUnstake;
     uint256 public pendingUnstakeSum;

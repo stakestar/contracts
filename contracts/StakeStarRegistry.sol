@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {PoRAddressList} from "@chainlink/contracts/src/v0.8/interfaces/PoRAddressList.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/PoRAddressList.sol";
 
 contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddressList {
     event AddOperatorToAllowList(uint32 operatorId);

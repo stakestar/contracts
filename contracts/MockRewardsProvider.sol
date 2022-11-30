@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {IRewardsProvider} from "./IRewardsProvider.sol";
+import "./IRewardsProvider.sol";
 
 contract MockRewardsProvider {
     event ProvideRewards(int256 rewards);
