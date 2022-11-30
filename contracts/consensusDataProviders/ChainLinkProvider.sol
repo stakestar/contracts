@@ -21,13 +21,7 @@ contract ChainLinkProvider is Initializable, IConsensusDataProvider, AccessContr
     }
 
     function latestStakingBalance() public view returns (uint256 stakingBalance, uint256 timestamp) {
-        (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-        ) = stakingBalanceFeed.latestRoundData();
+        (,int256 answer, uint256 startedAt,,) = stakingBalanceFeed.latestRoundData();
 
         stakingBalance = uint256(answer);
         timestamp = startedAt;
