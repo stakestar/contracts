@@ -8,14 +8,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
 
-  const MockRewardsProvider = await hre.ethers.getContractFactory(
-    "MockRewardsProvider"
-  );
-  const mockRewardsProvider = await MockRewardsProvider.deploy();
-  await mockRewardsProvider.deployed();
-  console.log(
-    `MockRewardsProvider is deployed to ${mockRewardsProvider.address}`
-  );
+  // Consensus Data Providers are supposed to be here
 
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"
@@ -52,6 +45,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
+    addresses.consensusDataProvider,
     stakeStarRegistry.address,
     stakeStarETH.address,
     stakeStarRewards.address,
@@ -72,7 +66,6 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarETH,
     stakeStarRewards,
     stakeStarTreasury,
-    mockRewardsProvider,
   };
 }
 
