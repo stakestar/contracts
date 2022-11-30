@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
-import { ADDRESSES, ZERO_ADDRESS } from "../constants";
+import { ADDRESSES } from "../constants";
 import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
@@ -52,7 +52,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    ZERO_ADDRESS,
+    addresses.consensusFeed,
     stakeStarRegistry.address,
     stakeStarETH.address,
     stakeStarRewards.address,

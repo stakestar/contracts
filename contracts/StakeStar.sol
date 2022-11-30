@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-
 import "./IStakingPool.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarETH.sol";
@@ -16,7 +14,7 @@ import "./StakeStarTreasury.sol";
 
 import "./IDepositContract.sol";
 import "./ISSVNetwork.sol";
-
+import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 // TODO Maintain SSV position in SSVNetwork contract

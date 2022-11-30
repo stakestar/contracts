@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { ADDRESSES, ZERO_ADDRESS } from "../constants";
+import { ADDRESSES } from "../constants";
 import { currentNetwork } from "../helpers";
 
 task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
@@ -13,7 +13,7 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    ZERO_ADDRESS,
+    addresses.consensusFeed,
     addresses.stakeStarRegistry,
     addresses.stakeStarETH,
     addresses.stakeStarRewards,

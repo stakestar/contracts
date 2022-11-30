@@ -1,12 +1,19 @@
 import { Network } from "./types";
 import { BigNumber } from "ethers";
 
+export const ZERO = BigNumber.from(0);
+export const ZERO_BYTES_STRING = "0x";
+export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const ZERO_PRIVATE_KEY =
+  "0000000000000000000000000000000000000000000000000000000000000000";
+
 export const ADDRESSES: Record<
   Network,
   {
     depositContract: string;
     ssvNetwork: string;
     ssvToken: string;
+    consensusFeed: string;
     stakeStarTreasury: string;
     stakeStarRegistry: string;
     stakeStarETH: string;
@@ -21,6 +28,7 @@ export const ADDRESSES: Record<
     depositContract: "",
     ssvNetwork: "",
     ssvToken: "",
+    consensusFeed: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
     stakeStarRewards: "",
@@ -34,6 +42,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
+    consensusFeed: ZERO_ADDRESS,
     stakeStarTreasury: "0x75D1433c6881db0583576F205Df3d95c5Deacc29",
     stakeStarRegistry: "0x981D1B3e33d78e1Af39Fc3CBb232Aa863324935c",
     stakeStarRewards: "0xbB551b50632789d7115D19423440832E5665151B",
@@ -47,6 +56,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
+    consensusFeed: ZERO_ADDRESS,
     stakeStarTreasury: "",
     stakeStarRegistry: "",
     stakeStarRewards: "",
@@ -86,10 +96,5 @@ export const GENESIS_FORK_VERSIONS: Record<Network, string> = {
   [Network.HARDHAT]: "0x00001020",
 };
 
-export const ZERO = BigNumber.from(0);
-export const ZERO_BYTES_STRING = "0x";
-export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const ZERO_PRIVATE_KEY =
-  "0000000000000000000000000000000000000000000000000000000000000000";
 export const RANDOM_PRIVATE_KEY =
   "0x6da4f8d49b28f88ef7154dd4ff9d5ebd83d0c0f29d04718996f6f89a95308219";
