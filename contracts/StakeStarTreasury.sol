@@ -28,7 +28,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit Withdraw(amount);
     }
 
-    function commission(uint256 amount) public view returns (uint256) {
-        return amount * commissionNumerator / commissionDenominator;
+    function commission(int256 amount) public view returns (uint256) {
+        return amount > 0 ? uint256(amount) * commissionNumerator / commissionDenominator : 0;
     }
 }

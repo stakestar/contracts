@@ -22,7 +22,6 @@ import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 // TODO Prevent double validator destroy
 // TODO Add local pool filling on validator destroy
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
-
     struct ValidatorParams {
         bytes publicKey;
         bytes withdrawalCredentials;
@@ -75,6 +74,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     int256 public stakingSurplusB;
     uint256 public timestampB;
     uint256 constant minimumTimestampDistance = 180;
+
+    uint256 public reservedTreasuryCommission;
 
     receive() external payable {}
 
@@ -216,7 +217,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(amount > 0, "no rewards available");
         stakeStarRewards.pull();
 
-        uint256 treasuryCommission = stakeStarTreasury.commission(amount);
+        uint256 treasuryCommission = stakeStarTreasury.commission(int256(amount));
         (bool status,) = payable(stakeStarTreasury).call{value : treasuryCommission}("");
         require(status, "failed to send Ether");
 
@@ -226,6 +227,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit Harvest(rewards);
     }
 
+    // TODO use IConsensusDataProvider to fetch currentStakingBalance and timestamp
+    //      then calculate currentStakingSurplus based on the number of validators and commit it
+    //      don't forget to get treasury commission
     function commitStakingSurplus(int256 currentStakingSurplus, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
 
@@ -235,7 +239,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakingSurplusA = stakingSurplusB;
         timestampA = timestampB;
 
-        stakingSurplusB = currentStakingSurplus;
+        reservedTreasuryCommission = stakeStarTreasury.commission(currentStakingSurplus);
+        stakingSurplusB = currentStakingSurplus - int256(reservedTreasuryCommission);
         timestampB = timestamp;
 
         if (pointBInitialized) {
