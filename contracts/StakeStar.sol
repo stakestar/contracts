@@ -17,10 +17,8 @@ import "./interfaces/IDepositContract.sol";
 import "./interfaces/ISSVNetwork.sol";
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
-// TODO Maintain SSV position in SSVNetwork contract
-// TODO Create validator destruction conditions
-// TODO Prevent double validator destroy
-// TODO Add local pool filling on validator destroy
+// TODO Manage SSV position
+// TODO Validator Destruction: prevent double validator destroy, local pool
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
         bytes publicKey;
@@ -205,11 +203,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         revert("not implemented");
-        require(validatorDestructionAvailability(), "cannot destruct validator");
-
-        stakeStarRegistry.destroyValidator(publicKey);
-
-        emit DestroyValidator(publicKey);
     }
 
     function harvest() public {
@@ -275,7 +268,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         return address(this).balance >= (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
     }
 
-    // TODO: add local pool & double destroy prevention
     function validatorDestructionAvailability() public view returns (bool) {
         revert("not implemented");
     }
