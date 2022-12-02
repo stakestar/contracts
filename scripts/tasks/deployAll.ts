@@ -9,6 +9,12 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const addresses = ADDRESSES[network];
 
   // Consensus Data Providers are supposed to be here
+  const ChainlinkProvider = await hre.ethers.getContractFactory(
+    "ChainlinkProvider"
+  );
+  const chainlinkProvider = await hre.upgrades.deployProxy(ChainlinkProvider);
+  await chainlinkProvider.deployed();
+  console.log(`ChainlinkProvider is deployed to ${chainlinkProvider.address}`);
 
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"
@@ -41,11 +47,13 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await stakeStar.deployed();
   console.log(`StakeStar is deployed to ${stakeStar.address}`);
 
+  await chainlinkProvider.setFeeds(addresses.chainlinkStakingBalanceFeed);
+
   await stakeStar.setAddresses(
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    addresses.consensusDataProvider,
+    chainlinkProvider.address,
     stakeStarRegistry.address,
     stakeStarETH.address,
     stakeStarRewards.address,
@@ -66,6 +74,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarETH,
     stakeStarRewards,
     stakeStarTreasury,
+    chainlinkProvider,
   };
 }
 
