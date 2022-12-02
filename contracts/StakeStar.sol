@@ -19,6 +19,7 @@ import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
 // TODO Manage SSV position
 // TODO Validator Destruction: prevent double validator destroy, local pool
+// TODO Add corresponding events
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
         bytes publicKey;
@@ -243,7 +244,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
     }
 
-    function buySSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function manageSSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
         ISwapRouter swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
         ISwapRouter.ExactInputSingleParams memory params =
