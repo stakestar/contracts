@@ -227,29 +227,26 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit Harvest(rewards);
     }
 
-    // TODO use IConsensusDataProvider to fetch currentStakingBalance and timestamp
-    //      then calculate currentStakingSurplus based on the number of validators and commit it
-    //      don't forget to get treasury commission
-    function commitStakingSurplus(int256 currentStakingSurplus, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function commitStakingSurplus() public {
+        (uint256 latestStakingBalance, uint256 timestamp) = consensusDataProvider.latestStakingBalance();
+
         require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
 
-        bool pointAInitialized = timestampA != 0;
-        bool pointBInitialized = timestampB != 0;
+        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.CREATED);
+        int256 latestStakingSurplus = int256(latestStakingBalance) - int256(activeValidators * 32 ether);
 
         stakingSurplusA = stakingSurplusB;
         timestampA = timestampB;
 
-        reservedTreasuryCommission = stakeStarTreasury.commission(currentStakingSurplus);
-        stakingSurplusB = currentStakingSurplus - int256(reservedTreasuryCommission);
+        reservedTreasuryCommission = stakeStarTreasury.commission(latestStakingSurplus);
+        stakingSurplusB = latestStakingSurplus - int256(reservedTreasuryCommission);
         timestampB = timestamp;
 
-        if (pointBInitialized) {
-            if (pointAInitialized) {
-                int256 ethChange = stakingSurplusB - stakingSurplusA;
-                stakeStarETH.updateRate(ethChange);
-            } else {
-                stakeStarETH.updateRate(currentStakingSurplus);
-            }
+        if (timestampA != 0 && timestampB != 0) {
+            int256 ethChange = stakingSurplusB - stakingSurplusA;
+            stakeStarETH.updateRate(ethChange);
+        } else {
+            stakeStarETH.updateRate(stakingSurplusB);
         }
     }
 
