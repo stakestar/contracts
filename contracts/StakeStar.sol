@@ -235,7 +235,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakingSurplusB = latestStakingSurplus - int256(reservedTreasuryCommission);
         timestampB = timestamp;
 
-        if (timestampA != 0 && timestampB != 0) {
+        if (approximationDataInitialized()) {
             int256 ethChange = stakingSurplusB - stakingSurplusA;
             stakeStarETH.updateRate(ethChange);
         } else {
@@ -283,13 +283,17 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function approximateRate(uint256 timestamp) public view returns (uint256) {
-        // not completely initialized yet
-        if (timestampA == 0) return stakeStarETH.rate();
+        if (approximationDataInitialized()) {
+            int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
+            int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
+            return stakeStarETH.estimateRate(approximateEthChange);
+        } else {
+            return stakeStarETH.rate();
+        }
+    }
 
-        int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
-        int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
-
-        return stakeStarETH.estimateRate(approximateEthChange);
+    function approximationDataInitialized() public view returns (bool) {
+        return timestampA != 0 && timestampB != 0;
     }
 
     function currentApproximateRate() public view returns (uint256) {
