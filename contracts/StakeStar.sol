@@ -229,6 +229,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.CREATED);
         int256 latestStakingSurplus = int256(latestStakingBalance) - int256(activeValidators * 32 ether);
 
+        bool initialized = approximationDataInitialized();
+
         stakingSurplusA = stakingSurplusB;
         timestampA = timestampB;
 
@@ -237,10 +239,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         timestampB = timestamp;
 
         if (approximationDataInitialized()) {
-            int256 ethChange = stakingSurplusB - stakingSurplusA;
-            stakeStarETH.updateRate(ethChange);
-        } else {
-            stakeStarETH.updateRate(stakingSurplusB);
+            if (initialized) {
+                int256 ethChange = stakingSurplusB - stakingSurplusA;
+                stakeStarETH.updateRate(ethChange);
+            } else {
+                stakeStarETH.updateRate(stakingSurplusB);
+            }
         }
     }
 

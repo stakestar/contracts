@@ -74,7 +74,7 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
       await expect(
-        stakeStarPublic.buySSV(addresses.weth, 3000, 0, 0)
+        stakeStarPublic.manageSSV(addresses.weth, 3000, 0, 0)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
@@ -476,7 +476,7 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("buySSV", function () {
+  describe("manageSSV", function () {
     it("Should buy SSV token on UNI V3", async function () {
       const { stakeStarOwner, addresses, ssvToken, ssvNetwork } =
         await loadFixture(deployStakeStarFixture);
@@ -490,7 +490,7 @@ describe("StakeStar", function () {
       const precision = BigNumber.from(1e7);
 
       await stakeStarOwner.stake({ value: amountIn });
-      await stakeStarOwner.buySSV(
+      await stakeStarOwner.manageSSV(
         addresses.weth,
         3000,
         amountIn,
@@ -512,6 +512,7 @@ describe("StakeStar", function () {
         stakeStarPublic,
         otherAccount,
         stakeStarETH,
+        aggregatorV3Mock,
       } = await loadFixture(deployStakeStarFixture);
 
       const one = ethers.utils.parseEther("1");
@@ -538,10 +539,11 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute 0.01 first time
-      await stakeStarOwner.commitStakingSurplus(
+      await aggregatorV3Mock.setMockValues(
         ethers.utils.parseEther("0.01"),
         initialTimestamp - 300
       );
+      await stakeStarOwner.commitStakingSurplus();
       // still not initialized yet (only one point)
       await expect(
         stakeStarPublic.approximateStakingSurplus(initialTimestamp)
@@ -549,10 +551,11 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute another 0.01
-      await stakeStarOwner.commitStakingSurplus(
+      await aggregatorV3Mock.setMockValues(
         ethers.utils.parseEther("0.02"),
         initialTimestamp - 50
       );
+      await stakeStarOwner.commitStakingSurplus();
 
       // two points initialized. If timestamp = last point, reward = last reward
       expect(
