@@ -116,25 +116,66 @@ describe("StakeStarETH", function () {
     });
 
     it("Should mint msg.value * 2 of ssETH if rate 0.5", async function () {
-      const { stakeStarOwner, stakeStarPublic, stakeStarETH, otherAccount } =
-        await loadFixture(deployStakeStarFixture);
-
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
+      const {
+        stakeStarOwner,
+        stakeStarPublic,
         stakeStarETH,
         otherAccount,
-        1
+        aggregatorV3Mock,
+        ssvToken,
+        stakeStarManager,
+        validatorParams,
+        stakeStarRegistry,
+        owner,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+
+      const thirtyTwoEthers = hre.ethers.utils.parseEther("32");
+      const sixteenEthers = hre.ethers.utils.parseEther("16");
+
+      await expect(
+        stakeStarPublic.stake({ value: thirtyTwoEthers })
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, thirtyTwoEthers);
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      for (const operatorId of validatorParams.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await stakeStarManager.createValidator(
+        validatorParams,
+        await ssvToken.balanceOf(stakeStarManager.address)
       );
 
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
+      await aggregatorV3Mock.setMockValues(
+        thirtyTwoEthers,
+        (
+          await hre.ethers.provider.getBlock(
+            await hre.ethers.provider.getBlockNumber()
+          )
+        ).timestamp - 1000
       );
+      await stakeStarOwner.commitStakingSurplus();
 
-      await stakeStarOwner.applyPenalties(1);
+      await aggregatorV3Mock.setMockValues(
+        sixteenEthers,
+        (
+          await hre.ethers.provider.getBlock(
+            await hre.ethers.provider.getBlockNumber()
+          )
+        ).timestamp
+      );
+      await stakeStarOwner.commitStakingSurplus();
 
       expect(await stakeStarETH.rate()).to.equal(500000000000000000n);
-      expect(await stakeStarETH.totalSupply()).to.equal("2");
+      expect(await stakeStarETH.totalSupply()).to.equal(thirtyTwoEthers);
+      expect(await stakeStarETH.totalSupplyEth()).to.equal(sixteenEthers);
 
       await expect(stakeStarPublic.stake({ value: 2 })).to.changeTokenBalance(
         stakeStarETH,
@@ -157,7 +198,7 @@ describe("StakeStarETH", function () {
         otherAccount.sendTransaction({ to: stakeStarRewards.address, value: 1 })
       ).to.changeEtherBalances([otherAccount, stakeStarRewards], [-1, 1]);
 
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalances(
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
         [stakeStarRewards, stakeStarPublic],
         [-1, 1]
       );

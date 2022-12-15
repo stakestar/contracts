@@ -23,8 +23,9 @@ export async function deployStakeStarFixture() {
     stakeStarTreasury,
     stakeStarETH,
     stakeStarRewards,
+    chainlinkProvider,
+    aggregatorV3Mock,
   } = await deployAll(hre);
-
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
 
@@ -65,6 +66,8 @@ export async function deployStakeStarFixture() {
     stakeStarTreasury,
     stakeStarETH,
     stakeStarRewards,
+    chainlinkProvider,
+    aggregatorV3Mock,
     ssvToken,
     ssvNetwork,
     validatorParams,

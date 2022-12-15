@@ -83,7 +83,7 @@ describe("StakeStarRewards", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRewards.STAKE_STAR_ROLE()}`
       );
 
-      await expect(stakeStarOwner.applyRewards()).to.changeEtherBalances(
+      await expect(stakeStarOwner.harvest()).to.changeEtherBalances(
         [stakeStarOwner, stakeStarRewards],
         [rewards, rewards * -1]
       );
@@ -105,7 +105,7 @@ describe("StakeStarRewards", function () {
         value: rewards,
       });
 
-      await expect(stakeStarOwner.applyRewards())
+      await expect(stakeStarOwner.harvest())
         .to.emit(stakeStarRewards, "Pull")
         .withArgs(stakeStarOwner.address, rewards);
     });

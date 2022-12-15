@@ -73,11 +73,8 @@ describe("StakeStar", function () {
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
-      await expect(stakeStarPublic.applyPenalties(1)).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
-      );
       await expect(
-        stakeStarPublic.buySSV(addresses.weth, 3000, 0, 0)
+        stakeStarPublic.manageSSV(addresses.weth, 3000, 0, 0)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
@@ -428,7 +425,7 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("applyRewards", function () {
+  describe("harvest", function () {
     it("Should pull rewards from StakeStarRewards", async function () {
       const {
         stakeStarPublic,
@@ -440,7 +437,7 @@ describe("StakeStar", function () {
 
       await stakeStarTreasury.setCommission(5000); // 5%
 
-      await expect(stakeStarPublic.applyRewards()).to.be.revertedWith(
+      await expect(stakeStarPublic.harvest()).to.be.revertedWith(
         "no rewards available"
       );
 
@@ -452,7 +449,7 @@ describe("StakeStar", function () {
         to: stakeStarRewards.address,
         value: 100,
       });
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalances(
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
         [stakeStarPublic, stakeStarRewards],
         [95, -100]
       );
@@ -464,45 +461,22 @@ describe("StakeStar", function () {
         to: stakeStarRewards.address,
         value: 100,
       });
-      await expect(stakeStarPublic.applyRewards())
-        .to.emit(stakeStarPublic, "ApplyRewards")
+      await expect(stakeStarPublic.harvest())
+        .to.emit(stakeStarPublic, "Harvest")
         .withArgs(95);
 
       await otherAccount.sendTransaction({
         to: stakeStarRewards.address,
         value: 100,
       });
-      await expect(stakeStarPublic.applyRewards()).to.changeEtherBalance(
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalance(
         stakeStarTreasury,
         5
       );
     });
   });
 
-  describe("applyPenalties", function () {
-    it("Should decrease StakeStarETH rate", async function () {
-      const { stakeStarOwner, stakeStarETH } = await loadFixture(
-        deployStakeStarFixture
-      );
-
-      await expect(stakeStarOwner.applyPenalties(0)).to.be.revertedWith(
-        "cannot apply zero penalty"
-      );
-
-      await stakeStarOwner.stake({ value: 100 });
-
-      const rateBefore = await stakeStarETH.rate();
-
-      await expect(stakeStarOwner.applyPenalties(1))
-        .to.emit(stakeStarOwner, "ApplyPenalties")
-        .withArgs(1);
-
-      const rateAfter = await stakeStarETH.rate();
-      expect(rateAfter.lt(rateBefore)).to.equal(true);
-    });
-  });
-
-  describe("buySSV", function () {
+  describe("manageSSV", function () {
     it("Should buy SSV token on UNI V3", async function () {
       const { stakeStarOwner, addresses, ssvToken, ssvNetwork } =
         await loadFixture(deployStakeStarFixture);
@@ -516,7 +490,7 @@ describe("StakeStar", function () {
       const precision = BigNumber.from(1e7);
 
       await stakeStarOwner.stake({ value: amountIn });
-      await stakeStarOwner.buySSV(
+      await stakeStarOwner.manageSSV(
         addresses.weth,
         3000,
         amountIn,
@@ -538,6 +512,7 @@ describe("StakeStar", function () {
         stakeStarPublic,
         otherAccount,
         stakeStarETH,
+        aggregatorV3Mock,
       } = await loadFixture(deployStakeStarFixture);
 
       const one = ethers.utils.parseEther("1");
@@ -564,10 +539,11 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute 0.01 first time
-      await stakeStarOwner.commitStakingSurplus(
+      await aggregatorV3Mock.setMockValues(
         ethers.utils.parseEther("0.01"),
         initialTimestamp - 300
       );
+      await stakeStarOwner.commitStakingSurplus();
       // still not initialized yet (only one point)
       await expect(
         stakeStarPublic.approximateStakingSurplus(initialTimestamp)
@@ -575,10 +551,11 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute another 0.01
-      await stakeStarOwner.commitStakingSurplus(
+      await aggregatorV3Mock.setMockValues(
         ethers.utils.parseEther("0.02"),
         initialTimestamp - 50
       );
+      await stakeStarOwner.commitStakingSurplus();
 
       // two points initialized. If timestamp = last point, reward = last reward
       expect(
@@ -681,6 +658,112 @@ describe("StakeStar", function () {
 
       await stakeStarPublic.unstake(newStaked);
       await stakeStarPublic.claim();
+    });
+  });
+
+  describe("reservedTreasuryCommission", function () {
+    it("Should take commission on staking surplus", async function () {
+      const {
+        stakeStarOwner,
+        stakeStarPublic,
+        stakeStarETH,
+        otherAccount,
+        aggregatorV3Mock,
+        ssvToken,
+        stakeStarManager,
+        validatorParams,
+        stakeStarRegistry,
+        stakeStarTreasury,
+        owner,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+
+      const thirtyTwoEthers = hre.ethers.utils.parseEther("32");
+
+      await expect(
+        stakeStarPublic.stake({ value: thirtyTwoEthers })
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, thirtyTwoEthers);
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      for (const operatorId of validatorParams.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await stakeStarManager.createValidator(
+        validatorParams,
+        await ssvToken.balanceOf(stakeStarManager.address)
+      );
+
+      await stakeStarTreasury.setCommission(50_000); // 50%
+
+      const baseTimestamp = (
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
+      ).timestamp;
+
+      await aggregatorV3Mock.setMockValues(
+        thirtyTwoEthers,
+        baseTimestamp - 1000
+      );
+      await stakeStarOwner.commitStakingSurplus();
+
+      expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
+      expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
+      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
+
+      await aggregatorV3Mock.setMockValues(thirtyTwoEthers, baseTimestamp);
+      await stakeStarOwner.commitStakingSurplus();
+
+      expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
+      expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
+      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
+
+      await aggregatorV3Mock.setMockValues(
+        thirtyTwoEthers.add(100),
+        baseTimestamp + 1000
+      );
+      await stakeStarOwner.commitStakingSurplus();
+
+      expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
+      expect(await stakeStarOwner.stakingSurplusB()).to.eq(50);
+      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(50);
+
+      await aggregatorV3Mock.setMockValues(
+        thirtyTwoEthers.add(120),
+        baseTimestamp + 2000
+      );
+      await stakeStarOwner.commitStakingSurplus();
+
+      expect(await stakeStarOwner.stakingSurplusA()).to.eq(50);
+      expect(await stakeStarOwner.stakingSurplusB()).to.eq(60);
+      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(60);
+
+      await aggregatorV3Mock.setMockValues(
+        thirtyTwoEthers.add(10),
+        baseTimestamp + 3000
+      );
+      await stakeStarOwner.commitStakingSurplus();
+
+      expect(await stakeStarOwner.stakingSurplusA()).to.eq(60);
+      expect(await stakeStarOwner.stakingSurplusB()).to.eq(5);
+      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(5);
+
+      await aggregatorV3Mock.setMockValues(
+        thirtyTwoEthers.sub(120),
+        baseTimestamp + 4000
+      );
+      await stakeStarOwner.commitStakingSurplus();
+
+      expect(await stakeStarOwner.stakingSurplusA()).to.eq(5);
+      expect(await stakeStarOwner.stakingSurplusB()).to.eq(-120);
+      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
     });
   });
 });

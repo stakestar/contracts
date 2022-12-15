@@ -17,12 +17,10 @@ import "./interfaces/IDepositContract.sol";
 import "./interfaces/ISSVNetwork.sol";
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
-// TODO Maintain SSV position in SSVNetwork contract
-// TODO Create validator destruction conditions
-// TODO Prevent double validator destroy
-// TODO Add local pool filling on validator destroy
+// TODO Manage SSV position
+// TODO Validator Destruction: prevent double validator destroy, local pool
+// TODO Add corresponding events
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
-
     struct ValidatorParams {
         bytes publicKey;
         bytes withdrawalCredentials;
@@ -50,8 +48,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Stake(address indexed who, uint256 amount);
     event Unstake(address indexed who, uint256 amount);
     event Claim(address indexed who, uint256 amount);
-    event ApplyRewards(uint256 amount);
-    event ApplyPenalties(uint256 amount);
+    event Harvest(uint256 amount);
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
@@ -76,6 +73,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     int256 public stakingSurplusB;
     uint256 public timestampB;
     uint256 constant minimumTimestampDistance = 180;
+
+    uint256 public reservedTreasuryCommission;
+
+    receive() external payable {}
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -119,8 +120,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         emit SetLocalPoolSize(size);
     }
-
-    receive() external payable {}
 
     function stake() public payable {
         require(msg.value > 0, "no eth transferred");
@@ -203,25 +202,53 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
-    function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance >= (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
-    }
-
     function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         revert("not implemented");
-        require(validatorDestructionAvailability(), "cannot destruct validator");
-
-        stakeStarRegistry.destroyValidator(publicKey);
-
-        emit DestroyValidator(publicKey);
     }
 
-    // TODO: add local pool & double destroy prevention
-    function validatorDestructionAvailability() public view returns (bool) {
-        revert("not implemented");
+    function harvest() public {
+        uint256 amount = address(stakeStarRewards).balance;
+        require(amount > 0, "no rewards available");
+        stakeStarRewards.pull();
+
+        uint256 treasuryCommission = stakeStarTreasury.commission(int256(amount));
+        (bool status,) = payable(stakeStarTreasury).call{value : treasuryCommission}("");
+        require(status, "failed to send Ether");
+
+        uint256 rewards = amount - treasuryCommission;
+        stakeStarETH.updateRate(int256(rewards));
+
+        emit Harvest(rewards);
     }
 
-    function buySSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function commitStakingSurplus() public {
+        (uint256 latestStakingBalance, uint256 timestamp) = consensusDataProvider.latestStakingBalance();
+
+        require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
+
+        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.CREATED);
+        int256 latestStakingSurplus = int256(latestStakingBalance) - int256(activeValidators * 32 ether);
+
+        bool initialized = approximationDataInitialized();
+
+        stakingSurplusA = stakingSurplusB;
+        timestampA = timestampB;
+
+        reservedTreasuryCommission = stakeStarTreasury.commission(latestStakingSurplus);
+        stakingSurplusB = latestStakingSurplus - int256(reservedTreasuryCommission);
+        timestampB = timestamp;
+
+        if (approximationDataInitialized()) {
+            if (initialized) {
+                int256 ethChange = stakingSurplusB - stakingSurplusA;
+                stakeStarETH.updateRate(ethChange);
+            } else {
+                stakeStarETH.updateRate(stakingSurplusB);
+            }
+        }
+    }
+
+    function manageSSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
         ISwapRouter swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
         ISwapRouter.ExactInputSingleParams memory params =
@@ -242,26 +269,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork.deposit(address(this), depositAmount);
     }
 
-    function commitStakingSurplus(int256 currentStakingSurplus, uint256 timestamp) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
+    function validatorCreationAvailability() public view returns (bool) {
+        return address(this).balance >= (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
+    }
 
-        bool pointAInitialized = timestampA != 0;
-        bool pointBInitialized = timestampB != 0;
-
-        stakingSurplusA = stakingSurplusB;
-        timestampA = timestampB;
-
-        stakingSurplusB = currentStakingSurplus;
-        timestampB = timestamp;
-
-        if (pointBInitialized) {
-            if (pointAInitialized) {
-                int256 ethChange = stakingSurplusB - stakingSurplusA;
-                stakeStarETH.updateRate(ethChange);
-            } else {
-                stakeStarETH.updateRate(currentStakingSurplus);
-            }
-        }
+    function validatorDestructionAvailability() public view returns (bool) {
+        revert("not implemented");
     }
 
     function approximateStakingSurplus(uint256 timestamp) public view returns (int256) {
@@ -275,13 +288,17 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function approximateRate(uint256 timestamp) public view returns (uint256) {
-        // not completely initialized yet
-        if (timestampA == 0) return stakeStarETH.rate();
+        if (approximationDataInitialized()) {
+            int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
+            int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
+            return stakeStarETH.estimateRate(approximateEthChange);
+        } else {
+            return stakeStarETH.rate();
+        }
+    }
 
-        int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
-        int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
-
-        return stakeStarETH.estimateRate(approximateEthChange);
+    function approximationDataInitialized() public view returns (bool) {
+        return timestampA != 0 && timestampB != 0;
     }
 
     function currentApproximateRate() public view returns (uint256) {
@@ -294,27 +311,5 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function ETH_to_ssETH_approximate(uint256 eth) public view returns (uint256) {
         return eth * 1 ether / currentApproximateRate();
-    }
-
-    function applyRewards() public {
-        uint256 amount = address(stakeStarRewards).balance;
-        require(amount > 0, "no rewards available");
-        stakeStarRewards.pull();
-
-        uint256 treasuryCommission = stakeStarTreasury.commission(amount);
-        (bool status,) = payable(stakeStarTreasury).call{value : treasuryCommission}("");
-        require(status, "failed to send Ether");
-
-        uint256 rewards = amount - treasuryCommission;
-        stakeStarETH.updateRate(int256(rewards));
-
-        emit ApplyRewards(rewards);
-    }
-
-    function applyPenalties(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(amount > 0, "cannot apply zero penalty");
-        stakeStarETH.updateRate(- int256(amount));
-
-        emit ApplyPenalties(amount);
     }
 }
