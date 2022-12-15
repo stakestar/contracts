@@ -34,10 +34,7 @@ contract AggregatorV3Mock is AggregatorV3Interface {
         return (0, 0, 0, 0, 0);
     }
 
-    function latestRoundData()
-    external
-    view
-    returns (
+    function latestRoundData() external view returns (
         uint80 roundId,
         int256 answer,
         uint256 startedAt,
