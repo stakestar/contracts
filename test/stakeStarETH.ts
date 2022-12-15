@@ -126,6 +126,7 @@ describe("StakeStarETH", function () {
         stakeStarManager,
         validatorParams,
         stakeStarRegistry,
+        stakeStarRegistryManager,
         owner,
         hre,
       } = await loadFixture(deployStakeStarFixture);
@@ -151,6 +152,9 @@ describe("StakeStarETH", function () {
       await stakeStarManager.createValidator(
         validatorParams,
         await ssvToken.balanceOf(stakeStarManager.address)
+      );
+      await stakeStarRegistryManager.verifyValidatorCreation(
+        validatorParams.publicKey
       );
 
       await aggregatorV3Mock.setMockValues(

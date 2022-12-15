@@ -38,6 +38,12 @@ export async function deployStakeStarFixture() {
     manager.address
   );
 
+  await stakeStarRegistry.grantRole(
+    await stakeStarRegistry.MANAGER_ROLE(),
+    manager.address
+  );
+  const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
+
   const ERC20 = await hre.ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);
   const ssvNetwork = new Contract(
@@ -63,6 +69,7 @@ export async function deployStakeStarFixture() {
     stakeStarManager,
     stakeStarPublic,
     stakeStarRegistry,
+    stakeStarRegistryManager,
     stakeStarTreasury,
     stakeStarETH,
     stakeStarRewards,

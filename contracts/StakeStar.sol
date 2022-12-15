@@ -185,8 +185,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function updateValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(
-            stakeStarRegistry.validatorStatuses(validatorParams.publicKey) == StakeStarRegistry.ValidatorStatus.CREATED,
-            "validator not created"
+            stakeStarRegistry.validatorStatuses(validatorParams.publicKey) != StakeStarRegistry.ValidatorStatus.MISSING,
+            "validator missing"
         );
         require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "some operators not allowListed");
 
@@ -226,7 +226,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
 
-        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.CREATED);
+        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.ACTIVE);
         int256 latestStakingSurplus = int256(latestStakingBalance) - int256(activeValidators * 32 ether);
 
         bool initialized = approximationDataInitialized();

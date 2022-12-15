@@ -384,7 +384,7 @@ describe("StakeStar", function () {
 
       await expect(
         stakeStarOwner.updateValidator(validatorParams, ssvBalance)
-      ).to.be.revertedWith("validator not created");
+      ).to.be.revertedWith("validator missing");
 
       for (const operatorId of validatorParams.operatorIds) {
         await stakeStarRegistry
@@ -673,6 +673,7 @@ describe("StakeStar", function () {
         stakeStarManager,
         validatorParams,
         stakeStarRegistry,
+        stakeStarRegistryManager,
         stakeStarTreasury,
         owner,
         hre,
@@ -698,6 +699,9 @@ describe("StakeStar", function () {
       await stakeStarManager.createValidator(
         validatorParams,
         await ssvToken.balanceOf(stakeStarManager.address)
+      );
+      await stakeStarRegistryManager.verifyValidatorCreation(
+        validatorParams.publicKey
       );
 
       await stakeStarTreasury.setCommission(50_000); // 50%
