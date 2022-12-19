@@ -19,7 +19,6 @@ import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
 // TODO Manage SSV position
 // TODO Validator Destruction: prevent double validator destroy, local pool
-// TODO Add corresponding events
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
         bytes publicKey;
@@ -49,6 +48,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Unstake(address indexed who, uint256 amount);
     event Claim(address indexed who, uint256 amount);
     event Harvest(uint256 amount);
+    event CommitStakingSurplus(int256 stakingSurplus, uint256 timestamp);
+    event ManageSSV(uint256 amountIn, uint256 amountOut, uint256 depositAmount);
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
@@ -246,6 +247,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
                 stakeStarETH.updateRate(stakingSurplusB);
             }
         }
+
+        emit CommitStakingSurplus(stakingSurplusB, timestampB);
     }
 
     function manageSSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -267,6 +270,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 depositAmount = ssvToken.balanceOf(address(this)) / 1e7 * 1e7;
         ssvToken.approve(address(ssvNetwork), depositAmount);
         ssvNetwork.deposit(address(this), depositAmount);
+
+        emit ManageSSV(amountIn, amountOut, depositAmount);
     }
 
     function validatorCreationAvailability() public view returns (bool) {

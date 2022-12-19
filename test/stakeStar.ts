@@ -490,12 +490,14 @@ describe("StakeStar", function () {
       const precision = BigNumber.from(1e7);
 
       await stakeStarOwner.stake({ value: amountIn });
-      await stakeStarOwner.manageSSV(
-        addresses.weth,
-        3000,
-        amountIn,
-        expectedAmountOut
-      );
+      await expect(
+        stakeStarOwner.manageSSV(
+          addresses.weth,
+          3000,
+          amountIn,
+          expectedAmountOut
+        )
+      ).to.emit(stakeStarOwner, "ManageSSV");
 
       expect(
         await ssvNetwork.getAddressBalance(stakeStarOwner.address)
@@ -543,7 +545,9 @@ describe("StakeStar", function () {
         ethers.utils.parseEther("0.01"),
         initialTimestamp - 300
       );
-      await stakeStarOwner.commitStakingSurplus();
+      await expect(stakeStarOwner.commitStakingSurplus())
+        .to.emit(stakeStarOwner, "CommitStakingSurplus")
+        .withArgs(ethers.utils.parseEther("0.01"), initialTimestamp - 300);
       // still not initialized yet (only one point)
       await expect(
         stakeStarPublic.approximateStakingSurplus(initialTimestamp)
