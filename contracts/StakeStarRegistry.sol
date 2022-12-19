@@ -41,26 +41,26 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         emit RemoveOperatorFromAllowList(operatorId);
     }
 
-    function createValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
+    function initiateActivatingValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
         require(validatorStatuses[publicKey] == ValidatorStatus.MISSING, "validator status not MISSING");
         validatorStatuses[publicKey] = ValidatorStatus.PENDING;
         validatorPublicKeys.push(publicKey);
         emit ValidatorStatusChange(publicKey, ValidatorStatus.MISSING, ValidatorStatus.PENDING);
     }
 
-    function activateValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+    function confirmActivatingValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         require(validatorStatuses[publicKey] == ValidatorStatus.PENDING, "validator status not PENDING");
         validatorStatuses[publicKey] = ValidatorStatus.ACTIVE;
         emit ValidatorStatusChange(publicKey, ValidatorStatus.PENDING, ValidatorStatus.ACTIVE);
     }
 
-    function exitValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
+    function initiateExitingValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
         require(validatorStatuses[publicKey] == ValidatorStatus.ACTIVE, "validator status not ACTIVE");
         validatorStatuses[publicKey] = ValidatorStatus.EXITING;
         emit ValidatorStatusChange(publicKey, ValidatorStatus.ACTIVE, ValidatorStatus.EXITING);
     }
 
-    function verifyValidatorExit(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+    function confirmExitingValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         require(validatorStatuses[publicKey] == ValidatorStatus.EXITING, "validator status not EXITING");
         validatorStatuses[publicKey] = ValidatorStatus.EXITED;
         emit ValidatorStatusChange(publicKey, ValidatorStatus.EXITING, ValidatorStatus.EXITED);

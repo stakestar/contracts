@@ -162,7 +162,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(validatorCreationAvailability(), "cannot create validator");
         require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "some operators not allowListed");
 
-        stakeStarRegistry.createValidator(validatorParams.publicKey);
+        stakeStarRegistry.initiateActivatingValidator(validatorParams.publicKey);
 
         depositContract.deposit{value : 32 ether}(
             validatorParams.publicKey,

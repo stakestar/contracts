@@ -58,25 +58,25 @@ describe("StakeStarRegistry", function () {
       await expect(
         stakeStarRegistry
           .connect(owner)
-          .createValidator(validatorParams.publicKey)
+          .initiateActivatingValidator(validatorParams.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
       );
       await expect(
         stakeStarRegistry
           .connect(owner)
-          .exitValidator(validatorParams.publicKey)
+          .initiateExitingValidator(validatorParams.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
       );
 
       await expect(
-        stakeStarRegistry.activateValidator(validatorParams.publicKey)
+        stakeStarRegistry.confirmActivatingValidator(validatorParams.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
       );
       await expect(
-        stakeStarRegistry.verifyValidatorExit(validatorParams.publicKey)
+        stakeStarRegistry.confirmExitingValidator(validatorParams.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
       );
@@ -178,15 +178,15 @@ describe("StakeStarRegistry", function () {
         ValidatorStatus.MISSING
       );
 
-      await expect(stakeStarRegistry.createValidator(publicKey1))
+      await expect(stakeStarRegistry.initiateActivatingValidator(publicKey1))
         .to.emit(stakeStarRegistry, "ValidatorStatusChange")
         .withArgs(publicKey1, ValidatorStatus.MISSING, ValidatorStatus.PENDING);
 
       await expect(
-        stakeStarRegistry.createValidator(publicKey1)
+        stakeStarRegistry.initiateActivatingValidator(publicKey1)
       ).to.be.revertedWith("validator status not MISSING");
 
-      await stakeStarRegistry.createValidator(publicKey2);
+      await stakeStarRegistry.initiateActivatingValidator(publicKey2);
 
       expect(await stakeStarRegistry.validatorStatuses(publicKey1)).to.equal(
         ValidatorStatus.PENDING
@@ -236,12 +236,14 @@ describe("StakeStarRegistry", function () {
       );
 
       await expect(
-        stakeStarRegistryManager.activateValidator(publicKey1)
+        stakeStarRegistryManager.confirmActivatingValidator(publicKey1)
       ).to.be.revertedWith("validator status not PENDING");
 
-      await stakeStarRegistry.createValidator(publicKey1);
+      await stakeStarRegistry.initiateActivatingValidator(publicKey1);
 
-      await expect(stakeStarRegistryManager.activateValidator(publicKey1))
+      await expect(
+        stakeStarRegistryManager.confirmActivatingValidator(publicKey1)
+      )
         .to.emit(stakeStarRegistry, "ValidatorStatusChange")
         .withArgs(publicKey1, ValidatorStatus.PENDING, ValidatorStatus.ACTIVE);
 
@@ -249,12 +251,12 @@ describe("StakeStarRegistry", function () {
         ValidatorStatus.ACTIVE
       );
       await expect(
-        stakeStarRegistryManager.activateValidator(publicKey1)
+        stakeStarRegistryManager.confirmActivatingValidator(publicKey1)
       ).to.be.revertedWith("validator status not PENDING");
 
-      await stakeStarRegistry.exitValidator(publicKey1);
+      await stakeStarRegistry.initiateExitingValidator(publicKey1);
       await expect(
-        stakeStarRegistryManager.activateValidator(publicKey1)
+        stakeStarRegistryManager.confirmActivatingValidator(publicKey1)
       ).to.be.revertedWith("validator status not PENDING");
     });
 
@@ -276,30 +278,30 @@ describe("StakeStarRegistry", function () {
       );
 
       await expect(
-        stakeStarRegistry.exitValidator(publicKey1)
+        stakeStarRegistry.initiateExitingValidator(publicKey1)
       ).to.be.revertedWith("validator status not ACTIVE");
 
-      await expect(stakeStarRegistry.createValidator(publicKey1));
-      await expect(stakeStarRegistry.createValidator(publicKey2));
-      await expect(stakeStarRegistry.createValidator(publicKey3));
+      await expect(stakeStarRegistry.initiateActivatingValidator(publicKey1));
+      await expect(stakeStarRegistry.initiateActivatingValidator(publicKey2));
+      await expect(stakeStarRegistry.initiateActivatingValidator(publicKey3));
 
-      await stakeStarRegistryManager.activateValidator(publicKey1);
-      await stakeStarRegistryManager.activateValidator(publicKey2);
-      await stakeStarRegistryManager.activateValidator(publicKey3);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey1);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey2);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey3);
 
-      await expect(stakeStarRegistry.exitValidator(publicKey1))
+      await expect(stakeStarRegistry.initiateExitingValidator(publicKey1))
         .to.emit(stakeStarRegistry, "ValidatorStatusChange")
         .withArgs(publicKey1, ValidatorStatus.ACTIVE, ValidatorStatus.EXITING);
 
       await expect(
-        stakeStarRegistry.exitValidator(publicKey1)
+        stakeStarRegistry.initiateExitingValidator(publicKey1)
       ).to.be.revertedWith("validator status not ACTIVE");
 
       expect(await stakeStarRegistry.validatorStatuses(publicKey1)).to.equal(
         ValidatorStatus.EXITING
       );
 
-      await stakeStarRegistry.exitValidator(publicKey2);
+      await stakeStarRegistry.initiateExitingValidator(publicKey2);
 
       expect(
         await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.MISSING)
@@ -342,16 +344,16 @@ describe("StakeStarRegistry", function () {
 
       const publicKey1 = Wallet.createRandom().publicKey;
 
-      await stakeStarRegistry.createValidator(publicKey1);
-      await stakeStarRegistryManager.activateValidator(publicKey1);
+      await stakeStarRegistry.initiateActivatingValidator(publicKey1);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey1);
 
       await expect(
-        stakeStarRegistryManager.verifyValidatorExit(publicKey1)
+        stakeStarRegistryManager.confirmExitingValidator(publicKey1)
       ).to.be.revertedWith("validator status not EXITING");
 
-      await stakeStarRegistry.exitValidator(publicKey1);
+      await stakeStarRegistry.initiateExitingValidator(publicKey1);
 
-      await expect(stakeStarRegistryManager.verifyValidatorExit(publicKey1))
+      await expect(stakeStarRegistryManager.confirmExitingValidator(publicKey1))
         .to.emit(stakeStarRegistry, "ValidatorStatusChange")
         .withArgs(publicKey1, ValidatorStatus.EXITING, ValidatorStatus.EXITED);
 
@@ -375,21 +377,21 @@ describe("StakeStarRegistry", function () {
       const publicKey3 = Wallet.createRandom().publicKey;
 
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(0);
-      await stakeStarRegistry.createValidator(publicKey1);
-      await stakeStarRegistryManager.activateValidator(publicKey1);
+      await stakeStarRegistry.initiateActivatingValidator(publicKey1);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey1);
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(1);
-      await stakeStarRegistry.createValidator(publicKey2);
-      await stakeStarRegistryManager.activateValidator(publicKey2);
+      await stakeStarRegistry.initiateActivatingValidator(publicKey2);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey2);
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(2);
-      await stakeStarRegistry.createValidator(publicKey3);
-      await stakeStarRegistryManager.activateValidator(publicKey3);
+      await stakeStarRegistry.initiateActivatingValidator(publicKey3);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey3);
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(3);
 
-      await expect(stakeStarRegistry.exitValidator(publicKey1));
+      await expect(stakeStarRegistry.initiateExitingValidator(publicKey1));
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(2);
-      await expect(stakeStarRegistry.exitValidator(publicKey2));
+      await expect(stakeStarRegistry.initiateExitingValidator(publicKey2));
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(1);
-      await expect(stakeStarRegistry.exitValidator(publicKey3));
+      await expect(stakeStarRegistry.initiateExitingValidator(publicKey3));
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(0);
     });
 
@@ -409,15 +411,15 @@ describe("StakeStarRegistry", function () {
       const publicKey3 = Wallet.createRandom().publicKey;
       const publicKey4 = Wallet.createRandom().publicKey;
 
-      await stakeStarRegistryOwner.createValidator(publicKey1);
-      await stakeStarRegistryOwner.createValidator(publicKey2);
-      await stakeStarRegistryOwner.createValidator(publicKey3);
-      await stakeStarRegistryOwner.createValidator(publicKey4);
+      await stakeStarRegistryOwner.initiateActivatingValidator(publicKey1);
+      await stakeStarRegistryOwner.initiateActivatingValidator(publicKey2);
+      await stakeStarRegistryOwner.initiateActivatingValidator(publicKey3);
+      await stakeStarRegistryOwner.initiateActivatingValidator(publicKey4);
 
-      await stakeStarRegistryManager.activateValidator(publicKey1);
-      await stakeStarRegistryManager.activateValidator(publicKey2);
-      await stakeStarRegistryManager.activateValidator(publicKey3);
-      await stakeStarRegistryManager.activateValidator(publicKey4);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey1);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey2);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey3);
+      await stakeStarRegistryManager.confirmActivatingValidator(publicKey4);
 
       expect(await stakeStarRegistry.getPoRAddressList(1, 0)).to.eql([]);
       expect(await stakeStarRegistry.getPoRAddressList(100, 100)).to.eql([]);
