@@ -10,7 +10,6 @@ import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
 import { deployAll } from "../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Contract } from "ethers";
-import { grantAllStakeStarRoles } from "../scripts/tasks/grant-StakeStarRole";
 import { grantAllManagerRoles } from "../scripts/tasks/grant-ManagerRole";
 
 // We define a fixture to reuse the same setup in every test.
@@ -44,13 +43,6 @@ export async function deployStakeStarFixture() {
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
   const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
 
-  await grantAllStakeStarRoles(
-    hre,
-    stakeStar.address,
-    stakeStarRegistry.address,
-    stakeStarETH.address,
-    stakeStarRewards.address
-  );
   await grantAllManagerRoles(
     hre,
     stakeStar.address,

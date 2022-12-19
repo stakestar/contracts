@@ -3,7 +3,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
 import { ADDRESSES } from "../constants";
 import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
-import { grantAllManagerRoles } from "./grant-ManagerRole";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
@@ -64,13 +63,6 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarRegistry.address,
     stakeStarETH.address,
     stakeStarRewards.address
-  );
-
-  await grantAllManagerRoles(
-    hre,
-    stakeStar.address,
-    stakeStarRegistry.address,
-    addresses.stakeStarBot
   );
 
   return {

@@ -28,13 +28,13 @@ contract StakeStarETH is ERC20, AccessControl {
         emit Burn(account, ssETH, rate);
     }
 
-    function totalSupplyEth() public view returns (uint256) {
-        return ssETH_to_ETH(totalSupply());
-    }
-
     function updateRate(int256 ethChange) public onlyRole(STAKE_STAR_ROLE) {
         rate = estimateRate(ethChange);
         emit UpdateRate(rate, ethChange);
+    }
+
+    function totalSupplyEth() public view returns (uint256) {
+        return ssETH_to_ETH(totalSupply());
     }
 
     function estimateRate(int256 ethChange) public view returns (uint256) {

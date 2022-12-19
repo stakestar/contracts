@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-contract ChainlinkProvider is Initializable, IConsensusDataProvider, AccessControlUpgradeable {
+contract ChainlinkProvider is Initializable, AccessControlUpgradeable, IConsensusDataProvider {
     event SetFeeds(address stakingBalanceFeed);
 
     AggregatorV3Interface public stakingBalanceFeed;
