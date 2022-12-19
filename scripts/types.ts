@@ -6,6 +6,8 @@ export enum Network {
 
 export enum ValidatorStatus {
   MISSING,
-  CREATED,
-  DESTROYED,
+  PENDING,
+  ACTIVE,
+  EXITING,
+  EXITED,
 }

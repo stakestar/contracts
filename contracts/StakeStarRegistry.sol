@@ -6,18 +6,20 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@chainlink/contracts/src/v0.8/interfaces/PoRAddressList.sol";
 
 contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddressList {
-    event AddOperatorToAllowList(uint32 operatorId);
-    event RemoveOperatorFromAllowList(uint32 operatorId);
-    event CreateValidator(bytes publicKey);
-    event DestroyValidator(bytes publicKey);
-
     enum ValidatorStatus {
         MISSING,
-        CREATED,
-        DESTROYED
+        PENDING,
+        ACTIVE,
+        EXITING,
+        EXITED
     }
 
+    event AddOperatorToAllowList(uint32 operatorId);
+    event RemoveOperatorFromAllowList(uint32 operatorId);
+    event ValidatorStatusChange(bytes publicKey, ValidatorStatus statusFrom, ValidatorStatus statusTo);
+
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
+    bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
     mapping(uint32 => bool) public allowListOfOperators;
     mapping(bytes => ValidatorStatus) public validatorStatuses;
@@ -39,17 +41,29 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         emit RemoveOperatorFromAllowList(operatorId);
     }
 
-    function createValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
+    function initiateActivatingValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
         require(validatorStatuses[publicKey] == ValidatorStatus.MISSING, "validator status not MISSING");
-        validatorStatuses[publicKey] = ValidatorStatus.CREATED;
+        validatorStatuses[publicKey] = ValidatorStatus.PENDING;
         validatorPublicKeys.push(publicKey);
-        emit CreateValidator(publicKey);
+        emit ValidatorStatusChange(publicKey, ValidatorStatus.MISSING, ValidatorStatus.PENDING);
     }
 
-    function destroyValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.CREATED, "validator status not CREATED");
-        validatorStatuses[publicKey] = ValidatorStatus.DESTROYED;
-        emit DestroyValidator(publicKey);
+    function confirmActivatingValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+        require(validatorStatuses[publicKey] == ValidatorStatus.PENDING, "validator status not PENDING");
+        validatorStatuses[publicKey] = ValidatorStatus.ACTIVE;
+        emit ValidatorStatusChange(publicKey, ValidatorStatus.PENDING, ValidatorStatus.ACTIVE);
+    }
+
+    function initiateExitingValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
+        require(validatorStatuses[publicKey] == ValidatorStatus.ACTIVE, "validator status not ACTIVE");
+        validatorStatuses[publicKey] = ValidatorStatus.EXITING;
+        emit ValidatorStatusChange(publicKey, ValidatorStatus.ACTIVE, ValidatorStatus.EXITING);
+    }
+
+    function confirmExitingValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+        require(validatorStatuses[publicKey] == ValidatorStatus.EXITING, "validator status not EXITING");
+        validatorStatuses[publicKey] = ValidatorStatus.EXITED;
+        emit ValidatorStatusChange(publicKey, ValidatorStatus.EXITING, ValidatorStatus.EXITED);
     }
 
     function verifyOperators(uint32[] memory operatorIds) public view returns (bool) {
@@ -86,7 +100,7 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
     }
 
     function getPoRAddressListLength() public view returns (uint256) {
-        return countValidatorPublicKeys(ValidatorStatus.CREATED);
+        return countValidatorPublicKeys(ValidatorStatus.ACTIVE);
     }
 
     function getPoRAddressList(uint256 startIndex, uint256 endIndex) public view returns (string[] memory) {
@@ -101,7 +115,7 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         }
 
         string[] memory addressList = new string[](normalizedEndIndex - startIndex + 1);
-        bytes[] memory publicKeys = getValidatorPublicKeys(ValidatorStatus.CREATED);
+        bytes[] memory publicKeys = getValidatorPublicKeys(ValidatorStatus.ACTIVE);
         uint256 relativeIndex = 0;
         uint256 returnIndex = 0;
 
