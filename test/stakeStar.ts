@@ -700,7 +700,7 @@ describe("StakeStar", function () {
         validatorParams,
         await ssvToken.balanceOf(stakeStarManager.address)
       );
-      await stakeStarRegistryManager.verifyValidatorCreation(
+      await stakeStarRegistryManager.activateValidator(
         validatorParams.publicKey
       );
 

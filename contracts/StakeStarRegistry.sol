@@ -48,7 +48,7 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         emit ValidatorStatusChange(publicKey, ValidatorStatus.MISSING, ValidatorStatus.PENDING);
     }
 
-    function verifyValidatorCreation(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+    function activateValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
         require(validatorStatuses[publicKey] == ValidatorStatus.PENDING, "validator status not PENDING");
         validatorStatuses[publicKey] = ValidatorStatus.ACTIVE;
         emit ValidatorStatusChange(publicKey, ValidatorStatus.PENDING, ValidatorStatus.ACTIVE);
