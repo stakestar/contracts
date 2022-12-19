@@ -9,7 +9,7 @@
     "dist/index.*",
     "artifacts/contracts/**/*"
   ],
-  "version": "0.10.0-dev",
+  "version": "0.10.0",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
