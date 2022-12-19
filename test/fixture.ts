@@ -10,6 +10,8 @@ import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
 import { deployAll } from "../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Contract } from "ethers";
+import { grantAllStakeStarRoles } from "../scripts/tasks/grant-StakeStarRole";
+import { grantAllManagerRoles } from "../scripts/tasks/grant-ManagerRole";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,
@@ -24,25 +26,37 @@ export async function deployStakeStarFixture() {
     stakeStarETH,
     stakeStarRewards,
     chainlinkProvider,
-    aggregatorV3Mock,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
 
+  const AggregatorV3Mock = await hre.ethers.getContractFactory(
+    "AggregatorV3Mock"
+  );
+  const aggregatorV3Mock = await hre.upgrades.deployProxy(AggregatorV3Mock);
+  await aggregatorV3Mock.deployed();
+  console.log(`AggregatorV3Mock is deployed to ${aggregatorV3Mock.address}`);
+
+  await chainlinkProvider.setFeeds(aggregatorV3Mock.address);
+
   const stakeStarOwner = stakeStar.connect(owner);
   const stakeStarManager = stakeStarOwner.connect(manager);
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
-
-  await stakeStarOwner.grantRole(
-    await stakeStarOwner.MANAGER_ROLE(),
-    manager.address
-  );
-
-  await stakeStarRegistry.grantRole(
-    await stakeStarRegistry.MANAGER_ROLE(),
-    manager.address
-  );
   const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
+
+  await grantAllStakeStarRoles(
+    hre,
+    stakeStar.address,
+    stakeStarRegistry.address,
+    stakeStarETH.address,
+    stakeStarRewards.address
+  );
+  await grantAllManagerRoles(
+    hre,
+    stakeStar.address,
+    stakeStarRegistry.address,
+    manager.address
+  );
 
   const ERC20 = await hre.ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);

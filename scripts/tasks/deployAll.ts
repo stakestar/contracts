@@ -3,17 +3,11 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
 import { ADDRESSES } from "../constants";
 import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
+import { grantAllManagerRoles } from "./grant-ManagerRole";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
-
-  const AggregatorV3Mock = await hre.ethers.getContractFactory(
-    "AggregatorV3Mock"
-  );
-  const aggregatorV3Mock = await hre.upgrades.deployProxy(AggregatorV3Mock);
-  await aggregatorV3Mock.deployed();
-  console.log(`ChainlinkProvider is deployed to ${aggregatorV3Mock.address}`);
 
   const ChainlinkProvider = await hre.ethers.getContractFactory(
     "ChainlinkProvider"
@@ -53,8 +47,6 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await stakeStar.deployed();
   console.log(`StakeStar is deployed to ${stakeStar.address}`);
 
-  await chainlinkProvider.setFeeds(aggregatorV3Mock.address);
-
   await stakeStar.setAddresses(
     addresses.depositContract,
     addresses.ssvNetwork,
@@ -74,6 +66,13 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarRewards.address
   );
 
+  await grantAllManagerRoles(
+    hre,
+    stakeStar.address,
+    stakeStarRegistry.address,
+    addresses.stakeStarBot
+  );
+
   return {
     stakeStar,
     stakeStarRegistry,
@@ -81,7 +80,6 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarRewards,
     stakeStarTreasury,
     chainlinkProvider,
-    aggregatorV3Mock,
   };
 }
 

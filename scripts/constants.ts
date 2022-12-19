@@ -21,7 +21,6 @@ export const ADDRESSES: Record<
     stakeStarRewards: string;
     stakeStar: string;
     stakeStarBot: string;
-    mockRewardsProvider: string;
     weth: string;
   }
 > = {
@@ -37,29 +36,27 @@ export const ADDRESSES: Record<
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",
-    mockRewardsProvider: "",
     weth: "",
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    chainlinkStakingBalanceFeed: "0xcd3BBd46c6c6354e3B03780F99E9836d3AC7740b",
-    consensusDataProvider: ZERO_ADDRESS,
-    stakeStarTreasury: "0x75D1433c6881db0583576F205Df3d95c5Deacc29",
-    stakeStarRegistry: "0x981D1B3e33d78e1Af39Fc3CBb232Aa863324935c",
-    stakeStarRewards: "0xbB551b50632789d7115D19423440832E5665151B",
-    stakeStarETH: "0x1643acE56113B95d35CB4256764f29E61746F991",
-    stakeStar: "0x4A4Aa5C43ce5E9d2dD3BeebeaD8762C3d408A7cD",
+    chainlinkStakingBalanceFeed: "",
+    consensusDataProvider: "",
+    stakeStarTreasury: "",
+    stakeStarRegistry: "",
+    stakeStarRewards: "",
+    stakeStarETH: "",
+    stakeStar: "",
     stakeStarBot: "0xD57A255522D8a2575cF49A8dB17e5d4b33c65De1",
-    mockRewardsProvider: "0x2838cA6C93aC645BAc88556D6365d1aeEa6D4B7B",
     weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    chainlinkStakingBalanceFeed: "0xcd3BBd46c6c6354e3B03780F99E9836d3AC7740b",
+    chainlinkStakingBalanceFeed: "",
     consensusDataProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
@@ -67,7 +64,6 @@ export const ADDRESSES: Record<
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",
-    mockRewardsProvider: "",
     weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
   },
 };
