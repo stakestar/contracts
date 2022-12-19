@@ -31,15 +31,15 @@ export async function grantAllManagerRoles(
   );
 }
 
-task("grant-ManagerRole", "Grants a MANAGER_ROLE to an address")
-  .addPositionalParam("address")
-  .setAction(async (args, hre) => {
+task("grant-ManagerRole", "Grants a MANAGER_ROLE to an address").setAction(
+  async (args, hre) => {
     const network = currentNetwork(hre);
     const addresses = ADDRESSES[network];
     await grantAllManagerRoles(
       hre,
       addresses.stakeStar,
       addresses.stakeStarRegistry,
-      args.address
+      addresses.stakeStarBot
     );
-  });
+  }
+);
