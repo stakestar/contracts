@@ -2,6 +2,11 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
+
+import { ZERO_PRIVATE_KEY } from "./scripts/constants";
+import { Network } from "./scripts/types";
+
+import "./scripts/tasks/allowListOperators";
 import "./scripts/tasks/deployAll";
 import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/grant-StakeStarRole";
@@ -9,8 +14,6 @@ import "./scripts/tasks/printAddresses";
 import "./scripts/tasks/setAddresses";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
-import { ZERO_PRIVATE_KEY } from "./scripts/constants";
-import { Network } from "./scripts/types";
 
 const HARDHAT_NETWORK = "http://127.0.0.1:8545/";
 
