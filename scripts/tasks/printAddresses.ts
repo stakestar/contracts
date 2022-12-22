@@ -14,7 +14,10 @@ task("printAddresses", "Prints useful metadata from the contracts").setAction(
     console.log("StakeStarRegistry", await stakeStar.stakeStarRegistry());
     console.log("StakeStarETH", await stakeStar.stakeStarETH());
     console.log("StakeStarRewards", await stakeStar.stakeStarRewards());
-    console.log("ChainlinkProvider", await stakeStar.consensusDataProvider());
+    console.log(
+      "ConsensusDataProvider",
+      await stakeStar.consensusDataProvider()
+    );
 
     console.log("DepositContract", await stakeStar.depositContract());
     console.log("SSV Network", await stakeStar.ssvNetwork());
