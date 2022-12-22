@@ -521,7 +521,7 @@ describe("StakeStar", function () {
         stakeStarPublic,
         otherAccount,
         stakeStarETH,
-        aggregatorV3Mock,
+        stakeStarProviderManager,
       } = await loadFixture(deployStakeStarFixture);
 
       const one = ethers.utils.parseEther("1");
@@ -548,7 +548,7 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute 0.01 first time
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         ethers.utils.parseEther("0.01"),
         initialTimestamp - 300
       );
@@ -562,7 +562,7 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute another 0.01
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         ethers.utils.parseEther("0.02"),
         initialTimestamp - 50
       );
@@ -679,7 +679,7 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarETH,
         otherAccount,
-        aggregatorV3Mock,
+        stakeStarProviderManager,
         ssvToken,
         stakeStarManager,
         validatorParams,
@@ -723,7 +723,7 @@ describe("StakeStar", function () {
         )
       ).timestamp;
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         thirtyTwoEthers,
         baseTimestamp - 1000
       );
@@ -733,14 +733,17 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
 
-      await aggregatorV3Mock.setMockValues(thirtyTwoEthers, baseTimestamp);
+      await stakeStarProviderManager.commitStakingBalance(
+        thirtyTwoEthers,
+        baseTimestamp
+      );
       await stakeStarOwner.commitStakingSurplus();
 
       expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         thirtyTwoEthers.add(100),
         baseTimestamp + 1000
       );
@@ -750,7 +753,7 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(50);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(50);
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         thirtyTwoEthers.add(120),
         baseTimestamp + 2000
       );
@@ -760,7 +763,7 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(60);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(60);
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         thirtyTwoEthers.add(10),
         baseTimestamp + 3000
       );
@@ -770,7 +773,7 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(5);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(5);
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         thirtyTwoEthers.sub(120),
         baseTimestamp + 4000
       );

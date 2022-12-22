@@ -20,9 +20,8 @@ describe("StakeStarProvider", function () {
 
   describe("stakingBalance", function () {
     it("Should commit staking balance", async function () {
-      const { stakeStarProvider, owner, manager } = await loadFixture(
-        deployStakeStarFixture
-      );
+      const { stakeStarProvider, stakeStarProviderManager, owner } =
+        await loadFixture(deployStakeStarFixture);
 
       expect(await stakeStarProvider.latestTimestamp()).to.eq(0);
 
@@ -38,9 +37,7 @@ describe("StakeStarProvider", function () {
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarProvider.MANAGER_ROLE()}`
       );
 
-      await expect(
-        stakeStarProvider.connect(manager).commitStakingBalance(2, 3)
-      )
+      await expect(stakeStarProviderManager.commitStakingBalance(2, 3))
         .to.emit(stakeStarProvider, "CommitStakingBalance")
         .withArgs(2, 3);
 
@@ -51,10 +48,10 @@ describe("StakeStarProvider", function () {
       expect(latestStakingBalance2.timestamp).to.be.eq(3);
 
       await expect(
-        stakeStarProvider.connect(manager).commitStakingBalance(1, 1)
+        stakeStarProviderManager.commitStakingBalance(1, 1)
       ).to.be.revertedWith("timestamp too old");
       await expect(
-        stakeStarProvider.connect(manager).commitStakingBalance(1, 3)
+        stakeStarProviderManager.commitStakingBalance(1, 3)
       ).to.be.revertedWith("timestamp too old");
     });
   });

@@ -43,6 +43,7 @@ export async function deployStakeStarFixture() {
   const stakeStarManager = stakeStarOwner.connect(manager);
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
   const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
+  const stakeStarProviderManager = stakeStarProvider.connect(manager);
 
   await grantAllManagerRoles(
     hre,
@@ -82,6 +83,7 @@ export async function deployStakeStarFixture() {
     stakeStarETH,
     stakeStarRewards,
     stakeStarProvider,
+    stakeStarProviderManager,
     chainlinkProvider,
     aggregatorV3Mock,
     ssvToken,

@@ -57,7 +57,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    chainlinkProvider.address,
+    stakeStarProvider.address,
     stakeStarRegistry.address,
     stakeStarETH.address,
     stakeStarRewards.address,
