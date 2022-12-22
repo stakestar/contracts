@@ -8,6 +8,13 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
 
+  const StakeStarProvider = await hre.ethers.getContractFactory(
+    "StakeStarProvider"
+  );
+  const stakeStarProvider = await hre.upgrades.deployProxy(StakeStarProvider);
+  await stakeStarProvider.deployed();
+  console.log(`StakeStarProvider is deployed to ${stakeStarProvider.address}`);
+
   const ChainlinkProvider = await hre.ethers.getContractFactory(
     "ChainlinkProvider"
   );
@@ -50,7 +57,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    chainlinkProvider.address,
+    stakeStarProvider.address,
     stakeStarRegistry.address,
     stakeStarETH.address,
     stakeStarRewards.address,
@@ -71,6 +78,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarETH,
     stakeStarRewards,
     stakeStarTreasury,
+    stakeStarProvider,
     chainlinkProvider,
   };
 }

@@ -121,7 +121,7 @@ describe("StakeStarETH", function () {
         stakeStarPublic,
         stakeStarETH,
         otherAccount,
-        aggregatorV3Mock,
+        stakeStarProviderManager,
         ssvToken,
         stakeStarManager,
         validatorParams,
@@ -157,7 +157,7 @@ describe("StakeStarETH", function () {
         validatorParams.publicKey
       );
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         thirtyTwoEthers,
         (
           await hre.ethers.provider.getBlock(
@@ -167,7 +167,7 @@ describe("StakeStarETH", function () {
       );
       await stakeStarOwner.commitStakingSurplus();
 
-      await aggregatorV3Mock.setMockValues(
+      await stakeStarProviderManager.commitStakingBalance(
         sixteenEthers,
         (
           await hre.ethers.provider.getBlock(
