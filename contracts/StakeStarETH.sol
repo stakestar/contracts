@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract StakeStarETH is ERC20, AccessControl {
-    event Mint(address indexed to, uint256 ssETH);
-    event Burn(address indexed from, uint256 ssETH);
+    event Mint(address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
     event UpdateRate(uint256 rate, int256 ethChange);
 
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
