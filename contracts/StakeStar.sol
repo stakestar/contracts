@@ -44,8 +44,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
-    event Stake(address indexed who, uint256 amount);
-    event Unstake(address indexed who, uint256 amount);
+    event Stake(address indexed who, uint256 eth, uint256 ssETH);
+    event Unstake(address indexed who, uint256 eth, uint256 ssETH);
     event Claim(address indexed who, uint256 amount);
     event Harvest(uint256 amount);
     event CommitStakingSurplus(int256 stakingSurplus, uint256 timestamp);
@@ -128,7 +128,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 ssETH = ETH_to_ssETH_approximate(msg.value);
         stakeStarETH.mint(msg.sender, ssETH);
 
-        emit Stake(msg.sender, msg.value);
+        emit Stake(msg.sender, msg.value, ssETH);
     }
 
     function unstake(uint256 ssETH) public returns (uint256 eth) {
@@ -138,7 +138,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         pendingUnstake[msg.sender] += eth;
         pendingUnstakeSum += eth;
 
-        emit Unstake(msg.sender, eth);
+        emit Unstake(msg.sender, eth, ssETH);
     }
 
     function claim() public {

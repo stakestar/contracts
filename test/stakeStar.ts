@@ -91,20 +91,25 @@ describe("StakeStar", function () {
         "no eth transferred"
       );
 
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeEtherBalances(
+      const stakeAmountETH = BigNumber.from(1);
+      const stakeAmountSS = await stakeStarPublic.ETH_to_ssETH_approximate(
+        stakeAmountETH
+      );
+
+      await expect(
+        stakeStarPublic.stake({ value: stakeAmountETH })
+      ).to.changeEtherBalances(
         [otherAccount, stakeStarPublic],
-        [-1, 1]
+        [stakeAmountETH.mul(-1), stakeAmountETH]
       );
 
-      await expect(stakeStarPublic.stake({ value: 1 })).to.changeTokenBalance(
-        stakeStarETH,
-        otherAccount,
-        1
-      );
+      await expect(
+        stakeStarPublic.stake({ value: stakeAmountETH })
+      ).to.changeTokenBalance(stakeStarETH, otherAccount, stakeAmountSS);
 
-      await expect(stakeStarPublic.stake({ value: 1 }))
+      await expect(stakeStarPublic.stake({ value: stakeAmountETH }))
         .to.emit(stakeStarPublic, "Stake")
-        .withArgs(otherAccount.address, 1);
+        .withArgs(otherAccount.address, stakeAmountETH, stakeAmountSS);
     });
   });
 
@@ -121,7 +126,9 @@ describe("StakeStar", function () {
       expect(await stakeStarETH.totalSupply()).to.equal(ssEthAmount);
 
       const unstakeAmountSS = ssEthAmount.div(2);
-      const unstakeAmountEth = await stakeStarETH.ssETH_to_ETH(unstakeAmountSS);
+      const unstakeAmountEth = await stakeStarPublic.ssETH_to_ETH_approximate(
+        unstakeAmountSS
+      );
       const shouldBeBurntSS = unstakeAmountSS;
 
       await expect(
@@ -146,7 +153,7 @@ describe("StakeStar", function () {
 
       await expect(stakeStarPublic.unstake(unstakeAmountSS))
         .to.emit(stakeStarPublic, "Unstake")
-        .withArgs(otherAccount.address, unstakeAmountSS);
+        .withArgs(otherAccount.address, unstakeAmountSS, unstakeAmountEth);
     });
   });
 
