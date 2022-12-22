@@ -24,6 +24,7 @@ export async function deployStakeStarFixture() {
     stakeStarTreasury,
     stakeStarETH,
     stakeStarRewards,
+    stakeStarProvider,
     chainlinkProvider,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
@@ -47,6 +48,7 @@ export async function deployStakeStarFixture() {
     hre,
     stakeStar.address,
     stakeStarRegistry.address,
+    stakeStarProvider.address,
     manager.address
   );
 
@@ -79,6 +81,7 @@ export async function deployStakeStarFixture() {
     stakeStarTreasury,
     stakeStarETH,
     stakeStarRewards,
+    stakeStarProvider,
     chainlinkProvider,
     aggregatorV3Mock,
     ssvToken,
