@@ -161,7 +161,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
-        require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "some operators not allowListed");
+        require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "operators not allowListed");
 
         stakeStarRegistry.initiateActivatingValidator(validatorParams.publicKey);
 
@@ -189,7 +189,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             stakeStarRegistry.validatorStatuses(validatorParams.publicKey) != StakeStarRegistry.ValidatorStatus.MISSING,
             "validator missing"
         );
-        require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "some operators not allowListed");
+        require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "operators not allowListed");
 
         ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
         ssvNetwork.updateValidator(

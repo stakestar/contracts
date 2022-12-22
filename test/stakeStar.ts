@@ -271,7 +271,7 @@ describe("StakeStar", function () {
 
       await expect(
         stakeStarManager.createValidator(validatorParams, ssvBalance)
-      ).to.be.revertedWith("some operators not allowListed");
+      ).to.be.revertedWith("operators not allowListed");
 
       for (const operatorId of validatorParams.operatorIds) {
         await stakeStarRegistry
@@ -400,7 +400,7 @@ describe("StakeStar", function () {
 
       await expect(
         stakeStarOwner.updateValidator(validatorParams, ssvBalance)
-      ).to.be.revertedWith("some operators not allowListed");
+      ).to.be.revertedWith("operators not allowListed");
 
       await stakeStarRegistry.connect(owner).addOperatorToAllowList(127);
 
