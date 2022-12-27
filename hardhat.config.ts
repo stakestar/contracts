@@ -11,6 +11,7 @@ import "./scripts/tasks/deployAll";
 import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/grant-StakeStarRole";
 import "./scripts/tasks/printAddresses";
+import "./scripts/tasks/printContractVariables";
 import "./scripts/tasks/setAddresses";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
