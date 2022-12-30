@@ -6,26 +6,26 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 contract StakeStarProvider is Initializable, AccessControlUpgradeable, IConsensusDataProvider {
-    event CommitStakingBalance(uint256 stakingBalance, uint256 timestamp);
+    event CommitStakingSurplus(int256 stakingSurplus, uint256 timestamp);
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
-    mapping(uint256 => uint256) public stakingBalances;
+    mapping(uint256 => int256) public stakingSurpluses;
     uint256 public latestTimestamp;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function commitStakingBalance(uint256 stakingBalance, uint256 timestamp) public onlyRole(MANAGER_ROLE) {
+    function commitStakingSurplus(int256 stakingSurplus, uint256 timestamp) public onlyRole(MANAGER_ROLE) {
         require(latestTimestamp < timestamp, "timestamp too old");
-        stakingBalances[timestamp] = stakingBalance;
+        stakingSurpluses[timestamp] = stakingSurplus;
         latestTimestamp = timestamp;
-        emit CommitStakingBalance(stakingBalance, timestamp);
+        emit CommitStakingSurplus(stakingSurplus, timestamp);
     }
 
-    function latestStakingBalance() public view returns (uint256 stakingBalance, uint256 timestamp) {
-        stakingBalance = stakingBalances[latestTimestamp];
+    function latestStakingSurplus() public view returns (int256 stakingSurplus, uint256 timestamp) {
+        stakingSurplus = stakingSurpluses[latestTimestamp];
         timestamp = latestTimestamp;
     }
 }

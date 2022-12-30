@@ -157,8 +157,8 @@ describe("StakeStarETH", function () {
         validatorParams.publicKey
       );
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers,
+      await stakeStarProviderManager.commitStakingSurplus(
+        0,
         (
           await hre.ethers.provider.getBlock(
             await hre.ethers.provider.getBlockNumber()
@@ -167,8 +167,8 @@ describe("StakeStarETH", function () {
       );
       await stakeStarOwner.commitStakingSurplus();
 
-      await stakeStarProviderManager.commitStakingBalance(
-        sixteenEthers,
+      await stakeStarProviderManager.commitStakingSurplus(
+        sixteenEthers.mul(-1),
         (
           await hre.ethers.provider.getBlock(
             await hre.ethers.provider.getBlockNumber()

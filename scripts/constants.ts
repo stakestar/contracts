@@ -48,7 +48,7 @@ export const ADDRESSES: Record<
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     consensusDataProvider: "0x00c919998492108Cb28e4Fb4A9CdF48a1bFfaad5",
     chainlinkStakingBalanceFeed: "",
-    chainlinkProvider: "0x8EcEC9bFBFE2EA50E9A462c44BE0794F1F224dD1",
+    chainlinkProvider: "",
     stakeStarProvider: "0x00c919998492108Cb28e4Fb4A9CdF48a1bFfaad5",
     stakeStarTreasury: "0x1Ea5EABb2E76313670ff422d36C91cB1698B585A",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",

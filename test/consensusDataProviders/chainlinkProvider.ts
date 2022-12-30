@@ -4,30 +4,30 @@ import { deployStakeStarFixture } from "../fixture";
 
 describe("ChainlinkProvider", function () {
   describe("Deployment", function () {
-    it("Should set the right stakingBalanceFeed", async function () {
+    it("Should set the right stakingSurplusFeed", async function () {
       const { chainlinkProvider, aggregatorV3Mock } = await loadFixture(
         deployStakeStarFixture
       );
 
-      expect(await chainlinkProvider.stakingBalanceFeed()).to.equal(
+      expect(await chainlinkProvider.stakingSurplusFeed()).to.equal(
         aggregatorV3Mock.address
       );
     });
   });
 
-  describe("latestStakingBalance", function () {
-    it("Should return stakingBalance and timestamp", async function () {
+  describe("latestStakingSurplus", function () {
+    it("Should return stakingSurplus and timestamp", async function () {
       const { chainlinkProvider, aggregatorV3Mock } = await loadFixture(
         deployStakeStarFixture
       );
 
       await aggregatorV3Mock.setMockValues(7, 7);
 
-      const latestStakingBalance =
-        await chainlinkProvider.latestStakingBalance();
+      const latestStakingSurplus =
+        await chainlinkProvider.latestStakingSurplus();
 
-      expect(latestStakingBalance.stakingBalance).to.eq(7);
-      expect(latestStakingBalance.timestamp).to.be.eq(7);
+      expect(latestStakingSurplus.stakingSurplus).to.eq(7);
+      expect(latestStakingSurplus.timestamp).to.be.eq(7);
     });
   });
 });
