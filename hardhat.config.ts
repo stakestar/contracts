@@ -6,6 +6,8 @@ import "dotenv/config";
 import { ZERO_PRIVATE_KEY } from "./scripts/constants";
 import { Network } from "./scripts/types";
 
+import "./scripts/tasks/events/printPullEvents";
+import "./scripts/tasks/events/printUpdateRateEvents";
 import "./scripts/tasks/allowListOperators";
 import "./scripts/tasks/deployAll";
 import "./scripts/tasks/grant-ManagerRole";

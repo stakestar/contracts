@@ -17,6 +17,10 @@ task("printContractVariables", "Prints contracts variables").setAction(
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
     console.log(
+      "StakeStar ETH Balance",
+      stringify(await hre.ethers.provider.getBalance(stakeStar.address))
+    );
+    console.log(
       "pendingUnstakeSum",
       stringify(await stakeStar.pendingUnstakeSum())
     );
@@ -26,21 +30,13 @@ task("printContractVariables", "Prints contracts variables").setAction(
       stringify(await stakeStar.stakingSurplusA())
     );
     const timestampA = (await stakeStar.timestampA()).toNumber();
-    console.log(
-      "timestampA",
-      timestampA,
-      new Date(timestampA * 1000).toISOString()
-    );
+    console.log("timestampA", new Date(timestampA * 1000).toISOString());
     console.log(
       "stakingSurplusB",
       stringify(await stakeStar.stakingSurplusB())
     );
     const timestampB = (await stakeStar.timestampB()).toNumber();
-    console.log(
-      "timestampB",
-      timestampB,
-      new Date(timestampB * 1000).toISOString()
-    );
+    console.log("timestampB", new Date(timestampB * 1000).toISOString());
     console.log(
       "reservedTreasuryCommission",
       stringify(await stakeStar.reservedTreasuryCommission())
@@ -69,20 +65,21 @@ task("printContractVariables", "Prints contracts variables").setAction(
       addresses.stakeStarRegistry
     );
 
-    console.log(
-      "PENDING validators count",
-      stringify(
-        await stakeStarRegistry.countValidatorPublicKeys(
-          ValidatorStatus.PENDING
-        )
-      )
-    );
-    console.log(
-      "ACTIVE validators count",
-      stringify(
-        await stakeStarRegistry.countValidatorPublicKeys(ValidatorStatus.ACTIVE)
-      )
-    );
+    const pendingValidatorCount =
+      await stakeStarRegistry.countValidatorPublicKeys(ValidatorStatus.PENDING);
+    const activeValidatorCount =
+      await stakeStarRegistry.countValidatorPublicKeys(ValidatorStatus.ACTIVE);
+    const exitingValidatorCount =
+      await stakeStarRegistry.countValidatorPublicKeys(ValidatorStatus.EXITING);
+    const totalValidatorCount = pendingValidatorCount
+      .add(activeValidatorCount)
+      .add(exitingValidatorCount);
+
+    console.log("PENDING validator count", stringify(pendingValidatorCount));
+    console.log("ACTIVE validator count", stringify(activeValidatorCount));
+    console.log("EXITING validator count", stringify(exitingValidatorCount));
+    console.log("TOTAL validator count", stringify(totalValidatorCount));
+    console.log();
 
     const pendingPublicKeys = (
       await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.PENDING)
@@ -96,6 +93,18 @@ task("printContractVariables", "Prints contracts variables").setAction(
     if (activePublicKeys.length > 0) {
       console.log(`ACTIVE validators\n${activePublicKeys.join("\n")}`);
     }
+    const exitingPublicKeys = (
+      await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.EXITING)
+    ).filter((key) => key !== "0x");
+    if (exitingPublicKeys.length > 0) {
+      console.log(`EXITING validators\n${exitingPublicKeys.join("\n")}`);
+    }
+    console.log();
+
+    console.log(
+      "ETH which is held on validators",
+      stringify(hre.ethers.utils.parseEther("32").mul(totalValidatorCount))
+    );
     console.log();
 
     const StakeStarProvider = await hre.ethers.getContractFactory(
@@ -106,8 +115,9 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     const latestStakingSurplus = await stakeStarProvider.latestStakingSurplus();
     console.log(
+      "StakeStarProvider::latestStakingSurplus",
       stringify(latestStakingSurplus.stakingSurplus),
-      latestStakingSurplus.timestamp.toNumber()
+      new Date(latestStakingSurplus.timestamp.toNumber() * 1000).toISOString()
     );
   }
 );
