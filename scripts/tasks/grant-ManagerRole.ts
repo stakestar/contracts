@@ -47,7 +47,7 @@ export async function grantAllManagerRoles(
   );
 }
 
-task("grant-ManagerRole", "Grants a MANAGER_ROLE to an address").setAction(
+task("grant-ManagerRole", "Grants a MANAGER_ROLE to the manager").setAction(
   async (args, hre) => {
     const network = currentNetwork(hre);
     const addresses = ADDRESSES[network];

@@ -16,7 +16,6 @@ task("printContractVariables", "Prints contracts variables").setAction(
     const StakeStar = await hre.ethers.getContractFactory("StakeStar");
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
-    console.log("StakeStar", stakeStar.address);
     console.log(
       "pendingUnstakeSum",
       stringify(await stakeStar.pendingUnstakeSum())
@@ -26,12 +25,22 @@ task("printContractVariables", "Prints contracts variables").setAction(
       "stakingSurplusA",
       stringify(await stakeStar.stakingSurplusA())
     );
-    console.log("timestampA", stringify(await stakeStar.timestampA()));
+    const timestampA = (await stakeStar.timestampA()).toNumber();
+    console.log(
+      "timestampA",
+      timestampA,
+      new Date(timestampA * 1000).toISOString()
+    );
     console.log(
       "stakingSurplusB",
       stringify(await stakeStar.stakingSurplusB())
     );
-    console.log("timestampB", stringify(await stakeStar.timestampB()));
+    const timestampB = (await stakeStar.timestampB()).toNumber();
+    console.log(
+      "timestampB",
+      timestampB,
+      new Date(timestampB * 1000).toISOString()
+    );
     console.log(
       "reservedTreasuryCommission",
       stringify(await stakeStar.reservedTreasuryCommission())
@@ -81,12 +90,24 @@ task("printContractVariables", "Prints contracts variables").setAction(
     if (pendingPublicKeys.length > 0) {
       console.log(`PENDING validators\n${pendingPublicKeys.join("\n")}`);
     }
-
     const activePublicKeys = (
       await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.ACTIVE)
     ).filter((key) => key !== "0x");
     if (activePublicKeys.length > 0) {
       console.log(`ACTIVE validators\n${activePublicKeys.join("\n")}`);
     }
+    console.log();
+
+    const StakeStarProvider = await hre.ethers.getContractFactory(
+      "StakeStarProvider"
+    );
+    const stakeStarProvider = await StakeStarProvider.attach(
+      addresses.stakeStarProvider
+    );
+    const latestStakingSurplus = await stakeStarProvider.latestStakingSurplus();
+    console.log(
+      stringify(latestStakingSurplus.stakingSurplus),
+      latestStakingSurplus.timestamp.toNumber()
+    );
   }
 );
