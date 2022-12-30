@@ -18,40 +18,40 @@ describe("StakeStarProvider", function () {
     });
   });
 
-  describe("stakingBalance", function () {
-    it("Should commit staking balance", async function () {
+  describe("stakingSurplus", function () {
+    it("Should commit staking surplus", async function () {
       const { stakeStarProvider, stakeStarProviderManager, owner } =
         await loadFixture(deployStakeStarFixture);
 
       expect(await stakeStarProvider.latestTimestamp()).to.eq(0);
 
-      const latestStakingBalance =
-        await stakeStarProvider.latestStakingBalance();
+      const latestStakingSurplus =
+        await stakeStarProvider.latestStakingSurplus();
 
-      expect(latestStakingBalance.stakingBalance).to.eq(0);
-      expect(latestStakingBalance.timestamp).to.be.eq(0);
+      expect(latestStakingSurplus.stakingSurplus).to.eq(0);
+      expect(latestStakingSurplus.timestamp).to.be.eq(0);
 
       await expect(
-        stakeStarProvider.commitStakingBalance(1, 1)
+        stakeStarProvider.commitStakingSurplus(1, 1)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarProvider.MANAGER_ROLE()}`
       );
 
-      await expect(stakeStarProviderManager.commitStakingBalance(2, 3))
-        .to.emit(stakeStarProvider, "CommitStakingBalance")
+      await expect(stakeStarProviderManager.commitStakingSurplus(2, 3))
+        .to.emit(stakeStarProvider, "CommitStakingSurplus")
         .withArgs(2, 3);
 
-      const latestStakingBalance2 =
-        await stakeStarProvider.latestStakingBalance();
+      const latestStakingSurplus2 =
+        await stakeStarProvider.latestStakingSurplus();
 
-      expect(latestStakingBalance2.stakingBalance).to.eq(2);
-      expect(latestStakingBalance2.timestamp).to.be.eq(3);
+      expect(latestStakingSurplus2.stakingSurplus).to.eq(2);
+      expect(latestStakingSurplus2.timestamp).to.be.eq(3);
 
       await expect(
-        stakeStarProviderManager.commitStakingBalance(1, 1)
+        stakeStarProviderManager.commitStakingSurplus(1, 1)
       ).to.be.revertedWith("timestamp too old");
       await expect(
-        stakeStarProviderManager.commitStakingBalance(1, 3)
+        stakeStarProviderManager.commitStakingSurplus(1, 3)
       ).to.be.revertedWith("timestamp too old");
     });
   });

@@ -525,12 +525,13 @@ describe("StakeStar", function () {
       } = await loadFixture(deployStakeStarFixture);
 
       const one = ethers.utils.parseEther("1");
+      const oneHundred = ethers.utils.parseEther("100");
 
       // some stake required because of division by zero
-      await stakeStarPublic.stake({ value: ethers.utils.parseEther("100") });
+      await stakeStarPublic.stake({ value: oneHundred });
       // one to one
       const balance1 = await stakeStarETH.balanceOf(otherAccount.address);
-      expect(balance1).to.equal(ethers.utils.parseEther("100"));
+      expect(balance1).to.equal(oneHundred);
 
       const getTime = async function () {
         return (
@@ -548,7 +549,7 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute 0.01 first time
-      await stakeStarProviderManager.commitStakingBalance(
+      await stakeStarProviderManager.commitStakingSurplus(
         ethers.utils.parseEther("0.01"),
         initialTimestamp - 300
       );
@@ -562,7 +563,7 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute another 0.01
-      await stakeStarProviderManager.commitStakingBalance(
+      await stakeStarProviderManager.commitStakingSurplus(
         ethers.utils.parseEther("0.02"),
         initialTimestamp - 50
       );
@@ -723,8 +724,8 @@ describe("StakeStar", function () {
         )
       ).timestamp;
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers,
+      await stakeStarProviderManager.commitStakingSurplus(
+        0,
         baseTimestamp - 1000
       );
       await stakeStarOwner.commitStakingSurplus();
@@ -733,18 +734,15 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers,
-        baseTimestamp
-      );
+      await stakeStarProviderManager.commitStakingSurplus(0, baseTimestamp);
       await stakeStarOwner.commitStakingSurplus();
 
       expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers.add(100),
+      await stakeStarProviderManager.commitStakingSurplus(
+        100,
         baseTimestamp + 1000
       );
       await stakeStarOwner.commitStakingSurplus();
@@ -753,8 +751,8 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(50);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(50);
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers.add(120),
+      await stakeStarProviderManager.commitStakingSurplus(
+        120,
         baseTimestamp + 2000
       );
       await stakeStarOwner.commitStakingSurplus();
@@ -763,8 +761,8 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(60);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(60);
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers.add(10),
+      await stakeStarProviderManager.commitStakingSurplus(
+        10,
         baseTimestamp + 3000
       );
       await stakeStarOwner.commitStakingSurplus();
@@ -773,8 +771,8 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(5);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(5);
 
-      await stakeStarProviderManager.commitStakingBalance(
-        thirtyTwoEthers.sub(120),
+      await stakeStarProviderManager.commitStakingSurplus(
+        -120,
         baseTimestamp + 4000
       );
       await stakeStarOwner.commitStakingSurplus();

@@ -223,12 +223,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function commitStakingSurplus() public {
-        (uint256 latestStakingBalance, uint256 timestamp) = consensusDataProvider.latestStakingBalance();
+        (int256 latestStakingSurplus, uint256 timestamp) = consensusDataProvider.latestStakingSurplus();
 
         require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
-
-        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.ACTIVE);
-        int256 latestStakingSurplus = int256(latestStakingBalance) - int256(activeValidators * 32 ether);
 
         bool initialized = approximationDataInitialized();
 

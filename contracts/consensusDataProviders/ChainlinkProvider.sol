@@ -7,23 +7,23 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract ChainlinkProvider is Initializable, AccessControlUpgradeable, IConsensusDataProvider {
-    event SetFeeds(address stakingBalanceFeed);
+    event SetFeeds(address stakingSurplusFeed);
 
-    AggregatorV3Interface public stakingBalanceFeed;
+    AggregatorV3Interface public stakingSurplusFeed;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function setFeeds(address stakingBalanceFeedAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        stakingBalanceFeed = AggregatorV3Interface(stakingBalanceFeedAddress);
-        emit SetFeeds(stakingBalanceFeedAddress);
+    function setFeeds(address stakingSurplusFeedAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        stakingSurplusFeed = AggregatorV3Interface(stakingSurplusFeedAddress);
+        emit SetFeeds(stakingSurplusFeedAddress);
     }
 
-    function latestStakingBalance() public view returns (uint256 stakingBalance, uint256 timestamp) {
-        (,int256 answer, uint256 startedAt,,) = stakingBalanceFeed.latestRoundData();
+    function latestStakingSurplus() public view returns (int256 stakingSurplus, uint256 timestamp) {
+        (,int256 answer, uint256 startedAt,,) = stakingSurplusFeed.latestRoundData();
 
-        stakingBalance = uint256(answer);
+        stakingSurplus = answer;
         timestamp = startedAt;
     }
 }
