@@ -1,12 +1,7 @@
 import { task } from "hardhat/config";
 import { ADDRESSES } from "../constants";
-import { currentNetwork } from "../helpers";
-import { BigNumber } from "ethers";
+import { currentNetwork, humanify } from "../helpers";
 import { ValidatorStatus } from "../types";
-
-function stringify(n: BigNumber) {
-  return n.toString();
-}
 
 task("printContractVariables", "Prints contracts variables").setAction(
   async (args, hre) => {
@@ -18,43 +13,41 @@ task("printContractVariables", "Prints contracts variables").setAction(
 
     console.log(
       "StakeStar ETH Balance",
-      stringify(await hre.ethers.provider.getBalance(stakeStar.address))
+      humanify(await hre.ethers.provider.getBalance(stakeStar.address))
     );
     console.log(
       "pendingUnstakeSum",
-      stringify(await stakeStar.pendingUnstakeSum())
+      humanify(await stakeStar.pendingUnstakeSum())
     );
-    console.log("localPoolSize", stringify(await stakeStar.localPoolSize()));
-    console.log(
-      "stakingSurplusA",
-      stringify(await stakeStar.stakingSurplusA())
-    );
+    console.log("localPoolSize", humanify(await stakeStar.localPoolSize()));
+    console.log();
+
+    console.log("stakingSurplusA", humanify(await stakeStar.stakingSurplusA()));
     const timestampA = (await stakeStar.timestampA()).toNumber();
     console.log("timestampA", new Date(timestampA * 1000).toISOString());
-    console.log(
-      "stakingSurplusB",
-      stringify(await stakeStar.stakingSurplusB())
-    );
+    console.log("stakingSurplusB", humanify(await stakeStar.stakingSurplusB()));
     const timestampB = (await stakeStar.timestampB()).toNumber();
     console.log("timestampB", new Date(timestampB * 1000).toISOString());
+    console.log();
+
     console.log(
       "reservedTreasuryCommission",
-      stringify(await stakeStar.reservedTreasuryCommission())
+      humanify(await stakeStar.reservedTreasuryCommission())
     );
     console.log(
       "currentApproximateRate",
-      stringify(await stakeStar.currentApproximateRate())
+      humanify(await stakeStar.currentApproximateRate())
     );
     console.log();
 
     const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
     const stakeStarETH = await StakeStarETH.attach(addresses.stakeStarETH);
 
-    console.log("rate", stringify(await stakeStarETH.rate()));
-    console.log("totalSupply", stringify(await stakeStarETH.totalSupply()));
+    console.log("rate", humanify(await stakeStarETH.rate()));
+    console.log("totalSupply", humanify(await stakeStarETH.totalSupply()));
     console.log(
       "totalSupplyEth",
-      stringify(await stakeStarETH.totalSupplyEth())
+      humanify(await stakeStarETH.totalSupplyEth())
     );
     console.log();
 
@@ -75,10 +68,16 @@ task("printContractVariables", "Prints contracts variables").setAction(
       .add(activeValidatorCount)
       .add(exitingValidatorCount);
 
-    console.log("PENDING validator count", stringify(pendingValidatorCount));
-    console.log("ACTIVE validator count", stringify(activeValidatorCount));
-    console.log("EXITING validator count", stringify(exitingValidatorCount));
-    console.log("TOTAL validator count", stringify(totalValidatorCount));
+    console.log(
+      "PENDING validator count",
+      humanify(pendingValidatorCount, 0, 0)
+    );
+    console.log("ACTIVE validator count", humanify(activeValidatorCount, 0, 0));
+    console.log(
+      "EXITING validator count",
+      humanify(exitingValidatorCount, 0, 0)
+    );
+    console.log("TOTAL validator count", humanify(totalValidatorCount, 0, 0));
     console.log();
 
     const pendingPublicKeys = (
@@ -103,7 +102,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
 
     console.log(
       "ETH which is held on validators",
-      stringify(hre.ethers.utils.parseEther("32").mul(totalValidatorCount))
+      humanify(hre.ethers.utils.parseEther("32").mul(totalValidatorCount))
     );
     console.log();
 
@@ -116,7 +115,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
     const latestStakingSurplus = await stakeStarProvider.latestStakingSurplus();
     console.log(
       "StakeStarProvider::latestStakingSurplus",
-      stringify(latestStakingSurplus.stakingSurplus),
+      humanify(latestStakingSurplus.stakingSurplus),
       new Date(latestStakingSurplus.timestamp.toNumber() * 1000).toISOString()
     );
   }

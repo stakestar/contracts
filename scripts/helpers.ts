@@ -2,6 +2,7 @@ import { AbiCoder } from "@ethersproject/abi";
 import { StakeStar } from "../typechain-types";
 import { Network } from "./types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { BigNumber } from "ethers";
 
 export function currentNetwork(hre: HardhatRuntimeEnvironment) {
   switch (hre.network.name) {
@@ -49,4 +50,14 @@ export async function generateValidatorParams(
       coder.encode(["string"], [share.privateKey])
     ),
   };
+}
+
+export function humanify(
+  n: BigNumber,
+  decimals: number = 18,
+  digits: number = 5
+) {
+  return (
+    n.div(BigNumber.from(10 ** (decimals - digits))).toNumber() / 10 ** digits
+  );
 }
