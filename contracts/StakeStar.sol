@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
+import "./beaconChainDataProviders/BeaconChainDataProvider.sol";
 import "./interfaces/IStakingPool.sol";
-import "./interfaces/IBeaconChainDataProvider.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarETH.sol";
 import "./StakeStarRewards.sol";
@@ -62,7 +62,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
 
-    IBeaconChainDataProvider public beaconChainDataProvider;
+    BeaconChainDataProvider public beaconChainDataProvider;
 
     mapping(address => uint256) public pendingUnstake;
     uint256 public pendingUnstakeSum;
@@ -97,7 +97,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
 
-        beaconChainDataProvider = IBeaconChainDataProvider(beaconChainDataProviderAddress);
+        beaconChainDataProvider = BeaconChainDataProvider(beaconChainDataProviderAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarETH = StakeStarETH(stakeStarETHAddress);
