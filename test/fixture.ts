@@ -30,15 +30,6 @@ export async function deployStakeStarFixture() {
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
 
-  const AggregatorV3Mock = await hre.ethers.getContractFactory(
-    "AggregatorV3Mock"
-  );
-  const aggregatorV3Mock = await hre.upgrades.deployProxy(AggregatorV3Mock);
-  await aggregatorV3Mock.deployed();
-  console.log(`AggregatorV3Mock is deployed to ${aggregatorV3Mock.address}`);
-
-  await chainlinkProvider.setFeeds(aggregatorV3Mock.address);
-
   const stakeStarOwner = stakeStar.connect(owner);
   const stakeStarManager = stakeStarOwner.connect(manager);
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
@@ -85,7 +76,6 @@ export async function deployStakeStarFixture() {
     stakeStarProvider,
     stakeStarProviderManager,
     chainlinkProvider,
-    aggregatorV3Mock,
     ssvToken,
     ssvNetwork,
     validatorParams,

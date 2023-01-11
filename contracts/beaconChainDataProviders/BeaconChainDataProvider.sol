@@ -1,15 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-abstract contract BeaconChainDataProvider {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+abstract contract BeaconChainDataProvider is Initializable, AccessControlUpgradeable {
     error ValidationFailed(uint16 code);
 
     modifier BCDPInitializer(uint256 zeroEpochTimestamp) {
-        _zeroEpochTimestamp = _zeroEpochTimestamp;
+        _zeroEpochTimestamp = zeroEpochTimestamp;
         _;
     }
 
-    uint32 _latestEpoch;
+    event SetLimits(
+        uint256 avgValidatorBalanceLowerLimit,
+        uint256 avgValidatorBalanceUpperLimit,
+        uint256 epochGapLimit,
+        uint256 aprLimit,
+        uint32 validatorCountDiffLimit
+    );
+    event Saved(uint32 epoch, uint256 totalBalance, uint32 validatorCount);
+
+    bytes32 public constant MANAGER_ROLE = keccak256("Manager");
+
+    uint32 public _latestEpoch;
     mapping(uint32 => uint256) public _totalBalance;
     mapping(uint32 => uint32) public _validatorCount;
 
@@ -19,12 +33,32 @@ abstract contract BeaconChainDataProvider {
     uint256 public _avgValidatorBalanceLowerLimit;
     uint256 public _avgValidatorBalanceUpperLimit;
     uint256 public _epochGapLimit;
-    uint256 public _aprLimit;
+    uint256 public _aprLimit; // excess over 32 eth after a year
     uint32 public _validatorCountDiffLimit;
 
-    function _save(uint32 epoch, uint256 totalBalance, uint32 validatorCount) internal {
-        require(_zeroEpochTimestamp > 0, "_zeroEpochTimestamp not initialized");
+    function setLimits(
+        uint256 avgValidatorBalanceLowerLimit,
+        uint256 avgValidatorBalanceUpperLimit,
+        uint256 epochGapLimit,
+        uint256 aprLimit,
+        uint32 validatorCountDiffLimit
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _avgValidatorBalanceLowerLimit = avgValidatorBalanceLowerLimit;
+        _avgValidatorBalanceUpperLimit = avgValidatorBalanceUpperLimit;
+        _epochGapLimit = epochGapLimit;
+        _aprLimit = aprLimit;
+        _validatorCountDiffLimit = validatorCountDiffLimit;
 
+        emit SetLimits(
+            avgValidatorBalanceLowerLimit,
+            avgValidatorBalanceUpperLimit,
+            epochGapLimit,
+            aprLimit,
+            validatorCountDiffLimit
+        );
+    }
+
+    function _save(uint32 epoch, uint256 totalBalance, uint32 validatorCount) internal {
         uint16 validationResult = validate(epoch, totalBalance, validatorCount);
         if (validationResult != 0) {
             revert ValidationFailed({code : validationResult});
@@ -33,6 +67,8 @@ abstract contract BeaconChainDataProvider {
         _latestEpoch = epoch;
         _totalBalance[epoch] = totalBalance;
         _validatorCount[epoch] = validatorCount;
+
+        emit Saved(epoch, totalBalance, validatorCount);
     }
 
     // return values
@@ -65,8 +101,8 @@ abstract contract BeaconChainDataProvider {
                     uint256 surplus = avgValidatorBalance - previousAvgValidatorBalance;
                     uint256 period = givenEpochTimestamp - epochTimestamp(_latestEpoch);
 
-                    // raw estimation of APR
-                    if (31536000 / period * surplus / 32 ether > _aprLimit) {
+                    // very raw estimation of APR
+                    if (31536000 / period * surplus > _aprLimit) {
                         return 5;
                     }
                 }
@@ -88,6 +124,7 @@ abstract contract BeaconChainDataProvider {
     }
 
     function epochTimestamp(uint32 epoch) public view returns (uint256) {
+        require(_zeroEpochTimestamp > 0, "_zeroEpochTimestamp not initialized");
         return _zeroEpochTimestamp + _epochDuration * uint256(epoch);
     }
 }

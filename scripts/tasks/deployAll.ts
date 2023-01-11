@@ -1,24 +1,29 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
-import { ADDRESSES } from "../constants";
+import { ADDRESSES, EPOCHS } from "../constants";
 import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
+  const zeroEpochTimestamp = EPOCHS[network];
 
   const StakeStarProvider = await hre.ethers.getContractFactory(
     "StakeStarProvider"
   );
-  const stakeStarProvider = await hre.upgrades.deployProxy(StakeStarProvider);
+  const stakeStarProvider = await hre.upgrades.deployProxy(StakeStarProvider, [
+    zeroEpochTimestamp,
+  ]);
   await stakeStarProvider.deployed();
   console.log(`StakeStarProvider is deployed to ${stakeStarProvider.address}`);
 
   const ChainlinkProvider = await hre.ethers.getContractFactory(
     "ChainlinkProvider"
   );
-  const chainlinkProvider = await hre.upgrades.deployProxy(ChainlinkProvider);
+  const chainlinkProvider = await hre.upgrades.deployProxy(ChainlinkProvider, [
+    zeroEpochTimestamp,
+  ]);
   await chainlinkProvider.deployed();
   console.log(`ChainlinkProvider is deployed to ${chainlinkProvider.address}`);
 

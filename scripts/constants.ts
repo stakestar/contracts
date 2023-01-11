@@ -76,6 +76,12 @@ export const ADDRESSES: Record<
   },
 };
 
+export const EPOCHS: Record<Network, number> = {
+  [Network.MAINNET]: 1606824023,
+  [Network.GOERLI]: 1616508000,
+  [Network.HARDHAT]: 1616508000,
+};
+
 export const OPERATOR_IDS: Record<Network, number[]> = {
   [Network.MAINNET]: [],
   [Network.GOERLI]: [24, 312, 335, 50],
