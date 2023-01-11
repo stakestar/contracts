@@ -16,7 +16,7 @@ task("printAddresses", "Prints addresses of the contracts").setAction(
     console.log("StakeStarRewards", await stakeStar.stakeStarRewards());
     console.log(
       "ConsensusDataProvider",
-      await stakeStar.consensusDataProvider()
+      await stakeStar.beaconChainDataProvider()
     );
 
     console.log("DepositContract", await stakeStar.depositContract());

@@ -2,7 +2,6 @@ import { task } from "hardhat/config";
 import { ADDRESSES } from "../constants";
 import { currentNetwork, humanify } from "../helpers";
 import { ValidatorStatus } from "../types";
-import { ISSVNetwork__factory } from "../../typechain-types";
 
 task("printContractVariables", "Prints contracts variables").setAction(
   async (args, hre) => {
@@ -120,20 +119,5 @@ task("printContractVariables", "Prints contracts variables").setAction(
       new Date(latestStakingSurplus.timestamp.toNumber() * 1000).toISOString()
     );
     console.log();
-
-    const ssvNetwork = ISSVNetwork__factory.connect(
-      addresses.ssvNetwork,
-      hre.ethers.provider
-    );
-    console.log(
-      "SSVNetwork Balance",
-      humanify(await ssvNetwork.getAddressBalance(addresses.stakeStar)),
-      "SSV"
-    );
-    console.log(
-      "SSVNetwork BurnRate",
-      humanify(await ssvNetwork.getAddressBurnRate(addresses.stakeStar)),
-      "SSV"
-    );
   }
 );
