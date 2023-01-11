@@ -73,7 +73,7 @@ abstract contract BeaconChainDataProvider is Initializable, AccessControlUpgrade
 
     // return values
     // 0 - OK
-    // 1 - given epoch is younger that latestEpoch
+    // 1 - given epoch is younger than latestEpoch
     // 2 - given epoch is from the future
     // 3 - epochGap > epochGapLimit
     // 4 - avgValidatorBalance is out of bounds
