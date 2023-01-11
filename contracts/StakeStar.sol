@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/IStakingPool.sol";
-import "./interfaces/IConsensusDataProvider.sol";
+import "./interfaces/IBeaconChainDataProvider.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarETH.sol";
 import "./StakeStarRewards.sol";
@@ -34,7 +34,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
-        address consensusDataProviderAddress,
+        address beaconChainDataProviderAddress,
         address stakeStarRegistryAddress,
         address stakeStarETHAddress,
         address stakeStarRewardsAddress,
@@ -62,7 +62,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
 
-    IConsensusDataProvider public consensusDataProvider;
+    IBeaconChainDataProvider public beaconChainDataProvider;
 
     mapping(address => uint256) public pendingUnstake;
     uint256 public pendingUnstakeSum;
@@ -87,7 +87,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address depositContractAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
-        address consensusDataProviderAddress,
+        address beaconChainDataProviderAddress,
         address stakeStarRegistryAddress,
         address stakeStarETHAddress,
         address stakeStarRewardsAddress,
@@ -97,7 +97,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
 
-        consensusDataProvider = IConsensusDataProvider(consensusDataProviderAddress);
+        beaconChainDataProvider = IBeaconChainDataProvider(beaconChainDataProviderAddress);
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarETH = StakeStarETH(stakeStarETHAddress);
@@ -108,7 +108,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             depositContractAddress,
             ssvNetworkAddress,
             ssvTokenAddress,
-            consensusDataProviderAddress,
+            beaconChainDataProviderAddress,
             stakeStarRegistryAddress,
             stakeStarETHAddress,
             stakeStarRewardsAddress,
@@ -223,7 +223,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function commitStakingSurplus() public {
-        (int256 latestStakingSurplus, uint256 timestamp) = consensusDataProvider.latestStakingSurplus();
+        (int256 latestStakingSurplus, uint256 timestamp) = beaconChainDataProvider.latestStakingSurplus();
 
         require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
 

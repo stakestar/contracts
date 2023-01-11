@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "../interfaces/IConsensusDataProvider.sol";
+import "../interfaces/IBeaconChainDataProvider.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-contract ChainlinkProvider is Initializable, AccessControlUpgradeable, IConsensusDataProvider {
+contract ChainlinkProvider is Initializable, AccessControlUpgradeable, IBeaconChainDataProvider {
     event SetFeeds(address stakingSurplusFeed);
 
     AggregatorV3Interface public stakingSurplusFeed;

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "../interfaces/IConsensusDataProvider.sol";
+import "../interfaces/IBeaconChainDataProvider.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-contract StakeStarProvider is Initializable, AccessControlUpgradeable, IConsensusDataProvider {
+contract StakeStarProvider is Initializable, AccessControlUpgradeable, IBeaconChainDataProvider {
     event CommitStakingSurplus(int256 stakingSurplus, uint256 timestamp);
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
