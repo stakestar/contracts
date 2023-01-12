@@ -32,7 +32,7 @@ abstract contract BeaconChainDataProvider is Initializable, AccessControlUpgrade
 
     uint256 public _avgValidatorBalanceLowerLimit;
     uint256 public _avgValidatorBalanceUpperLimit;
-    uint256 public _epochGapLimit;
+    uint256 public _epochGapLimit; // in seconds
     uint256 public _aprLimit; // excess over 32 eth after a year
     uint32 public _validatorCountDiffLimit;
 
