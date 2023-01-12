@@ -3,8 +3,9 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "../interfaces/IBeaconChainDataProvider.sol";
 
-abstract contract BeaconChainDataProvider is Initializable, AccessControlUpgradeable {
+abstract contract BeaconChainDataProvider is IBeaconChainDataProvider, Initializable, AccessControlUpgradeable {
     error ValidationFailed(uint16 code);
 
     modifier BCDPInitializer(uint256 zeroEpochTimestamp) {
