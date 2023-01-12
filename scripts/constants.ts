@@ -13,8 +13,7 @@ export const ADDRESSES: Record<
     depositContract: string;
     ssvNetwork: string;
     ssvToken: string;
-    consensusDataProvider: string;
-    chainlinkStakingBalanceFeed: string;
+    beaconChainDataProvider: string;
     chainlinkProvider: string;
     stakeStarProvider: string;
     stakeStarTreasury: string;
@@ -30,8 +29,7 @@ export const ADDRESSES: Record<
     depositContract: "",
     ssvNetwork: "",
     ssvToken: "",
-    consensusDataProvider: "",
-    chainlinkStakingBalanceFeed: "",
+    beaconChainDataProvider: "",
     chainlinkProvider: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
@@ -46,10 +44,9 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    consensusDataProvider: "0xD24BA3Be2e271753094E8d64f77A8B122a012497",
-    chainlinkStakingBalanceFeed: "",
+    beaconChainDataProvider: "0xD24BA3Be2e271753094E8d64f77A8B122a012497",
     chainlinkProvider: "",
-    stakeStarProvider: "0xD24BA3Be2e271753094E8d64f77A8B122a012497",
+    stakeStarProvider: "",
     stakeStarTreasury: "0x1Ea5EABb2E76313670ff422d36C91cB1698B585A",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
     stakeStarRewards: "0xaed21ba98900042bccAA8c2aAf250304D4Cb023D",
@@ -62,8 +59,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    consensusDataProvider: "",
-    chainlinkStakingBalanceFeed: "",
+    beaconChainDataProvider: "",
     chainlinkProvider: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
