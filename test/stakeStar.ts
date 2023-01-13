@@ -2,9 +2,10 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { ZERO } from "../scripts/constants";
+import { EPOCHS, ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture";
 import { BigNumber } from "ethers";
+import { currentNetwork } from "../scripts/helpers";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -521,8 +522,26 @@ describe("StakeStar", function () {
         stakeStarPublic,
         otherAccount,
         stakeStarETH,
+        stakeStarProvider,
         stakeStarProviderManager,
       } = await loadFixture(deployStakeStarFixture);
+
+      await stakeStarProvider.setLimits(
+        hre.ethers.utils.parseUnits("16"),
+        hre.ethers.utils.parseUnits("40"),
+        24 * 3600,
+        hre.ethers.utils.parseUnits("99999"),
+        3
+      );
+
+      const currentTimestamp = (
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
+      ).timestamp;
+      const currentEpochNumber = Math.floor(
+        (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
+      );
 
       const one = ethers.utils.parseEther("1");
       const oneHundred = ethers.utils.parseEther("100");
@@ -540,7 +559,9 @@ describe("StakeStar", function () {
           )
         ).timestamp;
       };
-      const initialTimestamp = await getTime();
+      const initialTimestamp = await stakeStarProviderManager.epochTimestamp(
+        currentEpochNumber
+      );
 
       // not initialized yet
       await expect(
@@ -549,13 +570,17 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute 0.01 first time
-      await stakeStarProviderManager.commitStakingSurplus(
-        ethers.utils.parseEther("0.01"),
-        initialTimestamp - 300
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 3,
+        ethers.utils.parseEther("32.01"),
+        1
       );
       await expect(stakeStarOwner.commitStakingSurplus())
         .to.emit(stakeStarOwner, "CommitStakingSurplus")
-        .withArgs(ethers.utils.parseEther("0.01"), initialTimestamp - 300);
+        .withArgs(
+          ethers.utils.parseEther("0.01"),
+          await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 3)
+        );
       // still not initialized yet (only one point)
       await expect(
         stakeStarPublic.approximateStakingSurplus(initialTimestamp)
@@ -563,15 +588,18 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
 
       // distribute another 0.01
-      await stakeStarProviderManager.commitStakingSurplus(
-        ethers.utils.parseEther("0.02"),
-        initialTimestamp - 50
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 2,
+        ethers.utils.parseEther("32.02"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
       // two points initialized. If timestamp = last point, reward = last reward
       expect(
-        await stakeStarPublic.approximateStakingSurplus(initialTimestamp - 50)
+        await stakeStarPublic.approximateStakingSurplus(
+          await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 2)
+        )
       ).to.equal(ethers.utils.parseEther("0.02"));
 
       // 0.02 will be distributed by 100 staked ethers
@@ -582,10 +610,10 @@ describe("StakeStar", function () {
           .div(ethers.utils.parseEther("100"))
       );
 
-      // 50 seconds spent with rate 0.01 ether / 250 seconds
+      // 2 epochs(384 * 2 seconds) spent with rate 0.01 ether / epoch
       expect(
         await stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-      ).to.equal(ethers.utils.parseEther("0.022"));
+      ).to.equal(ethers.utils.parseEther("0.04"));
 
       const getCurrentRate = async function (
         totalStakedEth: BigNumber,
@@ -600,9 +628,9 @@ describe("StakeStar", function () {
         // current reward = 0.01 / 250 * timedelta + 0.02
         const currentReward = ethers.utils
           .parseEther("0.01")
-          .div(250)
-          .mul(tm - initialTimestamp + 50)
-          .add(ethers.utils.parseEther("0.02"));
+          .mul(tm - initialTimestamp)
+          .div(384)
+          .add(ethers.utils.parseEther("0.04"));
         expect(await stakeStarPublic.approximateStakingSurplus(tm)).to.equal(
           currentReward
         );
@@ -629,7 +657,7 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        initialTimestamp + 100,
+        initialTimestamp.toNumber() + 200,
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
       await getCurrentRate(ethers.utils.parseEther("100"));
@@ -680,6 +708,7 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarETH,
         otherAccount,
+        stakeStarProvider,
         stakeStarProviderManager,
         ssvToken,
         stakeStarManager,
@@ -690,6 +719,23 @@ describe("StakeStar", function () {
         owner,
         hre,
       } = await loadFixture(deployStakeStarFixture);
+
+      await stakeStarProvider.setLimits(
+        hre.ethers.utils.parseUnits("16"),
+        hre.ethers.utils.parseUnits("40"),
+        24 * 3600,
+        hre.ethers.utils.parseUnits("99999"),
+        3
+      );
+
+      const currentTimestamp = (
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
+      ).timestamp;
+      const currentEpochNumber = Math.floor(
+        (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
+      );
 
       const thirtyTwoEthers = hre.ethers.utils.parseEther("32");
 
@@ -718,15 +764,10 @@ describe("StakeStar", function () {
 
       await stakeStarTreasury.setCommission(50_000); // 50%
 
-      const baseTimestamp = (
-        await hre.ethers.provider.getBlock(
-          await hre.ethers.provider.getBlockNumber()
-        )
-      ).timestamp;
-
-      await stakeStarProviderManager.commitStakingSurplus(
-        0,
-        baseTimestamp - 1000
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 10,
+        ethers.utils.parseEther("32.00"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
@@ -734,16 +775,21 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
 
-      await stakeStarProviderManager.commitStakingSurplus(0, baseTimestamp);
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 9,
+        ethers.utils.parseEther("32.00"),
+        1
+      );
       await stakeStarOwner.commitStakingSurplus();
 
       expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
 
-      await stakeStarProviderManager.commitStakingSurplus(
-        100,
-        baseTimestamp + 1000
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 8,
+        ethers.utils.parseEther("32.000000000000000100"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
@@ -751,9 +797,10 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(50);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(50);
 
-      await stakeStarProviderManager.commitStakingSurplus(
-        120,
-        baseTimestamp + 2000
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 7,
+        ethers.utils.parseEther("32.000000000000000120"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
@@ -761,9 +808,10 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(60);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(60);
 
-      await stakeStarProviderManager.commitStakingSurplus(
-        10,
-        baseTimestamp + 3000
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 6,
+        ethers.utils.parseEther("32.000000000000000010"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
@@ -771,9 +819,10 @@ describe("StakeStar", function () {
       expect(await stakeStarOwner.stakingSurplusB()).to.eq(5);
       expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(5);
 
-      await stakeStarProviderManager.commitStakingSurplus(
-        -120,
-        baseTimestamp + 4000
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 5,
+        ethers.utils.parseEther("31.999999999999999880"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 

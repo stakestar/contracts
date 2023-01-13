@@ -14,7 +14,6 @@ export const ADDRESSES: Record<
     ssvNetwork: string;
     ssvToken: string;
     consensusDataProvider: string;
-    chainlinkStakingBalanceFeed: string;
     chainlinkProvider: string;
     stakeStarProvider: string;
     stakeStarTreasury: string;
@@ -31,7 +30,6 @@ export const ADDRESSES: Record<
     ssvNetwork: "",
     ssvToken: "",
     consensusDataProvider: "",
-    chainlinkStakingBalanceFeed: "",
     chainlinkProvider: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
@@ -47,9 +45,8 @@ export const ADDRESSES: Record<
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     consensusDataProvider: "0xD24BA3Be2e271753094E8d64f77A8B122a012497",
-    chainlinkStakingBalanceFeed: "",
     chainlinkProvider: "",
-    stakeStarProvider: "0xD24BA3Be2e271753094E8d64f77A8B122a012497",
+    stakeStarProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
     stakeStarTreasury: "0x1Ea5EABb2E76313670ff422d36C91cB1698B585A",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
     stakeStarRewards: "0xaed21ba98900042bccAA8c2aAf250304D4Cb023D",
@@ -63,7 +60,6 @@ export const ADDRESSES: Record<
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     consensusDataProvider: "",
-    chainlinkStakingBalanceFeed: "",
     chainlinkProvider: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
@@ -74,6 +70,12 @@ export const ADDRESSES: Record<
     stakeStarBot: "",
     weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
   },
+};
+
+export const EPOCHS: Record<Network, number> = {
+  [Network.MAINNET]: 1606824023,
+  [Network.GOERLI]: 1616508000,
+  [Network.HARDHAT]: 1616508000,
 };
 
 export const OPERATOR_IDS: Record<Network, number[]> = {

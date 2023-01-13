@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "./fixture";
+import { EPOCHS } from "../scripts/constants";
+import { currentNetwork } from "../scripts/helpers";
 
 describe("StakeStarETH", function () {
   describe("Deployment", function () {
@@ -121,6 +123,7 @@ describe("StakeStarETH", function () {
         stakeStarPublic,
         stakeStarETH,
         otherAccount,
+        stakeStarProvider,
         stakeStarProviderManager,
         ssvToken,
         stakeStarManager,
@@ -157,23 +160,34 @@ describe("StakeStarETH", function () {
         validatorParams.publicKey
       );
 
-      await stakeStarProviderManager.commitStakingSurplus(
-        0,
-        (
-          await hre.ethers.provider.getBlock(
-            await hre.ethers.provider.getBlockNumber()
-          )
-        ).timestamp - 1000
+      await stakeStarProvider.setLimits(
+        hre.ethers.utils.parseUnits("16"),
+        hre.ethers.utils.parseUnits("40"),
+        24 * 3600,
+        hre.ethers.utils.parseUnits("3.2"), // 10% APR
+        3
+      );
+
+      const currentTimestamp = (
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
+      ).timestamp;
+      const currentEpochNumber = Math.floor(
+        (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
+      );
+
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 200,
+        hre.ethers.utils.parseUnits("32"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
-      await stakeStarProviderManager.commitStakingSurplus(
-        sixteenEthers.mul(-1),
-        (
-          await hre.ethers.provider.getBlock(
-            await hre.ethers.provider.getBlockNumber()
-          )
-        ).timestamp
+      await stakeStarProviderManager.save(
+        currentEpochNumber - 10,
+        hre.ethers.utils.parseUnits("16"),
+        1
       );
       await stakeStarOwner.commitStakingSurplus();
 
