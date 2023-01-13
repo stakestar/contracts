@@ -8,7 +8,7 @@ import "../interfaces/IConsensusDataProvider.sol";
 abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable, AccessControlUpgradeable {
     error ValidationFailed(uint16 code);
 
-    modifier BCDPInitializer(uint256 zeroEpochTimestamp) {
+    modifier CDPInitializer(uint256 zeroEpochTimestamp) {
         _zeroEpochTimestamp = zeroEpochTimestamp;
         _;
     }

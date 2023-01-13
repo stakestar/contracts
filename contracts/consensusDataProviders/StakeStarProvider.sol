@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "./ConsensusDataProvider.sol";
 
 contract StakeStarProvider is ConsensusDataProvider {
-    function initialize(uint256 zeroEpochTimestamp) public initializer BCDPInitializer(zeroEpochTimestamp) {
+    function initialize(uint256 zeroEpochTimestamp) public initializer CDPInitializer(zeroEpochTimestamp) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
