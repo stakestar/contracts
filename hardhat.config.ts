@@ -18,7 +18,9 @@ import "./scripts/tasks/printContractVariables";
 import "./scripts/tasks/setAddresses";
 import "./scripts/tasks/setTreasuryCommission";
 import "./scripts/tasks/upgrade-StakeStar";
+import "./scripts/tasks/upgrade-StakeStarProvider";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
+import "./scripts/tasks/upgrade-StakeStarTreasury";
 
 const HARDHAT_NETWORK = "http://127.0.0.1:8545/";
 

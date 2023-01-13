@@ -1651,72 +1651,72 @@
             "offset": 0,
             "slot": "151",
             "type": "t_uint32",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:26"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:27"
           },
           {
             "label": "_totalBalance",
             "offset": 0,
             "slot": "152",
             "type": "t_mapping(t_uint32,t_uint256)",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:27"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:28"
           },
           {
             "label": "_validatorCount",
             "offset": 0,
             "slot": "153",
             "type": "t_mapping(t_uint32,t_uint32)",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:28"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:29"
           },
           {
             "label": "_zeroEpochTimestamp",
             "offset": 0,
             "slot": "154",
             "type": "t_uint256",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:30"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:31"
           },
           {
             "label": "_avgValidatorBalanceLowerLimit",
             "offset": 0,
             "slot": "155",
             "type": "t_uint256",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:33"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:34"
           },
           {
             "label": "_avgValidatorBalanceUpperLimit",
             "offset": 0,
             "slot": "156",
             "type": "t_uint256",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:34"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:35"
           },
           {
             "label": "_epochGapLimit",
             "offset": 0,
             "slot": "157",
             "type": "t_uint256",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:35"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:36"
           },
           {
             "label": "_aprLimit",
             "offset": 0,
             "slot": "158",
             "type": "t_uint256",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:36"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:37"
           },
           {
             "label": "_validatorCountDiffLimit",
             "offset": 0,
             "slot": "159",
             "type": "t_uint32",
-            "contract": "BeaconChainDataProvider",
-            "src": "contracts/beaconChainDataProviders/BeaconChainDataProvider.sol:37"
+            "contract": "ConsensusDataProvider",
+            "src": "contracts/consensusDataProviders/ConsensusDataProvider.sol:38"
           }
         ],
         "types": {
