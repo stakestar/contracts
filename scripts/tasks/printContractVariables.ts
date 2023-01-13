@@ -112,6 +112,32 @@ task("printContractVariables", "Prints contracts variables").setAction(
     const stakeStarProvider = await StakeStarProvider.attach(
       addresses.stakeStarProvider
     );
+    console.log(
+      "StakeStarProvider::avgValidatorBalanceLowerLimit",
+      humanify(await stakeStarProvider._avgValidatorBalanceLowerLimit()),
+      "ETH"
+    );
+    console.log(
+      "StakeStarProvider::avgValidatorBalanceUpperLimit",
+      humanify(await stakeStarProvider._avgValidatorBalanceUpperLimit()),
+      "ETH"
+    );
+    console.log(
+      "StakeStarProvider::epochGapLimit",
+      humanify(await stakeStarProvider._epochGapLimit(), 0, 0),
+      "seconds"
+    );
+    console.log(
+      "StakeStarProvider::aprLimit",
+      humanify(await stakeStarProvider._aprLimit()),
+      "ETH"
+    );
+    console.log(
+      "StakeStarProvider::validatorCountDiffLimit",
+      await stakeStarProvider._validatorCountDiffLimit()
+    );
+    console.log();
+
     const latestStakingSurplus = await stakeStarProvider.latestStakingSurplus();
     console.log(
       "StakeStarProvider::latestStakingSurplus",
