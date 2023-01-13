@@ -55,7 +55,7 @@ describe("StakeStarProvider", function () {
   });
 
   describe("Save", function () {
-    it("Should save beacon chain data", async function () {
+    it("Should save consensus data", async function () {
       const { stakeStarProvider, stakeStarProviderManager, owner, hre } =
         await loadFixture(deployStakeStarFixture);
 
