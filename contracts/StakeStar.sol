@@ -7,14 +7,15 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./interfaces/IConsensusDataProvider.sol";
+import "./interfaces/IDepositContract.sol";
+import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/IStakingPool.sol";
+
 import "./StakeStarRegistry.sol";
 import "./StakeStarETH.sol";
 import "./StakeStarRewards.sol";
 import "./StakeStarTreasury.sol";
 
-import "./interfaces/IDepositContract.sol";
-import "./interfaces/ISSVNetwork.sol";
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
 // TODO Manage SSV position
