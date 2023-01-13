@@ -14,7 +14,7 @@
   "author": "onestar.dev",
   "license": "MIT",
   "scripts": {
-    "build": "hardhat clean && hardhat compile && tsc",
+    "build": "hardhat clean && hardhat compile && rm -rf dist && tsc",
     "bump": "bump --commit 'Release v' --tag",
     "test": "hardhat test",
     "solhint": "solhint contracts/**/*",
