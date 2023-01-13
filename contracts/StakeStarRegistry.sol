@@ -79,12 +79,13 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
     }
 
     function getValidatorPublicKeys(ValidatorStatus status) public view returns (bytes[] memory publicKeys) {
-        publicKeys = new bytes[](validatorPublicKeys.length);
+        publicKeys = new bytes[](countValidatorPublicKeys(status));
 
+        uint256 index = 0;
         for (uint256 i = 0; i < validatorPublicKeys.length; i++) {
             bytes memory publicKey = validatorPublicKeys[i];
             if (validatorStatuses[publicKey] == status) {
-                publicKeys[i] = publicKey;
+                publicKeys[index++] = publicKey;
             }
         }
     }
