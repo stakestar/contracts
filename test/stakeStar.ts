@@ -50,7 +50,7 @@ describe("StakeStar", function () {
 
   describe("AccessControl", function () {
     it("Should not allow to call methods without corresponding roles", async function () {
-      const { stakeStarPublic, validatorParams, otherAccount, addresses } =
+      const { stakeStarPublic, validatorParams1, otherAccount, addresses } =
         await loadFixture(deployStakeStarFixture);
 
       const defaultAdminRole = await stakeStarPublic.DEFAULT_ADMIN_ROLE();
@@ -60,17 +60,17 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
       await expect(
-        stakeStarPublic.createValidator(validatorParams, 1)
+        stakeStarPublic.createValidator(validatorParams1, 1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
       await expect(
-        stakeStarPublic.updateValidator(validatorParams, 1)
+        stakeStarPublic.updateValidator(validatorParams1, 1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
       await expect(
-        stakeStarPublic.destroyValidator(validatorParams.publicKey)
+        stakeStarPublic.destroyValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
@@ -165,12 +165,12 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarRegistry,
         ssvToken,
-        validatorParams,
+        validatorParams1,
         owner,
         otherAccount,
       } = await loadFixture(deployStakeStarFixture);
 
-      for (const operatorId of validatorParams.operatorIds) {
+      for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
           .connect(owner)
           .addOperatorToAllowList(operatorId);
@@ -192,7 +192,7 @@ describe("StakeStar", function () {
           await ssvToken.balanceOf(owner.address)
         );
       await stakeStarManager.createValidator(
-        validatorParams,
+        validatorParams1,
         await ssvToken.balanceOf(stakeStarManager.address)
       );
 
@@ -255,7 +255,7 @@ describe("StakeStar", function () {
         stakeStarManager,
         ssvToken,
         stakeStarRegistry,
-        validatorParams,
+        validatorParams1,
         owner,
         manager,
       } = await loadFixture(deployStakeStarFixture);
@@ -269,7 +269,7 @@ describe("StakeStar", function () {
       const ssvBalance = await ssvToken.balanceOf(stakeStarManager.address);
 
       await expect(
-        stakeStarManager.createValidator(validatorParams, ssvBalance)
+        stakeStarManager.createValidator(validatorParams1, ssvBalance)
       ).to.be.revertedWith("cannot create validator");
 
       await manager.sendTransaction({
@@ -278,17 +278,17 @@ describe("StakeStar", function () {
       });
 
       await expect(
-        stakeStarManager.createValidator(validatorParams, ssvBalance)
+        stakeStarManager.createValidator(validatorParams1, ssvBalance)
       ).to.be.revertedWith("operators not allowListed");
 
-      for (const operatorId of validatorParams.operatorIds) {
+      for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
           .connect(owner)
           .addOperatorToAllowList(operatorId);
       }
 
       await expect(
-        stakeStarManager.createValidator(validatorParams, ssvBalance)
+        stakeStarManager.createValidator(validatorParams1, ssvBalance)
       ).to.emit(stakeStarManager, "CreateValidator");
     });
 
@@ -299,11 +299,11 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarRegistry,
         ssvToken,
-        validatorParams,
+        validatorParams1,
         owner,
       } = await loadFixture(deployStakeStarFixture);
 
-      for (const operatorId of validatorParams.operatorIds) {
+      for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
           .connect(owner)
           .addOperatorToAllowList(operatorId);
@@ -346,7 +346,7 @@ describe("StakeStar", function () {
           await ssvToken.balanceOf(owner.address)
         );
       const ssvBalance = await ssvToken.balanceOf(stakeStarOwner.address);
-      await stakeStarManager.createValidator(validatorParams, ssvBalance);
+      await stakeStarManager.createValidator(validatorParams1, ssvBalance);
 
       await stakeStarPublic.unstake(ethers.utils.parseEther("32"));
 
@@ -372,7 +372,7 @@ describe("StakeStar", function () {
         stakeStarManager,
         stakeStarRegistry,
         ssvToken,
-        validatorParams,
+        validatorParams1,
         owner,
         manager,
       } = await loadFixture(deployStakeStarFixture);
@@ -391,45 +391,117 @@ describe("StakeStar", function () {
       });
 
       await expect(
-        stakeStarOwner.updateValidator(validatorParams, ssvBalance)
+        stakeStarOwner.updateValidator(validatorParams1, ssvBalance)
       ).to.be.revertedWith("validator missing");
 
-      for (const operatorId of validatorParams.operatorIds) {
+      for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
           .connect(owner)
           .addOperatorToAllowList(operatorId);
       }
 
       await expect(
-        stakeStarManager.createValidator(validatorParams, ssvBalance.div(2))
+        stakeStarManager.createValidator(validatorParams1, ssvBalance.div(2))
       ).to.emit(stakeStarManager, "CreateValidator");
 
-      validatorParams.operatorIds[0] = 127;
+      validatorParams1.operatorIds[0] = 127;
 
       await expect(
-        stakeStarOwner.updateValidator(validatorParams, ssvBalance)
+        stakeStarOwner.updateValidator(validatorParams1, ssvBalance)
       ).to.be.revertedWith("operators not allowListed");
 
       await stakeStarRegistry.connect(owner).addOperatorToAllowList(127);
 
       await expect(
-        stakeStarOwner.updateValidator(validatorParams, ssvBalance.div(2))
+        stakeStarOwner.updateValidator(validatorParams1, ssvBalance.div(2))
       ).to.emit(stakeStarOwner, "UpdateValidator");
     });
   });
 
   describe("DestroyValidator", function () {
     it("Should revert unless implemented", async function () {
-      const { stakeStarManager, validatorParams } = await loadFixture(
-        deployStakeStarFixture
+      const {
+        stakeStarPublic,
+        stakeStarManager,
+        stakeStarOwner,
+        stakeStarRegistry,
+        stakeStarRegistryManager,
+        stakeStarRewards,
+        ssvToken,
+        validatorParams1,
+        validatorParams2,
+        hre,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await expect(
+        stakeStarManager.destroyValidator(validatorParams1.publicKey)
+      ).to.be.revertedWith("not implemented");
+
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .false;
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+
+      await stakeStarPublic.stake({ value: hre.ethers.utils.parseEther("64") });
+
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+      );
+      await stakeStarManager.createValidator(
+        validatorParams2,
+        await ssvToken.balanceOf(stakeStarManager.address)
       );
 
-      await expect(
-        stakeStarManager.destroyValidator(validatorParams.publicKey)
-      ).to.be.revertedWith("not implemented");
-      await expect(
-        stakeStarManager.validatorDestructionAvailability()
-      ).to.be.revertedWith("not implemented");
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .false;
+
+      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
+
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .false;
+
+      await stakeStarRegistryManager.confirmActivatingValidator(
+        validatorParams1.publicKey
+      );
+      await stakeStarRegistryManager.confirmActivatingValidator(
+        validatorParams2.publicKey
+      );
+
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .true;
+
+      await stakeStarOwner.setLocalPoolSize(1);
+
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .false;
+
+      await stakeStarOwner.setLocalPoolSize(0);
+      await owner.sendTransaction({
+        to: stakeStarRewards.address,
+        value: hre.ethers.utils.parseEther("32"),
+      });
+
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .false;
+
+      await stakeStarPublic.harvest();
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .false;
+
+      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
+      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+        .true;
     });
   });
 
@@ -712,7 +784,7 @@ describe("StakeStar", function () {
         stakeStarProviderManager,
         ssvToken,
         stakeStarManager,
-        validatorParams,
+        validatorParams1,
         stakeStarRegistry,
         stakeStarRegistryManager,
         stakeStarTreasury,
@@ -749,17 +821,17 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
-      for (const operatorId of validatorParams.operatorIds) {
+      for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
           .connect(owner)
           .addOperatorToAllowList(operatorId);
       }
       await stakeStarManager.createValidator(
-        validatorParams,
+        validatorParams1,
         await ssvToken.balanceOf(stakeStarManager.address)
       );
       await stakeStarRegistryManager.confirmActivatingValidator(
-        validatorParams.publicKey
+        validatorParams1.publicKey
       );
 
       await stakeStarTreasury.setCommission(50_000); // 50%
