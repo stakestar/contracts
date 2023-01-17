@@ -41,6 +41,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address stakeStarTreasuryAddress
     );
     event SetLocalPoolSize(uint256 size);
+    event SetUnstakeLimit(uint256 limit);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
@@ -76,6 +77,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint256 constant minimumTimestampDistance = 180;
 
     uint256 public reservedTreasuryCommission;
+    uint256 public unstakeLimit;
 
     receive() external payable {}
 
@@ -122,6 +124,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit SetLocalPoolSize(size);
     }
 
+    function setUnstakeLimit(uint256 limit) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        unstakeLimit = limit;
+
+        emit SetUnstakeLimit(limit);
+    }
+
     function stake() public payable {
         require(msg.value > 0, "no eth transferred");
 
@@ -132,6 +140,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function unstake(uint256 ssETH) public returns (uint256 eth) {
+        require(ssETH <= unstakeLimit, "unstakeLimit");
+
         stakeStarETH.burn(msg.sender, ssETH);
 
         eth = ssETH_to_ETH_approximate(ssETH);
