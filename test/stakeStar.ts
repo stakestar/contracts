@@ -59,6 +59,9 @@ describe("StakeStar", function () {
       await expect(stakeStarPublic.setLocalPoolSize(1)).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
+      await expect(stakeStarPublic.setUnstakeLimit(1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
       await expect(
         stakeStarPublic.createValidator(validatorParams1, 1)
       ).to.be.revertedWith(
@@ -116,9 +119,8 @@ describe("StakeStar", function () {
 
   describe("Unstake", function () {
     it("Should create pendingUnstake", async function () {
-      const { stakeStarPublic, otherAccount, stakeStarETH } = await loadFixture(
-        deployStakeStarFixture
-      );
+      const { stakeStarPublic, stakeStarOwner, otherAccount, stakeStarETH } =
+        await loadFixture(deployStakeStarFixture);
 
       const stakeAmountEth = ethers.utils.parseEther("2");
       await stakeStarPublic.stake({ value: stakeAmountEth });
@@ -131,6 +133,11 @@ describe("StakeStar", function () {
         unstakeAmountSS
       );
       const shouldBeBurntSS = unstakeAmountSS;
+
+      await expect(stakeStarPublic.unstake(unstakeAmountSS)).to.be.revertedWith(
+        "unstakeLimit"
+      );
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       await expect(
         stakeStarPublic.unstake(unstakeAmountSS)
@@ -161,6 +168,7 @@ describe("StakeStar", function () {
   describe("Claim", function () {
     it("Should finish pendingUnstake and send Ether", async function () {
       const {
+        stakeStarOwner,
         stakeStarManager,
         stakeStarPublic,
         stakeStarRegistry,
@@ -169,6 +177,7 @@ describe("StakeStar", function () {
         owner,
         otherAccount,
       } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
@@ -226,9 +235,9 @@ describe("StakeStar", function () {
 
   describe("UnstakeAndClaim", function () {
     it("Should unstake and claim in a single tx", async function () {
-      const { stakeStarPublic, otherAccount } = await loadFixture(
-        deployStakeStarFixture
-      );
+      const { stakeStarPublic, stakeStarOwner, otherAccount } =
+        await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       const stakeAmount = ethers.utils.parseEther("2");
       const unstakeAndClaimAmount = stakeAmount.div(2);
@@ -259,7 +268,6 @@ describe("StakeStar", function () {
         owner,
         manager,
       } = await loadFixture(deployStakeStarFixture);
-
       await ssvToken
         .connect(owner)
         .transfer(
@@ -302,6 +310,7 @@ describe("StakeStar", function () {
         validatorParams1,
         owner,
       } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
@@ -436,6 +445,8 @@ describe("StakeStar", function () {
       await expect(
         stakeStarManager.destroyValidator(validatorParams1.publicKey)
       ).to.be.revertedWith("not implemented");
+
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       expect(await stakeStarManager.validatorDestructionAvailability()).to.be
         .false;
@@ -597,6 +608,8 @@ describe("StakeStar", function () {
         stakeStarProvider,
         stakeStarProviderManager,
       } = await loadFixture(deployStakeStarFixture);
+
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       await stakeStarProvider.setLimits(
         hre.ethers.utils.parseUnits("16"),
