@@ -106,5 +106,7 @@ export const GENESIS_FORK_VERSIONS: Record<Network, string> = {
   [Network.HARDHAT]: "0x00001020",
 };
 
-export const RANDOM_PRIVATE_KEY =
+export const RANDOM_PRIVATE_KEY_1 =
   "0x6da4f8d49b28f88ef7154dd4ff9d5ebd83d0c0f29d04718996f6f89a95308219";
+export const RANDOM_PRIVATE_KEY_2 =
+  "0x59531fe4c859a0ac36fe230b3b6485629a9e57f8671f912de04284ff02eae3cf";

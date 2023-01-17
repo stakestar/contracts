@@ -3,7 +3,8 @@ import {
   GENESIS_FORK_VERSIONS,
   OPERATOR_IDS,
   OPERATOR_PUBLIC_KEYS,
-  RANDOM_PRIVATE_KEY,
+  RANDOM_PRIVATE_KEY_1,
+  RANDOM_PRIVATE_KEY_2,
 } from "../scripts/constants";
 import hre from "hardhat";
 import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
@@ -54,8 +55,16 @@ export async function deployStakeStarFixture() {
     otherAccount
   );
 
-  const validatorParams = await generateValidatorParams(
-    RANDOM_PRIVATE_KEY,
+  const validatorParams1 = await generateValidatorParams(
+    RANDOM_PRIVATE_KEY_1,
+    OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
+    OPERATOR_IDS[currentNetwork(hre)],
+    stakeStarRewards.address,
+    GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+  );
+
+  const validatorParams2 = await generateValidatorParams(
+    RANDOM_PRIVATE_KEY_2,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     OPERATOR_IDS[currentNetwork(hre)],
     stakeStarRewards.address,
@@ -78,7 +87,8 @@ export async function deployStakeStarFixture() {
     chainlinkProvider,
     ssvToken,
     ssvNetwork,
-    validatorParams,
+    validatorParams1,
+    validatorParams2,
     owner,
     manager,
     otherAccount,

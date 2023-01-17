@@ -40,7 +40,7 @@ describe("StakeStarRegistry", function () {
 
   describe("AccessControl", function () {
     it("Should not allow call methods without corresponding roles", async function () {
-      const { stakeStarRegistry, validatorParams, owner, otherAccount } =
+      const { stakeStarRegistry, validatorParams1, owner, otherAccount } =
         await loadFixture(deployStakeStarFixture);
 
       await expect(
@@ -57,25 +57,25 @@ describe("StakeStarRegistry", function () {
       await expect(
         stakeStarRegistry
           .connect(owner)
-          .initiateActivatingValidator(validatorParams.publicKey)
+          .initiateActivatingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
       );
       await expect(
         stakeStarRegistry
           .connect(owner)
-          .initiateExitingValidator(validatorParams.publicKey)
+          .initiateExitingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
       );
 
       await expect(
-        stakeStarRegistry.confirmActivatingValidator(validatorParams.publicKey)
+        stakeStarRegistry.confirmActivatingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
       );
       await expect(
-        stakeStarRegistry.confirmExitingValidator(validatorParams.publicKey)
+        stakeStarRegistry.confirmExitingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
       );

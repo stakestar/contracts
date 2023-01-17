@@ -127,7 +127,7 @@ describe("StakeStarETH", function () {
         stakeStarProviderManager,
         ssvToken,
         stakeStarManager,
-        validatorParams,
+        validatorParams1,
         stakeStarRegistry,
         stakeStarRegistryManager,
         owner,
@@ -147,17 +147,17 @@ describe("StakeStarETH", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
-      for (const operatorId of validatorParams.operatorIds) {
+      for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
           .connect(owner)
           .addOperatorToAllowList(operatorId);
       }
       await stakeStarManager.createValidator(
-        validatorParams,
+        validatorParams1,
         await ssvToken.balanceOf(stakeStarManager.address)
       );
       await stakeStarRegistryManager.confirmActivatingValidator(
-        validatorParams.publicKey
+        validatorParams1.publicKey
       );
 
       await stakeStarProvider.setLimits(

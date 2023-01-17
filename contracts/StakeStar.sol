@@ -18,8 +18,7 @@ import "./StakeStarTreasury.sol";
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
-// TODO Manage SSV position
-// TODO Validator Destruction: prevent double validator destroy, local pool
+// TODO Manage SSV position automatically
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
         bytes publicKey;
@@ -277,7 +276,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorDestructionAvailability() public view returns (bool) {
-        revert("not implemented");
+        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.ACTIVE);
+        if (activeValidators == 0) return false;
+
+        uint256 exitingValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.EXITING);
+        uint256 exitingETH = exitingValidators * uint256(32 ether);
+        uint256 exitedETH = address(this).balance + address(stakeStarRewards).balance;
+
+        return pendingUnstakeSum >= uint256(32 ether) + exitingETH + exitedETH + localPoolSize;
     }
 
     function approximateStakingSurplus(uint256 timestamp) public view returns (int256) {
