@@ -63,19 +63,21 @@ describe("StakeStarRegistry", function () {
       );
       await expect(
         stakeStarRegistry
-          .connect(owner)
+          .connect(otherAccount)
           .initiateExitingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
+      );
+      await expect(
+        stakeStarRegistry
+          .connect(otherAccount)
+          .confirmExitingValidator(validatorParams1.publicKey)
+      ).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
       );
 
       await expect(
         stakeStarRegistry.confirmActivatingValidator(validatorParams1.publicKey)
-      ).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
-      );
-      await expect(
-        stakeStarRegistry.confirmExitingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
       );
@@ -253,7 +255,7 @@ describe("StakeStarRegistry", function () {
         stakeStarRegistryManager.confirmActivatingValidator(publicKey1)
       ).to.be.revertedWith("validator status not PENDING");
 
-      await stakeStarRegistry.initiateExitingValidator(publicKey1);
+      await stakeStarRegistryManager.initiateExitingValidator(publicKey1);
       await expect(
         stakeStarRegistryManager.confirmActivatingValidator(publicKey1)
       ).to.be.revertedWith("validator status not PENDING");
@@ -277,7 +279,7 @@ describe("StakeStarRegistry", function () {
       );
 
       await expect(
-        stakeStarRegistry.initiateExitingValidator(publicKey1)
+        stakeStarRegistryManager.initiateExitingValidator(publicKey1)
       ).to.be.revertedWith("validator status not ACTIVE");
 
       await expect(stakeStarRegistry.initiateActivatingValidator(publicKey1));
@@ -288,19 +290,21 @@ describe("StakeStarRegistry", function () {
       await stakeStarRegistryManager.confirmActivatingValidator(publicKey2);
       await stakeStarRegistryManager.confirmActivatingValidator(publicKey3);
 
-      await expect(stakeStarRegistry.initiateExitingValidator(publicKey1))
+      await expect(
+        stakeStarRegistryManager.initiateExitingValidator(publicKey1)
+      )
         .to.emit(stakeStarRegistry, "ValidatorStatusChange")
         .withArgs(publicKey1, ValidatorStatus.ACTIVE, ValidatorStatus.EXITING);
 
       await expect(
-        stakeStarRegistry.initiateExitingValidator(publicKey1)
+        stakeStarRegistryManager.initiateExitingValidator(publicKey1)
       ).to.be.revertedWith("validator status not ACTIVE");
 
       expect(await stakeStarRegistry.validatorStatuses(publicKey1)).to.equal(
         ValidatorStatus.EXITING
       );
 
-      await stakeStarRegistry.initiateExitingValidator(publicKey2);
+      await stakeStarRegistryManager.initiateExitingValidator(publicKey2);
 
       expect(
         await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.MISSING)
@@ -347,12 +351,12 @@ describe("StakeStarRegistry", function () {
       await stakeStarRegistryManager.confirmActivatingValidator(publicKey1);
 
       await expect(
-        stakeStarRegistryManager.confirmExitingValidator(publicKey1)
+        stakeStarRegistry.confirmExitingValidator(publicKey1)
       ).to.be.revertedWith("validator status not EXITING");
 
-      await stakeStarRegistry.initiateExitingValidator(publicKey1);
+      await stakeStarRegistryManager.initiateExitingValidator(publicKey1);
 
-      await expect(stakeStarRegistryManager.confirmExitingValidator(publicKey1))
+      await expect(stakeStarRegistry.confirmExitingValidator(publicKey1))
         .to.emit(stakeStarRegistry, "ValidatorStatusChange")
         .withArgs(publicKey1, ValidatorStatus.EXITING, ValidatorStatus.EXITED);
 
@@ -386,11 +390,17 @@ describe("StakeStarRegistry", function () {
       await stakeStarRegistryManager.confirmActivatingValidator(publicKey3);
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(3);
 
-      await expect(stakeStarRegistry.initiateExitingValidator(publicKey1));
+      await expect(
+        stakeStarRegistryManager.initiateExitingValidator(publicKey1)
+      );
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(2);
-      await expect(stakeStarRegistry.initiateExitingValidator(publicKey2));
+      await expect(
+        stakeStarRegistryManager.initiateExitingValidator(publicKey2)
+      );
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(1);
-      await expect(stakeStarRegistry.initiateExitingValidator(publicKey3));
+      await expect(
+        stakeStarRegistryManager.initiateExitingValidator(publicKey3)
+      );
       expect(await stakeStarRegistry.getPoRAddressListLength()).to.equal(0);
     });
 

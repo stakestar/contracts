@@ -90,7 +90,7 @@ contract StakeStarRegistry is
 
     function initiateExitingValidator(bytes memory publicKey)
         public
-        onlyRole(STAKE_STAR_ROLE)
+        onlyRole(MANAGER_ROLE)
     {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.ACTIVE,
@@ -106,7 +106,7 @@ contract StakeStarRegistry is
 
     function confirmExitingValidator(bytes memory publicKey)
         public
-        onlyRole(MANAGER_ROLE)
+        onlyRole(STAKE_STAR_ROLE)
     {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.EXITING,

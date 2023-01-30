@@ -6,6 +6,7 @@ import { EPOCHS, ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture";
 import { BigNumber } from "ethers";
 import { currentNetwork } from "../scripts/helpers";
+import { ValidatorStatus } from "../scripts/types";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -428,7 +429,75 @@ describe("StakeStar", function () {
   });
 
   describe("DestroyValidator", function () {
-    it("Should revert unless implemented", async function () {
+    it("destroyValidator", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarManager,
+        stakeStarOwner,
+        stakeStarRegistry,
+        stakeStarRegistryManager,
+        ssvToken,
+        ssvNetwork,
+        validatorParams1,
+        hre,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+
+      await stakeStarPublic.stake({ value: hre.ethers.utils.parseEther("32") });
+
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+      );
+
+      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
+
+      await stakeStarRegistryManager.confirmActivatingValidator(
+        validatorParams1.publicKey
+      );
+
+      const validatorToDestroy = await stakeStarManager.validatorToDestroy();
+      expect(validatorToDestroy).to.eql(
+        hre.ethers.utils.hexlify(await validatorParams1.publicKey)
+      );
+
+      await stakeStarRegistryManager.initiateExitingValidator(
+        validatorToDestroy
+      );
+
+      expect(
+        (await ssvNetwork.getValidatorsByOwnerAddress(stakeStarManager.address))
+          .length
+      ).to.be.greaterThan(0);
+
+      await expect(stakeStarManager.destroyValidator(validatorToDestroy))
+        .to.emit(stakeStarManager, "DestroyValidator")
+        .withArgs(validatorToDestroy);
+
+      expect(
+        await stakeStarRegistry.validatorStatuses(validatorToDestroy)
+      ).to.eql(ValidatorStatus.EXITED);
+
+      expect(
+        (await ssvNetwork.getValidatorsByOwnerAddress(stakeStarManager.address))
+          .length
+      ).to.be.eql(0);
+    });
+
+    it("validatorDestructionAvailability", async function () {
       const {
         stakeStarPublic,
         stakeStarManager,
@@ -442,10 +511,6 @@ describe("StakeStar", function () {
         hre,
         owner,
       } = await loadFixture(deployStakeStarFixture);
-      await expect(
-        stakeStarManager.destroyValidator(validatorParams1.publicKey)
-      ).to.be.revertedWith("not implemented");
-
       await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
 
       expect(await stakeStarManager.validatorDestructionAvailability()).to.be
@@ -513,6 +578,63 @@ describe("StakeStar", function () {
       await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
       expect(await stakeStarManager.validatorDestructionAvailability()).to.be
         .true;
+    });
+
+    it("validatorToDestroy", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarManager,
+        stakeStarOwner,
+        stakeStarRegistry,
+        stakeStarRegistryManager,
+        ssvToken,
+        validatorParams1,
+        hre,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setUnstakeLimit(ethers.utils.parseEther("999"));
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+
+      await stakeStarPublic.stake({ value: hre.ethers.utils.parseEther("32") });
+
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+      );
+
+      expect(await stakeStarManager.validatorToDestroy()).to.eql("0x");
+
+      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
+
+      await stakeStarRegistryManager.confirmActivatingValidator(
+        validatorParams1.publicKey
+      );
+
+      const validatorToDestroy = await stakeStarManager.validatorToDestroy();
+      expect(validatorToDestroy).to.eql(
+        hre.ethers.utils.hexlify(await validatorParams1.publicKey)
+      );
+
+      await stakeStarRegistryManager.initiateExitingValidator(
+        validatorToDestroy
+      );
+
+      expect(await stakeStarManager.validatorToDestroy()).to.eql("0x");
+
+      await stakeStarManager.destroyValidator(validatorToDestroy);
+
+      expect(await stakeStarManager.validatorToDestroy()).to.eql("0x");
     });
   });
 
