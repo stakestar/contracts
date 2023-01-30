@@ -9,7 +9,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event Withdraw(uint256 amount);
 
     uint256 public commissionNumerator;
-    uint256 public constant commissionDenominator = 100_000;
+    uint256 public constant COMISSION_DENOMINATOR = 100_000;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -17,8 +17,14 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     receive() external payable {}
 
-    function setCommission(uint256 numerator) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(numerator <= commissionDenominator, "numerator must be in [0, 100_000]");
+    function setCommission(uint256 numerator)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(
+            numerator <= COMISSION_DENOMINATOR,
+            "value must be in [0, 100_000]"
+        );
         commissionNumerator = numerator;
         emit SetCommission(numerator);
     }
@@ -29,6 +35,10 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     }
 
     function commission(int256 amount) public view returns (uint256) {
-        return amount > 0 ? uint256(amount) * commissionNumerator / commissionDenominator : 0;
+        return
+            amount > 0
+                ? (uint256(amount) * commissionNumerator) /
+                    COMISSION_DENOMINATOR
+                : 0;
     }
 }

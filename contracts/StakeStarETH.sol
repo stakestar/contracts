@@ -18,12 +18,18 @@ contract StakeStarETH is ERC20, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function mint(address account, uint256 ssETH) public onlyRole(STAKE_STAR_ROLE) {
+    function mint(address account, uint256 ssETH)
+        public
+        onlyRole(STAKE_STAR_ROLE)
+    {
         _mint(account, ssETH);
         emit Mint(account, ssETH);
     }
 
-    function burn(address account, uint256 ssETH) public onlyRole(STAKE_STAR_ROLE) {
+    function burn(address account, uint256 ssETH)
+        public
+        onlyRole(STAKE_STAR_ROLE)
+    {
         _burn(account, ssETH);
         emit Burn(account, ssETH);
     }
@@ -38,22 +44,22 @@ contract StakeStarETH is ERC20, AccessControl {
     }
 
     function estimateRate(int256 ethChange) public view returns (uint256) {
-        int256 totalSupplyEth = int256(totalSupplyEth()) + ethChange;
-        require(totalSupplyEth >= 0, "pool cannot have negative balance");
+        int256 totalEth = int256(totalSupplyEth()) + ethChange;
+        require(totalEth >= 0, "pool can't have negative balance");
 
-        return _rate(uint256(totalSupplyEth), totalSupply());
+        return _rate(uint256(totalEth), totalSupply());
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
-        return ssETH * rate / 1 ether;
+        return (ssETH * rate) / 1 ether;
     }
 
     function ETH_to_ssETH(uint256 eth) public view returns (uint256) {
-        return eth * 1 ether / rate;
+        return (eth * 1 ether) / rate;
     }
 
     function _rate(uint256 eth, uint256 ssETH) private pure returns (uint256) {
         if (eth == 0 && ssETH == 0) return 1 ether;
-        else return eth * 1 ether / ssETH;
+        else return (eth * 1 ether) / ssETH;
     }
 }

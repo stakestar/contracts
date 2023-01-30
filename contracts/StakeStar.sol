@@ -16,7 +16,7 @@ import "./StakeStarETH.sol";
 import "./StakeStarRewards.sol";
 import "./StakeStarTreasury.sol";
 
-import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 // TODO Manage SSV position automatically
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
@@ -74,7 +74,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint256 public timestampA;
     int256 public stakingSurplusB;
     uint256 public timestampB;
-    uint256 constant minimumTimestampDistance = 180;
+    uint256 public constant MIN_TIMESTAMP_DISTANCE = 180;
 
     uint256 public reservedTreasuryCommission;
     uint256 public unstakeLimit;
@@ -99,12 +99,16 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
 
-        consensusDataProvider = IConsensusDataProvider(consensusDataProviderAddress);
+        consensusDataProvider = IConsensusDataProvider(
+            consensusDataProviderAddress
+        );
 
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarETH = StakeStarETH(stakeStarETHAddress);
         stakeStarRewards = StakeStarRewards(payable(stakeStarRewardsAddress));
-        stakeStarTreasury = StakeStarTreasury(payable(stakeStarTreasuryAddress));
+        stakeStarTreasury = StakeStarTreasury(
+            payable(stakeStarTreasuryAddress)
+        );
 
         emit SetAddresses(
             depositContractAddress,
@@ -118,13 +122,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function setLocalPoolSize(uint256 size) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setLocalPoolSize(uint256 size)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         localPoolSize = size;
 
         emit SetLocalPoolSize(size);
     }
 
-    function setUnstakeLimit(uint256 limit) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setUnstakeLimit(uint256 limit)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         unstakeLimit = limit;
 
         emit SetUnstakeLimit(limit);
@@ -158,7 +168,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         delete pendingUnstake[msg.sender];
         pendingUnstakeSum -= eth;
 
-        (bool status,) = msg.sender.call{value : eth}("");
+        (bool status, ) = msg.sender.call{value: eth}("");
         require(status, "failed to send Ether");
 
         emit Claim(msg.sender, eth);
@@ -169,13 +179,21 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         claim();
     }
 
-    function createValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(MANAGER_ROLE) {
+    function createValidator(
+        ValidatorParams calldata validatorParams,
+        uint256 ssvDepositAmount
+    ) public onlyRole(MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
-        require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "operators not allowListed");
+        require(
+            stakeStarRegistry.verifyOperators(validatorParams.operatorIds),
+            "operators not allowListed"
+        );
 
-        stakeStarRegistry.initiateActivatingValidator(validatorParams.publicKey);
+        stakeStarRegistry.initiateActivatingValidator(
+            validatorParams.publicKey
+        );
 
-        depositContract.deposit{value : 32 ether}(
+        depositContract.deposit{value: 32 ether}(
             validatorParams.publicKey,
             validatorParams.withdrawalCredentials,
             validatorParams.signature,
@@ -194,12 +212,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit CreateValidator(validatorParams, ssvDepositAmount);
     }
 
-    function updateValidator(ValidatorParams calldata validatorParams, uint256 ssvDepositAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateValidator(
+        ValidatorParams calldata validatorParams,
+        uint256 ssvDepositAmount
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(
-            stakeStarRegistry.validatorStatuses(validatorParams.publicKey) != StakeStarRegistry.ValidatorStatus.MISSING,
+            stakeStarRegistry.validatorStatuses(validatorParams.publicKey) !=
+                StakeStarRegistry.ValidatorStatus.MISSING,
             "validator missing"
         );
-        require(stakeStarRegistry.verifyOperators(validatorParams.operatorIds), "operators not allowListed");
+        require(
+            stakeStarRegistry.verifyOperators(validatorParams.operatorIds),
+            "operators not allowListed"
+        );
 
         ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
         ssvNetwork.updateValidator(
@@ -213,7 +238,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
-    function destroyValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
+    function destroyValidator(bytes memory publicKey)
+        public
+        onlyRole(MANAGER_ROLE)
+    {
         revert("not implemented");
     }
 
@@ -222,8 +250,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(amount > 0, "no rewards available");
         stakeStarRewards.pull();
 
-        uint256 treasuryCommission = stakeStarTreasury.commission(int256(amount));
-        (bool status,) = payable(stakeStarTreasury).call{value : treasuryCommission}("");
+        uint256 treasuryCommission = stakeStarTreasury.commission(
+            int256(amount)
+        );
+        (bool status, ) = payable(stakeStarTreasury).call{
+            value: treasuryCommission
+        }("");
         require(status, "failed to send Ether");
 
         uint256 rewards = amount - treasuryCommission;
@@ -233,17 +265,25 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function commitStakingSurplus() public {
-        (int256 latestStakingSurplus, uint256 timestamp) = consensusDataProvider.latestStakingSurplus();
+        (int256 latestStakingSurplus, uint256 timestamp) = consensusDataProvider
+            .latestStakingSurplus();
 
-        require(timestamp >= timestampB + minimumTimestampDistance, "timestamp distance too short");
+        require(
+            timestamp >= timestampB + MIN_TIMESTAMP_DISTANCE,
+            "timestamp distance too short"
+        );
 
         bool initialized = approximationDataInitialized();
 
         stakingSurplusA = stakingSurplusB;
         timestampA = timestampB;
 
-        reservedTreasuryCommission = stakeStarTreasury.commission(latestStakingSurplus);
-        stakingSurplusB = latestStakingSurplus - int256(reservedTreasuryCommission);
+        reservedTreasuryCommission = stakeStarTreasury.commission(
+            latestStakingSurplus
+        );
+        stakingSurplusB =
+            latestStakingSurplus -
+            int256(reservedTreasuryCommission);
         timestampB = timestamp;
 
         if (approximationDataInitialized()) {
@@ -258,23 +298,32 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit CommitStakingSurplus(stakingSurplusB, timestampB);
     }
 
-    function manageSSV(address WETH, uint24 fee, uint256 amountIn, uint256 amountOutMinimum) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        ISwapRouter swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    function manageSSV(
+        address wETH,
+        uint24 fee,
+        uint256 amountIn,
+        uint256 amountOutMinimum
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ISwapRouter swapRouter = ISwapRouter(
+            0xE592427A0AEce92De3Edee1F18E0157C05861564
+        );
 
-        ISwapRouter.ExactInputSingleParams memory params =
-        ISwapRouter.ExactInputSingleParams({
-        tokenIn : WETH,
-        tokenOut : address(ssvToken),
-        fee : fee,
-        recipient : address(this),
-        deadline : block.timestamp,
-        amountIn : amountIn,
-        amountOutMinimum : amountOutMinimum,
-        sqrtPriceLimitX96 : 0
-        });
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: wETH,
+                tokenOut: address(ssvToken),
+                fee: fee,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMinimum,
+                sqrtPriceLimitX96: 0
+            });
 
-        uint256 amountOut = swapRouter.exactInputSingle{value : amountIn}(params);
-        uint256 depositAmount = ssvToken.balanceOf(address(this)) / 1e7 * 1e7;
+        uint256 amountOut = swapRouter.exactInputSingle{value: amountIn}(
+            params
+        );
+        uint256 depositAmount = (ssvToken.balanceOf(address(this)) / 1e7) * 1e7;
         ssvToken.approve(address(ssvNetwork), depositAmount);
         ssvNetwork.deposit(address(this), depositAmount);
 
@@ -282,35 +331,55 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance >= (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
+        return
+            address(this).balance >=
+            (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
     }
 
     function validatorDestructionAvailability() public view returns (bool) {
-        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.ACTIVE);
+        uint256 activeValidators = stakeStarRegistry.countValidatorPublicKeys(
+            StakeStarRegistry.ValidatorStatus.ACTIVE
+        );
         if (activeValidators == 0) return false;
 
-        uint256 exitingValidators = stakeStarRegistry.countValidatorPublicKeys(StakeStarRegistry.ValidatorStatus.EXITING);
+        uint256 exitingValidators = stakeStarRegistry.countValidatorPublicKeys(
+            StakeStarRegistry.ValidatorStatus.EXITING
+        );
         uint256 exitingETH = exitingValidators * uint256(32 ether);
-        uint256 exitedETH = address(this).balance + address(stakeStarRewards).balance;
+        uint256 exitedETH = address(this).balance +
+            address(stakeStarRewards).balance;
 
-        return pendingUnstakeSum >= uint256(32 ether) + exitingETH + exitedETH + localPoolSize;
+        return
+            pendingUnstakeSum >=
+            uint256(32 ether) + exitingETH + exitedETH + localPoolSize;
     }
 
-    function approximateStakingSurplus(uint256 timestamp) public view returns (int256) {
+    function approximateStakingSurplus(uint256 timestamp)
+        public
+        view
+        returns (int256)
+    {
         require(timestampA * timestampB > 0, "point A or B not initialized");
-        require(timestampA + minimumTimestampDistance <= timestampB, "timestamp distance too short");
+        require(
+            timestampA + MIN_TIMESTAMP_DISTANCE <= timestampB,
+            "timestamp distance too short"
+        );
         require(timestampB <= timestamp, "timestamp in the past");
 
         if (timestampB == timestamp) return stakingSurplusB;
 
-        return (stakingSurplusB - stakingSurplusA) * (int256(timestamp) - int256(timestampB)) / (int256(timestampB) - int256(timestampA)) + stakingSurplusB;
+        return
+            ((stakingSurplusB - stakingSurplusA) *
+                (int256(timestamp) - int256(timestampB))) /
+            (int256(timestampB) - int256(timestampA)) +
+            stakingSurplusB;
     }
 
     function approximateRate(uint256 timestamp) public view returns (uint256) {
         if (approximationDataInitialized()) {
-            int256 approximateStakingSurplus = approximateStakingSurplus(timestamp);
-            int256 approximateEthChange = approximateStakingSurplus - stakingSurplusB;
-            return stakeStarETH.estimateRate(approximateEthChange);
+            int256 approxStakingSurplus = approximateStakingSurplus(timestamp);
+            int256 approxEthChange = approxStakingSurplus - stakingSurplusB;
+            return stakeStarETH.estimateRate(approxEthChange);
         } else {
             return stakeStarETH.rate();
         }
@@ -324,11 +393,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         return approximateRate(block.timestamp);
     }
 
-    function ssETH_to_ETH_approximate(uint256 ssETH) public view returns (uint256) {
-        return ssETH * currentApproximateRate() / 1 ether;
+    function ssETH_to_ETH_approximate(uint256 ssETH)
+        public
+        view
+        returns (uint256)
+    {
+        return (ssETH * currentApproximateRate()) / 1 ether;
     }
 
-    function ETH_to_ssETH_approximate(uint256 eth) public view returns (uint256) {
-        return eth * 1 ether / currentApproximateRate();
+    function ETH_to_ssETH_approximate(uint256 eth)
+        public
+        view
+        returns (uint256)
+    {
+        return (eth * 1 ether) / currentApproximateRate();
     }
 }

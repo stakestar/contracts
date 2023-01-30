@@ -66,7 +66,7 @@ describe("StakeStarTreasury", function () {
       expect(await stakeStarTreasury.commission(1000)).to.eq(0);
 
       await expect(stakeStarTreasury.setCommission(100_001)).to.be.revertedWith(
-        `numerator must be in [0, 100_000]`
+        `value must be in [0, 100_000]`
       );
 
       await stakeStarTreasury.setCommission(0);

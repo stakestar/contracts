@@ -5,7 +5,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../interfaces/IConsensusDataProvider.sol";
 
-abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable, AccessControlUpgradeable {
+abstract contract ConsensusDataProvider is
+    IConsensusDataProvider,
+    Initializable,
+    AccessControlUpgradeable
+{
     error ValidationFailed(uint16 code);
 
     modifier CDPInitializer(uint256 zeroEpochTimestamp) {
@@ -29,7 +33,7 @@ abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable
     mapping(uint32 => uint32) public _validatorCount;
 
     uint256 public _zeroEpochTimestamp;
-    uint256 public constant _epochDuration = 384;
+    uint256 public constant EPOCH_DURATION = 384;
 
     uint256 public _avgValidatorBalanceLowerLimit;
     uint256 public _avgValidatorBalanceUpperLimit;
@@ -59,10 +63,14 @@ abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable
         );
     }
 
-    function _save(uint32 epoch, uint256 totalBalance, uint32 validatorCount) internal {
+    function _save(
+        uint32 epoch,
+        uint256 totalBalance,
+        uint32 validatorCount
+    ) internal {
         uint16 validationResult = validate(epoch, totalBalance, validatorCount);
         if (validationResult != 0) {
-            revert ValidationFailed({code : validationResult});
+            revert ValidationFailed({code: validationResult});
         }
 
         _latestEpoch = epoch;
@@ -80,7 +88,11 @@ abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable
     // 4 - avgValidatorBalance is out of bounds
     // 5 - apr > aprLimit
     // 6 - validatorCountDiff > validatorCountDiffLimit
-    function validate(uint32 epoch, uint256 totalBalance, uint32 validatorCount) public view returns (uint16) {
+    function validate(
+        uint32 epoch,
+        uint256 totalBalance,
+        uint32 validatorCount
+    ) public view returns (uint16) {
         if (epoch <= _latestEpoch) return 1;
 
         uint256 givenEpochTimestamp = epochTimestamp(epoch);
@@ -97,13 +109,16 @@ abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable
             uint256 previousTotalBalance = _totalBalance[_latestEpoch];
             uint256 previousValidatorCount = _validatorCount[_latestEpoch];
             if (previousValidatorCount > 0) {
-                uint256 previousAvgValidatorBalance = previousTotalBalance / previousValidatorCount;
+                uint256 previousAvgValidatorBalance = previousTotalBalance /
+                    previousValidatorCount;
                 if (previousAvgValidatorBalance < avgValidatorBalance) {
-                    uint256 surplus = avgValidatorBalance - previousAvgValidatorBalance;
-                    uint256 period = givenEpochTimestamp - epochTimestamp(_latestEpoch);
+                    uint256 surplus = avgValidatorBalance -
+                        previousAvgValidatorBalance;
+                    uint256 period = givenEpochTimestamp -
+                        epochTimestamp(_latestEpoch);
 
                     // very raw estimation of APR
-                    if (31536000 / period * surplus > _aprLimit) {
+                    if ((31536000 / period) * surplus > _aprLimit) {
                         return 5;
                     }
                 }
@@ -112,20 +127,31 @@ abstract contract ConsensusDataProvider is IConsensusDataProvider, Initializable
 
         uint32 latestValidatorCount = _validatorCount[_latestEpoch];
         if (
-            (validatorCount < latestValidatorCount && latestValidatorCount - validatorCount > _validatorCountDiffLimit) ||
-            (validatorCount > latestValidatorCount && validatorCount - latestValidatorCount > _validatorCountDiffLimit)
+            (validatorCount < latestValidatorCount &&
+                latestValidatorCount - validatorCount >
+                _validatorCountDiffLimit) ||
+            (validatorCount > latestValidatorCount &&
+                validatorCount - latestValidatorCount >
+                _validatorCountDiffLimit)
         ) return 6;
 
         return 0;
     }
 
-    function latestStakingSurplus() public view returns (int256 stakingSurplus, uint256 timestamp) {
-        stakingSurplus = int256(_totalBalance[_latestEpoch]) - int256(int32(_validatorCount[_latestEpoch])) * int256(32 ether);
+    function latestStakingSurplus()
+        public
+        view
+        returns (int256 stakingSurplus, uint256 timestamp)
+    {
+        stakingSurplus =
+            int256(_totalBalance[_latestEpoch]) -
+            int256(int32(_validatorCount[_latestEpoch])) *
+            int256(32 ether);
         timestamp = epochTimestamp(_latestEpoch);
     }
 
     function epochTimestamp(uint32 epoch) public view returns (uint256) {
-        require(_zeroEpochTimestamp > 0, "_zeroEpochTimestamp not initialized");
-        return _zeroEpochTimestamp + _epochDuration * uint256(epoch);
+        require(_zeroEpochTimestamp > 0, "not initialized");
+        return _zeroEpochTimestamp + EPOCH_DURATION * uint256(epoch);
     }
 }
