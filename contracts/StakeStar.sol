@@ -242,7 +242,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         public
         onlyRole(MANAGER_ROLE)
     {
-        revert("not implemented");
+        stakeStarRegistry.confirmExitingValidator(publicKey);
+        ssvNetwork.removeValidator(publicKey);
+
+        emit DestroyValidator(publicKey);
     }
 
     function harvest() public {
@@ -352,6 +355,15 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         return
             pendingUnstakeSum >=
             uint256(32 ether) + exitingETH + exitedETH + localPoolSize;
+    }
+
+    function validatorToDestroy() public view returns (bytes memory) {
+        if (validatorDestructionAvailability())
+            return
+                stakeStarRegistry.getValidatorPublicKeys(
+                    StakeStarRegistry.ValidatorStatus.ACTIVE
+                )[0];
+        else return "";
     }
 
     function approximateStakingSurplus(uint256 timestamp)
