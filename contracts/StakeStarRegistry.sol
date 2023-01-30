@@ -5,7 +5,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/PoRAddressList.sol";
 
-contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddressList {
+contract StakeStarRegistry is
+    Initializable,
+    AccessControlUpgradeable,
+    PoRAddressList
+{
     enum ValidatorStatus {
         MISSING,
         PENDING,
@@ -16,7 +20,11 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
 
     event AddOperatorToAllowList(uint32 operatorId);
     event RemoveOperatorFromAllowList(uint32 operatorId);
-    event ValidatorStatusChange(bytes publicKey, ValidatorStatus statusFrom, ValidatorStatus statusTo);
+    event ValidatorStatusChange(
+        bytes publicKey,
+        ValidatorStatus statusFrom,
+        ValidatorStatus statusTo
+    );
 
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
@@ -29,44 +37,94 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function addOperatorToAllowList(uint32 operatorId) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addOperatorToAllowList(uint32 operatorId)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         require(!allowListOfOperators[operatorId], "operator already added");
         allowListOfOperators[operatorId] = true;
         emit AddOperatorToAllowList(operatorId);
     }
 
-    function removeOperatorFromAllowList(uint32 operatorId) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeOperatorFromAllowList(uint32 operatorId)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         require(allowListOfOperators[operatorId], "operator not added");
         delete allowListOfOperators[operatorId];
         emit RemoveOperatorFromAllowList(operatorId);
     }
 
-    function initiateActivatingValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.MISSING, "validator status not MISSING");
+    function initiateActivatingValidator(bytes memory publicKey)
+        public
+        onlyRole(STAKE_STAR_ROLE)
+    {
+        require(
+            validatorStatuses[publicKey] == ValidatorStatus.MISSING,
+            "validator status not MISSING"
+        );
         validatorStatuses[publicKey] = ValidatorStatus.PENDING;
         validatorPublicKeys.push(publicKey);
-        emit ValidatorStatusChange(publicKey, ValidatorStatus.MISSING, ValidatorStatus.PENDING);
+        emit ValidatorStatusChange(
+            publicKey,
+            ValidatorStatus.MISSING,
+            ValidatorStatus.PENDING
+        );
     }
 
-    function confirmActivatingValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.PENDING, "validator status not PENDING");
+    function confirmActivatingValidator(bytes memory publicKey)
+        public
+        onlyRole(MANAGER_ROLE)
+    {
+        require(
+            validatorStatuses[publicKey] == ValidatorStatus.PENDING,
+            "validator status not PENDING"
+        );
         validatorStatuses[publicKey] = ValidatorStatus.ACTIVE;
-        emit ValidatorStatusChange(publicKey, ValidatorStatus.PENDING, ValidatorStatus.ACTIVE);
+        emit ValidatorStatusChange(
+            publicKey,
+            ValidatorStatus.PENDING,
+            ValidatorStatus.ACTIVE
+        );
     }
 
-    function initiateExitingValidator(bytes memory publicKey) public onlyRole(STAKE_STAR_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.ACTIVE, "validator status not ACTIVE");
+    function initiateExitingValidator(bytes memory publicKey)
+        public
+        onlyRole(STAKE_STAR_ROLE)
+    {
+        require(
+            validatorStatuses[publicKey] == ValidatorStatus.ACTIVE,
+            "validator status not ACTIVE"
+        );
         validatorStatuses[publicKey] = ValidatorStatus.EXITING;
-        emit ValidatorStatusChange(publicKey, ValidatorStatus.ACTIVE, ValidatorStatus.EXITING);
+        emit ValidatorStatusChange(
+            publicKey,
+            ValidatorStatus.ACTIVE,
+            ValidatorStatus.EXITING
+        );
     }
 
-    function confirmExitingValidator(bytes memory publicKey) public onlyRole(MANAGER_ROLE) {
-        require(validatorStatuses[publicKey] == ValidatorStatus.EXITING, "validator status not EXITING");
+    function confirmExitingValidator(bytes memory publicKey)
+        public
+        onlyRole(MANAGER_ROLE)
+    {
+        require(
+            validatorStatuses[publicKey] == ValidatorStatus.EXITING,
+            "validator status not EXITING"
+        );
         validatorStatuses[publicKey] = ValidatorStatus.EXITED;
-        emit ValidatorStatusChange(publicKey, ValidatorStatus.EXITING, ValidatorStatus.EXITED);
+        emit ValidatorStatusChange(
+            publicKey,
+            ValidatorStatus.EXITING,
+            ValidatorStatus.EXITED
+        );
     }
 
-    function verifyOperators(uint32[] memory operatorIds) public view returns (bool) {
+    function verifyOperators(uint32[] memory operatorIds)
+        public
+        view
+        returns (bool)
+    {
         for (uint8 i = 0; i < operatorIds.length; i++) {
             if (!allowListOfOperators[operatorIds[i]]) return false;
         }
@@ -78,7 +136,11 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         return validatorPublicKeys.length;
     }
 
-    function getValidatorPublicKeys(ValidatorStatus status) public view returns (bytes[] memory publicKeys) {
+    function getValidatorPublicKeys(ValidatorStatus status)
+        public
+        view
+        returns (bytes[] memory publicKeys)
+    {
         publicKeys = new bytes[](countValidatorPublicKeys(status));
 
         uint256 index = 0;
@@ -90,7 +152,11 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         }
     }
 
-    function countValidatorPublicKeys(ValidatorStatus status) public view returns (uint256 count) {
+    function countValidatorPublicKeys(ValidatorStatus status)
+        public
+        view
+        returns (uint256 count)
+    {
         count = 0;
 
         for (uint256 i = 0; i < validatorPublicKeys.length; i++) {
@@ -104,19 +170,29 @@ contract StakeStarRegistry is Initializable, AccessControlUpgradeable, PoRAddres
         return countValidatorPublicKeys(ValidatorStatus.ACTIVE);
     }
 
-    function getPoRAddressList(uint256 startIndex, uint256 endIndex) public view returns (string[] memory) {
+    function getPoRAddressList(uint256 startIndex, uint256 endIndex)
+        public
+        view
+        returns (string[] memory)
+    {
         uint256 length = getPoRAddressListLength();
         if (length == 0) {
             return new string[](0);
         }
 
-        uint256 normalizedEndIndex = endIndex < length - 1 ? endIndex : length - 1;
+        uint256 normalizedEndIndex = endIndex < length - 1
+            ? endIndex
+            : length - 1;
         if (startIndex > normalizedEndIndex) {
             return new string[](0);
         }
 
-        string[] memory addressList = new string[](normalizedEndIndex - startIndex + 1);
-        bytes[] memory publicKeys = getValidatorPublicKeys(ValidatorStatus.ACTIVE);
+        string[] memory addressList = new string[](
+            normalizedEndIndex - startIndex + 1
+        );
+        bytes[] memory publicKeys = getValidatorPublicKeys(
+            ValidatorStatus.ACTIVE
+        );
         uint256 relativeIndex = 0;
         uint256 returnIndex = 0;
 

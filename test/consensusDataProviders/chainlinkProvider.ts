@@ -23,7 +23,7 @@ describe("ChainlinkProvider", function () {
       const { chainlinkProvider } = await loadFixture(deployStakeStarFixture);
 
       await expect(chainlinkProvider.save()).to.be.revertedWith(
-        "no implementation from Chainlink yet"
+        "no implementation"
       );
     });
   });

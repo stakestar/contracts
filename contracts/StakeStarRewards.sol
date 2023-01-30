@@ -17,7 +17,7 @@ contract StakeStarRewards is AccessControl {
     function pull() public onlyRole(STAKE_STAR_ROLE) {
         uint256 amount = address(this).balance;
 
-        (bool status,) = payable(msg.sender).call{value : amount}("");
+        (bool status, ) = payable(msg.sender).call{value: amount}("");
         require(status, "failed to send Ether");
 
         emit Pull(msg.sender, amount);
