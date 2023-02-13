@@ -111,7 +111,11 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
         uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
 
-        require(burnRate * minRunway < balance, "not necessary to swap");
+        require(address(this).balance > 0, "no eth");
+        require(
+            burnRate * minRunway < balance && balance < burnRate * maxRunway,
+            "not necessary to swap"
+        );
 
         uint256 amountOut = burnRate * maxRunway - balance;
         uint256 amountIn = quoter.quoteExactOutputSingle(

@@ -51,6 +51,7 @@ export async function deployStakeStarFixture() {
     addresses.ssvNetwork,
     [
       "function getAddressBalance(address ownerAddress) external view returns (uint256)",
+      "function getAddressBurnRate(address ownerAddress) external view returns (uint256)",
       "function getValidatorsByOwnerAddress(address ownerAddress) external view returns (bytes[] memory)",
     ],
     otherAccount

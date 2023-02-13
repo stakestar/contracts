@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "./fixture";
+import { ethers } from "hardhat";
 
 describe("StakeStarTreasury", function () {
   describe("Deployment", function () {
@@ -178,35 +179,102 @@ describe("StakeStarTreasury", function () {
     });
   });
 
-  // describe("manageSSV", function () {
-  //     it("Should buy SSV token on UNI V3", async function () {
-  //       const { stakeStarOwner, addresses, ssvToken, ssvNetwork } =
-  //         await loadFixture(deployStakeStarFixture);
-  //
-  //       expect(await ssvNetwork.getAddressBalance(stakeStarOwner.address)).to.eq(
-  //         0
-  //       );
-  //
-  //       const amountIn = BigNumber.from("100000000000000000"); // 0.1 eth
-  //       const expectedAmountOut = BigNumber.from("14000000000000000000"); // 14 SSV
-  //       const precision = BigNumber.from(1e7);
-  //
-  //       await stakeStarOwner.stake({ value: amountIn });
-  //       await expect(
-  //         stakeStarOwner.manageSSV(
-  //           addresses.weth,
-  //           3000,
-  //           amountIn,
-  //           expectedAmountOut
-  //         )
-  //       ).to.emit(stakeStarOwner, "ManageSSV");
-  //
-  //       expect(
-  //         await ssvNetwork.getAddressBalance(stakeStarOwner.address)
-  //       ).to.be.gte(expectedAmountOut);
-  //       expect(await ssvToken.balanceOf(stakeStarOwner.address)).to.lt(precision);
-  //     });
-  //   });
+  describe("swapETHAndDepositSSV", function () {
+    it("Should buy SSV token on UNI V3 and deposit", async function () {
+      const {
+        stakeStarTreasury,
+        stakeStarManager,
+        stakeStarRegistry,
+        ssvToken,
+        ssvNetwork,
+        addresses,
+        manager,
+        validatorParams1,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+
+      await stakeStarTreasury.setAddresses(
+        stakeStarManager.address,
+        addresses.weth,
+        ssvNetwork.address,
+        ssvToken.address,
+        addresses.swapRouter,
+        addresses.quoter
+      );
+
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "runway not set"
+      );
+
+      await stakeStarTreasury.setFee(3000);
+      await stakeStarTreasury.setRunway(216000, 216000 * 3); // 1 month, 3 months
+
+      expect(
+        await ssvNetwork.getAddressBalance(stakeStarManager.address)
+      ).to.eq(0);
+      expect(
+        await ssvNetwork.getAddressBurnRate(stakeStarManager.address)
+      ).to.eq(0);
+
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "no eth"
+      );
+      await manager.sendTransaction({
+        to: stakeStarTreasury.address,
+        value: ethers.utils.parseEther("1"),
+      });
+
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "not necessary to swap"
+      );
+
+      await ssvToken
+        .connect(owner)
+        .transfer(stakeStarManager.address, ethers.utils.parseEther("10"));
+      const ssvBalance = await ssvToken.balanceOf(stakeStarManager.address);
+
+      await manager.sendTransaction({
+        to: stakeStarManager.address,
+        value: ethers.utils.parseEther("32"),
+      });
+
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+
+      await stakeStarManager.createValidator(validatorParams1, ssvBalance);
+
+      const aBalance = await ssvNetwork.getAddressBalance(
+        stakeStarManager.address
+      );
+      const aBurnRate = await ssvNetwork.getAddressBalance(
+        stakeStarManager.address
+      );
+
+      expect(aBalance).to.be.greaterThan(0);
+      expect(aBurnRate).to.be.greaterThan(0);
+
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "not necessary to swap"
+      );
+
+      await stakeStarTreasury.setRunway(
+        (2 * 30 * 24 * 3600) / 12,
+        (6 * 30 * 24 * 3600) / 12
+      );
+      expect(await stakeStarTreasury.swapETHAndDepositSSV()).to.emit(
+        stakeStarTreasury,
+        "SwapETHAndDepositSSV"
+      );
+
+      const aBalance2 = await ssvNetwork.getAddressBalance(
+        stakeStarManager.address
+      );
+      expect(aBalance2).to.be.greaterThan(aBalance);
+    });
+  });
 
   describe("Withdraw", function () {
     it("Should emit Pull event", async function () {
