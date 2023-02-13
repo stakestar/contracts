@@ -27,6 +27,7 @@ export async function deployStakeStarFixture() {
     stakeStarRewards,
     stakeStarProvider,
     chainlinkProvider,
+    twap,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
@@ -89,6 +90,7 @@ export async function deployStakeStarFixture() {
     chainlinkProvider,
     ssvToken,
     ssvNetwork,
+    twap,
     validatorParams1,
     validatorParams2,
     owner,

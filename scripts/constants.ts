@@ -25,6 +25,7 @@ export const ADDRESSES: Record<
     weth: string;
     swapRouter: string;
     quoter: string;
+    pool: string;
   }
 > = {
   [Network.MAINNET]: {
@@ -43,6 +44,7 @@ export const ADDRESSES: Record<
     weth: "",
     swapRouter: "",
     quoter: "",
+    pool: "",
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -60,6 +62,7 @@ export const ADDRESSES: Record<
     weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
     swapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
     quoter: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
+    pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -77,6 +80,7 @@ export const ADDRESSES: Record<
     weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
     swapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
     quoter: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
+    pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
   },
 };
 
