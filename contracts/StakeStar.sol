@@ -122,19 +122,17 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function setLocalPoolSize(uint256 size)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setLocalPoolSize(
+        uint256 size
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         localPoolSize = size;
 
         emit SetLocalPoolSize(size);
     }
 
-    function setUnstakeLimit(uint256 limit)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setUnstakeLimit(
+        uint256 limit
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         unstakeLimit = limit;
 
         emit SetUnstakeLimit(limit);
@@ -238,10 +236,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit UpdateValidator(validatorParams, ssvDepositAmount);
     }
 
-    function destroyValidator(bytes memory publicKey)
-        public
-        onlyRole(MANAGER_ROLE)
-    {
+    function destroyValidator(
+        bytes memory publicKey
+    ) public onlyRole(MANAGER_ROLE) {
         stakeStarRegistry.confirmExitingValidator(publicKey);
         ssvNetwork.removeValidator(publicKey);
 
@@ -366,11 +363,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         else return "";
     }
 
-    function approximateStakingSurplus(uint256 timestamp)
-        public
-        view
-        returns (int256)
-    {
+    function approximateStakingSurplus(
+        uint256 timestamp
+    ) public view returns (int256) {
         require(timestampA * timestampB > 0, "point A or B not initialized");
         require(
             timestampA + MIN_TIMESTAMP_DISTANCE <= timestampB,
@@ -405,19 +400,15 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         return approximateRate(block.timestamp);
     }
 
-    function ssETH_to_ETH_approximate(uint256 ssETH)
-        public
-        view
-        returns (uint256)
-    {
+    function ssETH_to_ETH_approximate(
+        uint256 ssETH
+    ) public view returns (uint256) {
         return (ssETH * currentApproximateRate()) / 1 ether;
     }
 
-    function ETH_to_ssETH_approximate(uint256 eth)
-        public
-        view
-        returns (uint256)
-    {
+    function ETH_to_ssETH_approximate(
+        uint256 eth
+    ) public view returns (uint256) {
         return (eth * 1 ether) / currentApproximateRate();
     }
 }

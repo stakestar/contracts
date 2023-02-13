@@ -37,28 +37,25 @@ contract StakeStarRegistry is
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function addOperatorToAllowList(uint32 operatorId)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function addOperatorToAllowList(
+        uint32 operatorId
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(!allowListOfOperators[operatorId], "operator already added");
         allowListOfOperators[operatorId] = true;
         emit AddOperatorToAllowList(operatorId);
     }
 
-    function removeOperatorFromAllowList(uint32 operatorId)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function removeOperatorFromAllowList(
+        uint32 operatorId
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(allowListOfOperators[operatorId], "operator not added");
         delete allowListOfOperators[operatorId];
         emit RemoveOperatorFromAllowList(operatorId);
     }
 
-    function initiateActivatingValidator(bytes memory publicKey)
-        public
-        onlyRole(STAKE_STAR_ROLE)
-    {
+    function initiateActivatingValidator(
+        bytes memory publicKey
+    ) public onlyRole(STAKE_STAR_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.MISSING,
             "validator status not MISSING"
@@ -72,10 +69,9 @@ contract StakeStarRegistry is
         );
     }
 
-    function confirmActivatingValidator(bytes memory publicKey)
-        public
-        onlyRole(MANAGER_ROLE)
-    {
+    function confirmActivatingValidator(
+        bytes memory publicKey
+    ) public onlyRole(MANAGER_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.PENDING,
             "validator status not PENDING"
@@ -88,10 +84,9 @@ contract StakeStarRegistry is
         );
     }
 
-    function initiateExitingValidator(bytes memory publicKey)
-        public
-        onlyRole(MANAGER_ROLE)
-    {
+    function initiateExitingValidator(
+        bytes memory publicKey
+    ) public onlyRole(MANAGER_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.ACTIVE,
             "validator status not ACTIVE"
@@ -104,10 +99,9 @@ contract StakeStarRegistry is
         );
     }
 
-    function confirmExitingValidator(bytes memory publicKey)
-        public
-        onlyRole(STAKE_STAR_ROLE)
-    {
+    function confirmExitingValidator(
+        bytes memory publicKey
+    ) public onlyRole(STAKE_STAR_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.EXITING,
             "validator status not EXITING"
@@ -120,11 +114,9 @@ contract StakeStarRegistry is
         );
     }
 
-    function verifyOperators(uint32[] memory operatorIds)
-        public
-        view
-        returns (bool)
-    {
+    function verifyOperators(
+        uint32[] memory operatorIds
+    ) public view returns (bool) {
         for (uint8 i = 0; i < operatorIds.length; i++) {
             if (!allowListOfOperators[operatorIds[i]]) return false;
         }
@@ -136,11 +128,9 @@ contract StakeStarRegistry is
         return validatorPublicKeys.length;
     }
 
-    function getValidatorPublicKeys(ValidatorStatus status)
-        public
-        view
-        returns (bytes[] memory publicKeys)
-    {
+    function getValidatorPublicKeys(
+        ValidatorStatus status
+    ) public view returns (bytes[] memory publicKeys) {
         publicKeys = new bytes[](countValidatorPublicKeys(status));
 
         uint256 index = 0;
@@ -152,11 +142,9 @@ contract StakeStarRegistry is
         }
     }
 
-    function countValidatorPublicKeys(ValidatorStatus status)
-        public
-        view
-        returns (uint256 count)
-    {
+    function countValidatorPublicKeys(
+        ValidatorStatus status
+    ) public view returns (uint256 count) {
         count = 0;
 
         for (uint256 i = 0; i < validatorPublicKeys.length; i++) {
@@ -170,11 +158,10 @@ contract StakeStarRegistry is
         return countValidatorPublicKeys(ValidatorStatus.ACTIVE);
     }
 
-    function getPoRAddressList(uint256 startIndex, uint256 endIndex)
-        public
-        view
-        returns (string[] memory)
-    {
+    function getPoRAddressList(
+        uint256 startIndex,
+        uint256 endIndex
+    ) public view returns (string[] memory) {
         uint256 length = getPoRAddressListLength();
         if (length == 0) {
             return new string[](0);

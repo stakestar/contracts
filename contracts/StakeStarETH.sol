@@ -18,18 +18,18 @@ contract StakeStarETH is ERC20, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function mint(address account, uint256 ssETH)
-        public
-        onlyRole(STAKE_STAR_ROLE)
-    {
+    function mint(
+        address account,
+        uint256 ssETH
+    ) public onlyRole(STAKE_STAR_ROLE) {
         _mint(account, ssETH);
         emit Mint(account, ssETH);
     }
 
-    function burn(address account, uint256 ssETH)
-        public
-        onlyRole(STAKE_STAR_ROLE)
-    {
+    function burn(
+        address account,
+        uint256 ssETH
+    ) public onlyRole(STAKE_STAR_ROLE) {
         _burn(account, ssETH);
         emit Burn(account, ssETH);
     }
