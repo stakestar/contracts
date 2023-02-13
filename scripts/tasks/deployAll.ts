@@ -9,6 +9,11 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const addresses = ADDRESSES[network];
   const zeroEpochTimestamp = EPOCHS[network];
 
+  const TWAP = await hre.ethers.getContractFactory("TWAP");
+  const twap = await TWAP.deploy();
+  await twap.deployed();
+  console.log(`TWAP is deployed to ${twap.address}`);
+
   const StakeStarProvider = await hre.ethers.getContractFactory(
     "StakeStarProvider"
   );
@@ -85,6 +90,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarTreasury,
     stakeStarProvider,
     chainlinkProvider,
+    twap,
   };
 }
 
