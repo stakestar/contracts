@@ -51,7 +51,7 @@ describe("StakeStar", function () {
 
   describe("AccessControl", function () {
     it("Should not allow to call methods without corresponding roles", async function () {
-      const { stakeStarPublic, validatorParams1, otherAccount, addresses } =
+      const { stakeStarPublic, validatorParams1, otherAccount } =
         await loadFixture(deployStakeStarFixture);
 
       const defaultAdminRole = await stakeStarPublic.DEFAULT_ADMIN_ROLE();
@@ -77,11 +77,6 @@ describe("StakeStar", function () {
         stakeStarPublic.destroyValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
-      );
-      await expect(
-        stakeStarPublic.manageSSV(addresses.weth, 3000, 0, 0)
-      ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
     });
   });
@@ -686,36 +681,6 @@ describe("StakeStar", function () {
         stakeStarTreasury,
         5
       );
-    });
-  });
-
-  describe("manageSSV", function () {
-    it("Should buy SSV token on UNI V3", async function () {
-      const { stakeStarOwner, addresses, ssvToken, ssvNetwork } =
-        await loadFixture(deployStakeStarFixture);
-
-      expect(await ssvNetwork.getAddressBalance(stakeStarOwner.address)).to.eq(
-        0
-      );
-
-      const amountIn = BigNumber.from("100000000000000000"); // 0.1 eth
-      const expectedAmountOut = BigNumber.from("14000000000000000000"); // 14 SSV
-      const precision = BigNumber.from(1e7);
-
-      await stakeStarOwner.stake({ value: amountIn });
-      await expect(
-        stakeStarOwner.manageSSV(
-          addresses.weth,
-          3000,
-          amountIn,
-          expectedAmountOut
-        )
-      ).to.emit(stakeStarOwner, "ManageSSV");
-
-      expect(
-        await ssvNetwork.getAddressBalance(stakeStarOwner.address)
-      ).to.be.gte(expectedAmountOut);
-      expect(await ssvToken.balanceOf(stakeStarOwner.address)).to.lt(precision);
     });
   });
 

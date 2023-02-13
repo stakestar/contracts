@@ -16,9 +16,6 @@ import "./StakeStarETH.sol";
 import "./StakeStarRewards.sol";
 import "./StakeStarTreasury.sol";
 
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-
-// TODO Manage SSV position automatically
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
         bytes publicKey;
@@ -50,7 +47,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Claim(address indexed who, uint256 amount);
     event Harvest(uint256 amount);
     event CommitStakingSurplus(int256 stakingSurplus, uint256 timestamp);
-    event ManageSSV(uint256 amountIn, uint256 amountOut, uint256 depositAmount);
 
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
 
@@ -296,38 +292,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
 
         emit CommitStakingSurplus(stakingSurplusB, timestampB);
-    }
-
-    function manageSSV(
-        address wETH,
-        uint24 fee,
-        uint256 amountIn,
-        uint256 amountOutMinimum
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        ISwapRouter swapRouter = ISwapRouter(
-            0xE592427A0AEce92De3Edee1F18E0157C05861564
-        );
-
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({
-                tokenIn: wETH,
-                tokenOut: address(ssvToken),
-                fee: fee,
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: amountOutMinimum,
-                sqrtPriceLimitX96: 0
-            });
-
-        uint256 amountOut = swapRouter.exactInputSingle{value: amountIn}(
-            params
-        );
-        uint256 depositAmount = (ssvToken.balanceOf(address(this)) / 1e7) * 1e7;
-        ssvToken.approve(address(ssvNetwork), depositAmount);
-        ssvNetwork.deposit(address(this), depositAmount);
-
-        emit ManageSSV(amountIn, amountOut, depositAmount);
     }
 
     function validatorCreationAvailability() public view returns (bool) {
