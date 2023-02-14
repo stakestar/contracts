@@ -4,8 +4,6 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 
 import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/ISwapProvider.sol";
