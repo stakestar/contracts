@@ -17,10 +17,11 @@ contract UniswapV3Provider is SwapProvider {
         address ssvToken,
         address pool
     );
-    event SetSwapParameters(
+    event SetParameters(
         uint24 poolFee,
         uint24 slippage,
-        uint32 twapInterval
+        uint32 twapInterval,
+        uint256 minETHLiquidity
     );
 
     ISwapRouter public swapRouter;
@@ -33,8 +34,9 @@ contract UniswapV3Provider is SwapProvider {
 
     uint24 public poolFee;
     uint24 public slippage;
-    uint32 public twapInterval;
     uint24 public constant DENOMINATOR = 100_000;
+    uint32 public twapInterval;
+    uint256 public minETHLiquidity;
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -65,24 +67,31 @@ contract UniswapV3Provider is SwapProvider {
         );
     }
 
-    function setSwapParameters(
+    function setParameters(
         uint24 fee,
         uint24 numerator,
-        uint32 interval
+        uint32 interval,
+        uint256 minLiquidity
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(interval > 0, "twapInterval = 0");
         require(numerator <= DENOMINATOR, "slippage must be in [0, 100_000]");
+        require(minLiquidity > 0, "minLiquidity = 0");
 
         poolFee = fee;
         slippage = numerator;
         twapInterval = interval;
+        minETHLiquidity = minLiquidity;
 
-        emit SetSwapParameters(fee, numerator, interval);
+        emit SetParameters(fee, numerator, interval, minLiquidity);
     }
 
     function _swap(
         uint256 desiredAmountOut
     ) internal override returns (uint256 amountIn, uint256 amountOut) {
+        require(
+            IERC20(wETH).balanceOf(pool) >= minETHLiquidity,
+            "insufficient liquidity"
+        );
         require(slippage > 0, "slippage not set");
 
         amountIn = quoter.quoteExactOutputSingle(

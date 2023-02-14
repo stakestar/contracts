@@ -168,8 +168,6 @@ describe("StakeStarTreasury", function () {
         owner,
       } = await loadFixture(deployStakeStarFixture);
 
-      await uniswapV3Provider.setSwapParameters(3000, 0, 30 * 60);
-
       expect(
         await ssvNetwork.getAddressBalance(stakeStarManager.address)
       ).to.eq(0);
@@ -237,16 +235,42 @@ describe("StakeStarTreasury", function () {
         stakeStarTreasury.address
       );
 
+      await uniswapV3Provider.setParameters(
+        3000,
+        0,
+        30 * 60,
+        ethers.utils.parseEther("999999")
+      );
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "insufficient liquidity"
+      );
+      await uniswapV3Provider.setParameters(
+        3000,
+        0,
+        30 * 60,
+        ethers.utils.parseEther("0.1")
+      );
+
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "slippage not set"
       );
-      await uniswapV3Provider.setSwapParameters(3000, 99999, 30 * 60);
+      await uniswapV3Provider.setParameters(
+        3000,
+        99999,
+        30 * 60,
+        ethers.utils.parseEther("0.1")
+      );
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "Too little received"
       );
 
-      await uniswapV3Provider.setSwapParameters(3000, 97000, 30 * 60);
+      await uniswapV3Provider.setParameters(
+        3000,
+        97000,
+        30 * 60,
+        ethers.utils.parseEther("0.1")
+      );
       expect(await stakeStarTreasury.swapETHAndDepositSSV()).to.emit(
         stakeStarTreasury,
         "SwapETHAndDepositSSV"
