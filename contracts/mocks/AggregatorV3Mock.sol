@@ -24,7 +24,9 @@ contract AggregatorV3Mock is AggregatorV3Interface {
         return 0;
     }
 
-    function getRoundData(uint80)
+    function getRoundData(
+        uint80
+    )
         external
         pure
         returns (

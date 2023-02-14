@@ -30,7 +30,12 @@ interface ISSVRegistry {
      * @param publicKey Operator's public key. Will be used to encrypt secret shares of validators keys.
      * @param fee The fee which the operator charges for each block.
      */
-    function registerOperator(string calldata name, address ownerAddress, bytes calldata publicKey, uint64 fee) external returns (uint32);
+    function registerOperator(
+        string calldata name,
+        address ownerAddress,
+        bytes calldata publicKey,
+        uint64 fee
+    ) external returns (uint32);
 
     /**
      * @dev removes an operator.
@@ -43,20 +48,14 @@ interface ISSVRegistry {
      * @param operatorId Operator id.
      * @param fee New operator fee.
      */
-    function updateOperatorFee(
-        uint32 operatorId,
-        uint64 fee
-    ) external;
+    function updateOperatorFee(uint32 operatorId, uint64 fee) external;
 
     /**
      * @dev Updates an operator fee.
      * @param operatorId Operator id.
      * @param score New score.
      */
-    function updateOperatorScore(
-        uint32 operatorId,
-        uint32 score
-    ) external;
+    function updateOperatorScore(uint32 operatorId, uint32 score) external;
 
     /**
      * @dev Registers a new validator.
@@ -90,47 +89,50 @@ interface ISSVRegistry {
      * @dev Gets an operator by operator id.
      * @param operatorId Operator id.
      */
-    function getOperatorById(uint32 operatorId)
-    external view
-    returns (
-        string memory,
-        address,
-        bytes memory,
-        uint256,
-        uint256,
-        uint256,
-        bool
-    );
+    function getOperatorById(
+        uint32 operatorId
+    )
+        external
+        view
+        returns (
+            string memory,
+            address,
+            bytes memory,
+            uint256,
+            uint256,
+            uint256,
+            bool
+        );
 
     /**
      * @dev Returns operators for owner.
      * @param ownerAddress Owner's address.
      */
-    function getOperatorsByOwnerAddress(address ownerAddress)
-    external view
-    returns (uint32[] memory);
+    function getOperatorsByOwnerAddress(
+        address ownerAddress
+    ) external view returns (uint32[] memory);
 
     /**
      * @dev Gets operators list which are in use by validator.
      * @param validatorPublicKey Validator's public key.
      */
-    function getOperatorsByValidator(bytes calldata validatorPublicKey)
-    external view
-    returns (uint32[] memory);
+    function getOperatorsByValidator(
+        bytes calldata validatorPublicKey
+    ) external view returns (uint32[] memory);
 
     /**
      * @dev Gets operator's owner.
      * @param operatorId Operator id.
      */
-    function getOperatorOwner(uint32 operatorId) external view returns (address);
+    function getOperatorOwner(
+        uint32 operatorId
+    ) external view returns (address);
 
     /**
      * @dev Gets operator current fee.
      * @param operatorId Operator id.
      */
-    function getOperatorFee(uint32 operatorId)
-    external view
-    returns (uint64);
+    function getOperatorFee(uint32 operatorId) external view returns (uint64);
 
     /**
      * @dev Gets active validator count.
@@ -141,31 +143,31 @@ interface ISSVRegistry {
      * @dev Gets an validator by public key.
      * @param publicKey Validator's public key.
      */
-    function validators(bytes calldata publicKey)
-    external view
-    returns (
-        address,
-        bytes memory,
-        bool
-    );
+    function validators(
+        bytes calldata publicKey
+    ) external view returns (address, bytes memory, bool);
 
     /**
      * @dev Gets a validator public keys by owner's address.
      * @param ownerAddress Owner's Address.
      */
-    function getValidatorsByAddress(address ownerAddress)
-    external view
-    returns (bytes[] memory);
+    function getValidatorsByAddress(
+        address ownerAddress
+    ) external view returns (bytes[] memory);
 
     /**
      * @dev Get validator's owner.
      * @param publicKey Validator's public key.
      */
-    function getValidatorOwner(bytes calldata publicKey) external view returns (address);
+    function getValidatorOwner(
+        bytes calldata publicKey
+    ) external view returns (address);
 
     /**
      * @dev Get validators amount per operator.
      * @param operatorId Operator public key
      */
-    function validatorsPerOperatorCount(uint32 operatorId) external view returns (uint32);
+    function validatorsPerOperatorCount(
+        uint32 operatorId
+    ) external view returns (uint32);
 }

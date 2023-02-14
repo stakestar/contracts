@@ -48,7 +48,10 @@ interface ISSVNetwork {
         uint256 fee
     );
 
-    event DeclaredOperatorFeeCancelation(address indexed ownerAddress, uint32 operatorId);
+    event DeclaredOperatorFeeCancelation(
+        address indexed ownerAddress,
+        uint32 operatorId
+    );
 
     /**
      * @dev Emitted when an operator's fee is updated.
@@ -106,7 +109,11 @@ interface ISSVNetwork {
      * @param ownerAddress Owner's address.
      * @param senderAddress Sender's address.
      */
-    event FundsDeposit(uint256 value, address indexed ownerAddress, address indexed senderAddress);
+    event FundsDeposit(
+        uint256 value,
+        address indexed ownerAddress,
+        address indexed senderAddress
+    );
 
     /**
      * @dev Emitted when an owner withdraws funds.
@@ -200,7 +207,10 @@ interface ISSVNetwork {
      * @param operatorId Operator's id.
      * @param operatorFee The operator's updated fee.
      */
-    function declareOperatorFee(uint32 operatorId, uint256 operatorFee) external;
+    function declareOperatorFee(
+        uint32 operatorId,
+        uint256 operatorFee
+    ) external;
 
     function cancelDeclaredOperatorFee(uint32 operatorId) external;
 
@@ -291,11 +301,17 @@ interface ISSVNetwork {
      * @dev Updates the maximum fee increase in pecentage.
      * @param newOperatorMaxFeeIncrease The new value.
      */
-    function updateOperatorFeeIncreaseLimit(uint64 newOperatorMaxFeeIncrease) external;
+    function updateOperatorFeeIncreaseLimit(
+        uint64 newOperatorMaxFeeIncrease
+    ) external;
 
-    function updateDeclareOperatorFeePeriod(uint64 newDeclareOperatorFeePeriod) external;
+    function updateDeclareOperatorFeePeriod(
+        uint64 newDeclareOperatorFeePeriod
+    ) external;
 
-    function updateExecuteOperatorFeePeriod(uint64 newExecuteOperatorFeePeriod) external;
+    function updateExecuteOperatorFeePeriod(
+        uint64 newExecuteOperatorFeePeriod
+    ) external;
 
     /**
      * @dev Updates the network fee.
@@ -313,7 +329,9 @@ interface ISSVNetwork {
      * @dev Gets total balance for an owner.
      * @param ownerAddress Owner's address.
      */
-    function getAddressBalance(address ownerAddress) external view returns (uint256);
+    function getAddressBalance(
+        address ownerAddress
+    ) external view returns (uint256);
 
     function isLiquidated(address ownerAddress) external view returns (bool);
 
@@ -321,35 +339,40 @@ interface ISSVNetwork {
      * @dev Gets an operator by operator id.
      * @param operatorId Operator's id.
      */
-    function getOperatorById(uint32 operatorId)
-    external view
-    returns (
-        string memory,
-        address,
-        bytes memory,
-        uint256,
-        uint256,
-        uint256,
-        bool
-    );
+    function getOperatorById(
+        uint32 operatorId
+    )
+        external
+        view
+        returns (
+            string memory,
+            address,
+            bytes memory,
+            uint256,
+            uint256,
+            uint256,
+            bool
+        );
 
     /**
      * @dev Gets a validator public keys by owner's address.
      * @param ownerAddress Owner's Address.
      */
-    function getValidatorsByOwnerAddress(address ownerAddress)
-    external view
-    returns (bytes[] memory);
+    function getValidatorsByOwnerAddress(
+        address ownerAddress
+    ) external view returns (bytes[] memory);
 
     /**
      * @dev Gets operators list which are in use by validator.
      * @param validatorPublicKey Validator's public key.
      */
-    function getOperatorsByValidator(bytes calldata validatorPublicKey)
-    external view
-    returns (uint32[] memory);
+    function getOperatorsByValidator(
+        bytes calldata validatorPublicKey
+    ) external view returns (uint32[] memory);
 
-    function getOperatorDeclaredFee(uint32 operatorId) external view returns (uint256, uint256, uint256);
+    function getOperatorDeclaredFee(
+        uint32 operatorId
+    ) external view returns (uint256, uint256, uint256);
 
     /**
      * @dev Gets operator current fee.
@@ -361,13 +384,17 @@ interface ISSVNetwork {
      * @dev Gets the network fee for an address.
      * @param ownerAddress Owner's address.
      */
-    function addressNetworkFee(address ownerAddress) external view returns (uint256);
+    function addressNetworkFee(
+        address ownerAddress
+    ) external view returns (uint256);
 
     /**
      * @dev Returns the burn rate of an owner, returns 0 if negative.
      * @param ownerAddress Owner's address.
      */
-    function getAddressBurnRate(address ownerAddress) external view returns (uint256);
+    function getAddressBurnRate(
+        address ownerAddress
+    ) external view returns (uint256);
 
     /**
      * @dev Check if an owner is liquidatable.
@@ -399,5 +426,7 @@ interface ISSVNetwork {
 
     function getDeclaredOperatorFeePeriod() external view returns (uint256);
 
-    function validatorsPerOperatorCount(uint32 operatorId) external view returns (uint32);
+    function validatorsPerOperatorCount(
+        uint32 operatorId
+    ) external view returns (uint32);
 }
