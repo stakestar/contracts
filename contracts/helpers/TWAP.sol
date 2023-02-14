@@ -28,9 +28,22 @@ contract TWAP is ITWAP {
         }
     }
 
-    function getPriceX96FromSqrtPriceX96(
+    function getPriceFromSqrtPriceX96(
         uint160 sqrtPriceX96
-    ) public pure override returns (uint256 priceX96) {
-        return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, FixedPoint96.Q96);
+    ) public pure override returns (uint256 price) {
+        return
+            mulDiv(
+                mulDiv(sqrtPriceX96, sqrtPriceX96, FixedPoint96.Q96),
+                1e18,
+                FixedPoint96.Q96
+            );
+    }
+
+    function mulDiv(
+        uint256 a,
+        uint256 b,
+        uint256 denominator
+    ) public pure override returns (uint256 result) {
+        return FullMath.mulDiv(a, b, denominator);
     }
 }

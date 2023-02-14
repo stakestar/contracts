@@ -131,16 +131,16 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function swapETHAndDepositSSV() public {
         require(minRunway != maxRunway, "runway not set");
+        require(address(this).balance > 0, "no eth");
+        require(slippageNumerator > 0, "slippage not set");
 
         uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
         uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
 
-        require(address(this).balance > 0, "no eth");
         require(
             burnRate * minRunway < balance && balance < burnRate * maxRunway,
             "not necessary to swap"
         );
-        require(slippageNumerator > 0, "slippage not set");
 
         uint256 amountOut = burnRate * maxRunway - balance;
         uint256 amountIn = quoter.quoteExactOutputSingle(
@@ -151,10 +151,16 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
             0
         );
 
-        uint160 sqrtPriceX96 = twap.getSqrtTwapX96(address(pool), twapInterval);
-        console.log("sqrtPriceX96 %s", sqrtPriceX96);
-
         if (amountIn > address(this).balance) amountIn = address(this).balance;
+
+        uint256 expectedPrice = twap.getPriceFromSqrtPriceX96(
+            twap.getSqrtTwapX96(pool, twapInterval)
+        );
+        uint256 amountOutMinimum = twap.mulDiv(
+            twap.mulDiv(amountIn, 1e18, expectedPrice),
+            slippageNumerator,
+            DENOMINATOR
+        );
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
@@ -164,15 +170,10 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: amountIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: (sqrtPriceX96 *
-                    (slippageNumerator + DENOMINATOR)) / DENOMINATOR
+                amountOutMinimum: amountOutMinimum,
+                sqrtPriceLimitX96: 0
             });
-
         amountOut = swapRouter.exactInputSingle{value: amountIn}(params);
-
-        console.log("AmountIn %s", amountIn);
-        console.log("AmountOut %s", amountOut);
 
         uint256 depositAmount = (ssvToken.balanceOf(address(this)) / 1e7) * 1e7;
         ssvToken.approve(address(ssvNetwork), depositAmount);

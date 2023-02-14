@@ -214,11 +214,12 @@ describe("StakeStarTreasury", function () {
         addresses.pool
       );
 
+      await stakeStarTreasury.setSwapParameters(3000, 30 * 60);
+
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "runway not set"
       );
 
-      await stakeStarTreasury.setSwapParameters(3000, 30 * 60);
       await stakeStarTreasury.setRunway(216000, 216000 * 3); // 1 month, 3 months
 
       expect(
@@ -235,6 +236,11 @@ describe("StakeStarTreasury", function () {
         to: stakeStarTreasury.address,
         value: ethers.utils.parseEther("1"),
       });
+
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "slippage not set"
+      );
+      await stakeStarTreasury.setSlippage(99000);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "not necessary to swap"
@@ -278,11 +284,10 @@ describe("StakeStarTreasury", function () {
       );
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "slippage not set"
+        "Too little received"
       );
 
-      await stakeStarTreasury.setSlippage(10);
-
+      await stakeStarTreasury.setSlippage(97000);
       expect(await stakeStarTreasury.swapETHAndDepositSSV()).to.emit(
         stakeStarTreasury,
         "SwapETHAndDepositSSV"
