@@ -48,17 +48,8 @@ describe("StakeStarTreasury", function () {
             stakeStarTreasury.address,
             stakeStarTreasury.address,
             stakeStarTreasury.address,
-            stakeStarTreasury.address,
-            stakeStarTreasury.address,
-            stakeStarTreasury.address,
-            stakeStarTreasury.address,
             stakeStarTreasury.address
           )
-      ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
-      );
-      await expect(
-        stakeStarTreasury.connect(otherAccount).setSwapParameters(1, 1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
       );
@@ -117,19 +108,11 @@ describe("StakeStarTreasury", function () {
           stakeStarTreasury.address,
           stakeStarTreasury.address,
           stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
           stakeStarTreasury.address
         )
       )
         .to.emit(stakeStarTreasury, "SetAddresses")
         .withArgs(
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
           stakeStarTreasury.address,
           stakeStarTreasury.address,
           stakeStarTreasury.address,
@@ -139,32 +122,15 @@ describe("StakeStarTreasury", function () {
       expect(await stakeStarTreasury.stakeStar()).to.eq(
         stakeStarTreasury.address
       );
-      expect(await stakeStarTreasury.wETH()).to.eq(stakeStarTreasury.address);
       expect(await stakeStarTreasury.ssvNetwork()).to.eq(
         stakeStarTreasury.address
       );
       expect(await stakeStarTreasury.ssvToken()).to.eq(
         stakeStarTreasury.address
       );
-      expect(await stakeStarTreasury.swapRouter()).to.eq(
+      expect(await stakeStarTreasury.swapProvider()).to.eq(
         stakeStarTreasury.address
       );
-      expect(await stakeStarTreasury.quoter()).to.eq(stakeStarTreasury.address);
-      expect(await stakeStarTreasury.twap()).to.eq(stakeStarTreasury.address);
-      expect(await stakeStarTreasury.pool()).to.eq(stakeStarTreasury.address);
-    });
-  });
-
-  describe("SetSwapParameters", function () {
-    it("Should set swap parameters", async function () {
-      const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
-
-      await expect(stakeStarTreasury.setSwapParameters(7, 11))
-        .to.emit(stakeStarTreasury, "SetSwapParameters")
-        .withArgs(7, 11);
-
-      expect(await stakeStarTreasury.poolFee()).to.eq(7);
-      expect(await stakeStarTreasury.twapInterval()).to.eq(11);
     });
   });
 
@@ -196,31 +162,13 @@ describe("StakeStarTreasury", function () {
         stakeStarRegistry,
         ssvToken,
         ssvNetwork,
-        twap,
-        addresses,
+        uniswapV3Provider,
         manager,
         validatorParams1,
         owner,
       } = await loadFixture(deployStakeStarFixture);
 
-      await stakeStarTreasury.setAddresses(
-        stakeStarManager.address,
-        addresses.weth,
-        ssvNetwork.address,
-        ssvToken.address,
-        addresses.swapRouter,
-        addresses.quoter,
-        twap.address,
-        addresses.pool
-      );
-
-      await stakeStarTreasury.setSwapParameters(3000, 30 * 60);
-
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "runway not set"
-      );
-
-      await stakeStarTreasury.setRunway(216000, 216000 * 3); // 1 month, 3 months
+      await uniswapV3Provider.setSwapParameters(3000, 0, 30 * 60);
 
       expect(
         await ssvNetwork.getAddressBalance(stakeStarManager.address)
@@ -234,14 +182,13 @@ describe("StakeStarTreasury", function () {
       );
       await manager.sendTransaction({
         to: stakeStarTreasury.address,
-        value: ethers.utils.parseEther("1"),
+        value: ethers.utils.parseEther("10"),
       });
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "slippage not set"
+        "runway not set"
       );
-      await stakeStarTreasury.setSlippage(99999);
-
+      await stakeStarTreasury.setRunway(216000, 216000 * 3); // 1 month, 3 months
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "not necessary to swap"
       );
@@ -264,6 +211,14 @@ describe("StakeStarTreasury", function () {
 
       await stakeStarManager.createValidator(validatorParams1, ssvBalance);
 
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "not necessary to swap"
+      );
+      await stakeStarTreasury.setRunway(
+        (2 * 30 * 24 * 3600) / 12,
+        (6 * 30 * 24 * 3600) / 12
+      );
+
       const aBalance = await ssvNetwork.getAddressBalance(
         stakeStarManager.address
       );
@@ -275,19 +230,23 @@ describe("StakeStarTreasury", function () {
       expect(aBurnRate).to.be.greaterThan(0);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "not necessary to swap"
+        `AccessControl: account ${stakeStarTreasury.address.toLowerCase()} is missing role ${await uniswapV3Provider.TREASURY_ROLE()}`
+      );
+      await uniswapV3Provider.grantRole(
+        await uniswapV3Provider.TREASURY_ROLE(),
+        stakeStarTreasury.address
       );
 
-      await stakeStarTreasury.setRunway(
-        (2 * 30 * 24 * 3600) / 12,
-        (6 * 30 * 24 * 3600) / 12
+      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
+        "slippage not set"
       );
+      await uniswapV3Provider.setSwapParameters(3000, 99999, 30 * 60);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "Too little received"
       );
 
-      await stakeStarTreasury.setSlippage(97000);
+      await uniswapV3Provider.setSwapParameters(3000, 97000, 30 * 60);
       expect(await stakeStarTreasury.swapETHAndDepositSSV()).to.emit(
         stakeStarTreasury,
         "SwapETHAndDepositSSV"
@@ -297,6 +256,13 @@ describe("StakeStarTreasury", function () {
         stakeStarManager.address
       );
       expect(aBalance2).to.be.greaterThan(aBalance);
+
+      expect(
+        await uniswapV3Provider.provider.getBalance(uniswapV3Provider.address)
+      ).to.equal(0);
+      expect(
+        await stakeStarTreasury.provider.getBalance(stakeStarTreasury.address)
+      ).to.be.greaterThan(0);
     });
   });
 
