@@ -240,7 +240,7 @@ describe("StakeStarTreasury", function () {
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "slippage not set"
       );
-      await stakeStarTreasury.setSlippage(99000);
+      await stakeStarTreasury.setSlippage(99999);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "not necessary to swap"
