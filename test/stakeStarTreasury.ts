@@ -176,20 +176,17 @@ describe("StakeStarTreasury", function () {
       ).to.eq(0);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "no eth"
-      );
-      await manager.sendTransaction({
-        to: stakeStarTreasury.address,
-        value: ethers.utils.parseEther("10"),
-      });
-
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
         "runway not set"
       );
       await stakeStarTreasury.setRunway(216000, 216000 * 3); // 1 month, 3 months
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "not necessary to swap"
+        "swap not available"
       );
+
+      await manager.sendTransaction({
+        to: stakeStarTreasury.address,
+        value: ethers.utils.parseEther("10"),
+      });
 
       await ssvToken
         .connect(owner)
@@ -210,7 +207,7 @@ describe("StakeStarTreasury", function () {
       await stakeStarManager.createValidator(validatorParams1, ssvBalance);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "not necessary to swap"
+        "swap not available"
       );
       await stakeStarTreasury.setRunway(
         (2 * 30 * 24 * 3600) / 12,

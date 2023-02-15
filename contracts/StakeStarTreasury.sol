@@ -84,16 +84,12 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     }
 
     function swapETHAndDepositSSV() public {
-        require(address(this).balance > 0, "no eth");
         require(minRunway != maxRunway, "runway not set");
 
         uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
         uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
 
-        require(
-            burnRate * minRunway < balance && balance < burnRate * maxRunway,
-            "not necessary to swap"
-        );
+        require(swapAvailability(), "swap not available");
 
         (uint256 amountIn, uint256 amountOut) = swapProvider.swap{
             value: address(this).balance
@@ -104,6 +100,16 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         ssvNetwork.deposit(stakeStar, depositAmount);
 
         emit SwapETHAndDepositSSV(amountIn, amountOut, depositAmount);
+    }
+
+    function swapAvailability() public view returns (bool) {
+        uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
+        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
+
+        return
+            address(this).balance > 0 &&
+            burnRate * minRunway < balance &&
+            balance < burnRate * maxRunway;
     }
 
     function commission(int256 amount) public view returns (uint256) {
