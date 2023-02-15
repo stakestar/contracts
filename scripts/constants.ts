@@ -59,7 +59,7 @@ export const ADDRESSES: Record<
     consensusDataProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
     chainlinkProvider: "",
     stakeStarProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
-    stakeStarTreasury: "0xB50aCdEd851Ce4E570B34BC35Dbf03FeF3C542F1",
+    stakeStarTreasury: "0x52CEd95E80619F7FA269fDf6ea42aCb8212BDD24",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
     stakeStarRewards: "0xaed21ba98900042bccAA8c2aAf250304D4Cb023D",
     stakeStarETH: "0x2BAd1B83595a8F5452C707f127ADD1C28D17D686",

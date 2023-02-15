@@ -21,7 +21,6 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
     uint24 public commissionNumerator;
-    uint24 public slippageNumerator;
     uint24 public constant DENOMINATOR = 100_000;
 
     address public stakeStar;
