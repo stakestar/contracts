@@ -85,12 +85,10 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function swapETHAndDepositSSV() public {
         require(minRunway != maxRunway, "runway not set");
+        require(swapAvailability(), "swap not available");
 
         uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
         uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
-
-        require(swapAvailability(), "swap not available");
-
         (uint256 amountIn, uint256 amountOut) = swapProvider.swap{
             value: address(this).balance
         }(burnRate * maxRunway - balance);
