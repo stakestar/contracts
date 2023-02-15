@@ -26,6 +26,9 @@ export const ADDRESSES: Record<
     swapRouter: string;
     quoter: string;
     pool: string;
+    swapProvider: string;
+    uniswapV3Provider: string;
+    twap: string;
   }
 > = {
   [Network.MAINNET]: {
@@ -45,6 +48,9 @@ export const ADDRESSES: Record<
     swapRouter: "",
     quoter: "",
     pool: "",
+    swapProvider: "",
+    uniswapV3Provider: "",
+    twap: "",
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -53,7 +59,7 @@ export const ADDRESSES: Record<
     consensusDataProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
     chainlinkProvider: "",
     stakeStarProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
-    stakeStarTreasury: "0x1Ea5EABb2E76313670ff422d36C91cB1698B585A",
+    stakeStarTreasury: "0xB50aCdEd851Ce4E570B34BC35Dbf03FeF3C542F1",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
     stakeStarRewards: "0xaed21ba98900042bccAA8c2aAf250304D4Cb023D",
     stakeStarETH: "0x2BAd1B83595a8F5452C707f127ADD1C28D17D686",
@@ -63,6 +69,9 @@ export const ADDRESSES: Record<
     swapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
     quoter: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
+    swapProvider: "0xEd7c2BF9092fE13905281d9f8A7Fbe72d9c9d55F",
+    uniswapV3Provider: "0xEd7c2BF9092fE13905281d9f8A7Fbe72d9c9d55F",
+    twap: "0x3CF623f6ece2E389263e479Dee23Fd94E3D9351a",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -81,6 +90,9 @@ export const ADDRESSES: Record<
     swapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
     quoter: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
+    swapProvider: "",
+    uniswapV3Provider: "",
+    twap: "",
   },
 };
 
