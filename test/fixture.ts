@@ -27,6 +27,8 @@ export async function deployStakeStarFixture() {
     stakeStarRewards,
     stakeStarProvider,
     chainlinkProvider,
+    uniswapV3Provider,
+    twap,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
@@ -51,6 +53,7 @@ export async function deployStakeStarFixture() {
     addresses.ssvNetwork,
     [
       "function getAddressBalance(address ownerAddress) external view returns (uint256)",
+      "function getAddressBurnRate(address ownerAddress) external view returns (uint256)",
       "function getValidatorsByOwnerAddress(address ownerAddress) external view returns (bytes[] memory)",
     ],
     otherAccount
@@ -86,8 +89,10 @@ export async function deployStakeStarFixture() {
     stakeStarProvider,
     stakeStarProviderManager,
     chainlinkProvider,
+    uniswapV3Provider,
     ssvToken,
     ssvNetwork,
+    twap,
     validatorParams1,
     validatorParams2,
     owner,

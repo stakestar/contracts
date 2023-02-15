@@ -9,6 +9,18 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const addresses = ADDRESSES[network];
   const zeroEpochTimestamp = EPOCHS[network];
 
+  const UniswapV3Provider = await hre.ethers.getContractFactory(
+    "UniswapV3Provider"
+  );
+  const uniswapV3Provider = await hre.upgrades.deployProxy(UniswapV3Provider);
+  await uniswapV3Provider.deployed();
+  console.log(`UniswapV3Provider is deployed to ${uniswapV3Provider.address}`);
+
+  const TWAP = await hre.ethers.getContractFactory("TWAP");
+  const twap = await TWAP.deploy();
+  await twap.deployed();
+  console.log(`TWAP is deployed to ${twap.address}`);
+
   const StakeStarProvider = await hre.ethers.getContractFactory(
     "StakeStarProvider"
   );
@@ -69,6 +81,22 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarTreasury.address
   );
 
+  await stakeStarTreasury.setAddresses(
+    stakeStar.address,
+    addresses.ssvNetwork,
+    addresses.ssvToken,
+    uniswapV3Provider.address
+  );
+
+  await uniswapV3Provider.setAddresses(
+    addresses.swapRouter,
+    addresses.quoter,
+    twap.address,
+    addresses.weth,
+    addresses.ssvToken,
+    addresses.pool
+  );
+
   await grantAllStakeStarRoles(
     hre,
     stakeStar.address,
@@ -85,6 +113,8 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarTreasury,
     stakeStarProvider,
     chainlinkProvider,
+    uniswapV3Provider,
+    twap,
   };
 }
 
