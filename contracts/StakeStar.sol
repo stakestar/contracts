@@ -36,14 +36,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address stakeStarRewardsAddress,
         address stakeStarTreasuryAddress
     );
-    event SetLocalPoolSize(uint256 size);
-    event SetUnstakeLimit(uint256 limit);
+    event SetLocalPoolParameters(
+        uint256 localPoolMaxSize,
+        uint256 lpuLimit,
+        uint256 lpuFrequencyLimit
+    );
+    event SetQueueParameters(uint32 loopLimit);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
     event Stake(address indexed who, uint256 eth, uint256 ssETH);
     event Unstake(address indexed who, uint256 eth, uint256 ssETH);
     event Claim(address indexed who, uint256 amount);
+    event LocalPoolUnstake(address indexed who, uint256 eth, uint256 ssETH);
     event Harvest(uint256 amount);
     event CommitStakingSurplus(int256 stakingSurplus, uint256 timestamp);
 
@@ -61,22 +66,38 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IConsensusDataProvider public consensusDataProvider;
 
     mapping(address => uint256) public pendingUnstake;
+    mapping(uint32 => address) public pendingUnstakeQueue;
+    mapping(uint32 => uint32) public previous;
+    mapping(uint32 => uint32) public next;
+
     uint256 public pendingUnstakeSum;
 
-    uint256 public localPoolSize;
+    uint32 public left;
+    uint32 public right;
+    uint32 public loopLimit;
 
     int256 public stakingSurplusA;
-    uint256 public timestampA;
     int256 public stakingSurplusB;
+    uint256 public timestampA;
     uint256 public timestampB;
     uint256 public constant MIN_TIMESTAMP_DISTANCE = 180;
 
+    // lpu - Local Pool Unstake
+    uint256 public localPoolSize;
+    uint256 public localPoolMaxSize;
+    uint256 public lpuLimit;
+    uint256 public lpuFrequencyLimit;
+    mapping(address => uint256) public lpu;
+
     uint256 public reservedTreasuryCommission;
-    uint256 public unstakeLimit;
 
     receive() external payable {}
 
     function initialize() public initializer {
+        left = 1;
+        right = 1;
+        loopLimit = 25;
+
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -117,20 +138,28 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function setLocalPoolSize(
-        uint256 size
+    function setLocalPoolParameters(
+        uint256 _localPoolMaxSize,
+        uint256 _lpuLimit,
+        uint256 _lpuFrequencyLimit
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        localPoolSize = size;
+        localPoolMaxSize = _localPoolMaxSize;
+        lpuLimit = _lpuLimit;
+        lpuFrequencyLimit = _lpuFrequencyLimit;
 
-        emit SetLocalPoolSize(size);
+        emit SetLocalPoolParameters(
+            _localPoolMaxSize,
+            _lpuLimit,
+            _lpuFrequencyLimit
+        );
     }
 
-    function setUnstakeLimit(
-        uint256 limit
+    function setQueueParameters(
+        uint32 _loopLimit
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        unstakeLimit = limit;
+        loopLimit = _loopLimit;
 
-        emit SetUnstakeLimit(limit);
+        emit SetQueueParameters(_loopLimit);
     }
 
     function stake() public payable {
@@ -139,17 +168,25 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 ssETH = ETH_to_ssETH_approximate(msg.value);
         stakeStarETH.mint(msg.sender, ssETH);
 
+        localPoolSize = localPoolSize + msg.value > localPoolMaxSize
+            ? localPoolMaxSize
+            : localPoolSize + msg.value;
+
         emit Stake(msg.sender, msg.value, ssETH);
     }
 
     function unstake(uint256 ssETH) public returns (uint256 eth) {
-        require(ssETH <= unstakeLimit, "unstakeLimit");
+        require(pendingUnstake[msg.sender] == 0, "one unstake at a time only");
 
         stakeStarETH.burn(msg.sender, ssETH);
-
         eth = ssETH_to_ETH_approximate(ssETH);
-        pendingUnstake[msg.sender] += eth;
+
+        pendingUnstake[msg.sender] = eth;
         pendingUnstakeSum += eth;
+        pendingUnstakeQueue[right] = msg.sender;
+        previous[right + 1] = right;
+        next[right] = right + 1;
+        right++;
 
         emit Unstake(msg.sender, eth, ssETH);
     }
@@ -157,9 +194,20 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function claim() public {
         require(pendingUnstake[msg.sender] > 0, "no pending unstake");
 
+        uint32 index = queueIndex(msg.sender);
+        require(index > 0, "lack of eth / queue length");
+
         uint256 eth = pendingUnstake[msg.sender];
-        delete pendingUnstake[msg.sender];
         pendingUnstakeSum -= eth;
+        previous[next[index]] = previous[index];
+        next[previous[index]] = next[index];
+
+        if (left == index) left = next[left];
+
+        delete pendingUnstake[msg.sender];
+        delete pendingUnstakeQueue[index];
+        delete previous[index];
+        delete next[index];
 
         (bool status, ) = msg.sender.call{value: eth}("");
         require(status, "failed to send Ether");
@@ -167,9 +215,41 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit Claim(msg.sender, eth);
     }
 
-    function unstakeAndClaim(uint256 ssETH) public {
-        unstake(ssETH);
-        claim();
+    function localPoolUnstake(uint256 ssETH) public {
+        uint256 eth = ssETH_to_ETH_approximate(ssETH);
+
+        require(eth <= lpuLimit, "localPoolUnstakeLimit");
+        require(eth <= localPoolSize, "localPoolSize");
+        require(
+            block.number - lpu[msg.sender] > lpuFrequencyLimit,
+            "lpuFrequencyLimit"
+        );
+
+        stakeStarETH.burn(msg.sender, ssETH);
+        localPoolSize -= eth;
+        lpu[msg.sender] = block.number;
+
+        (bool status, ) = msg.sender.call{value: eth}("");
+        require(status, "failed to send Ether");
+
+        emit LocalPoolUnstake(msg.sender, eth, ssETH);
+    }
+
+    function queueIndex(address msgSender) public view returns (uint32) {
+        uint32 index = left;
+        uint32 loopCounter = 0;
+        uint256 availableETH = address(this).balance - localPoolSize;
+        uint256 unstakeSum = 0;
+
+        while (index < right && loopCounter < loopLimit) {
+            unstakeSum += pendingUnstake[pendingUnstakeQueue[index]];
+            if (unstakeSum > availableETH) break;
+            if (msgSender == pendingUnstakeQueue[index]) return index;
+            index = next[index];
+            loopCounter++;
+        }
+
+        return 0;
     }
 
     function createValidator(
@@ -256,6 +336,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 rewards = amount - treasuryCommission;
         stakeStarETH.updateRate(int256(rewards));
 
+        localPoolSize = localPoolSize + amount > localPoolMaxSize
+            ? localPoolMaxSize
+            : localPoolSize + amount;
+
         emit Harvest(rewards);
     }
 
@@ -296,7 +380,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function validatorCreationAvailability() public view returns (bool) {
         return
             address(this).balance >=
-            (uint256(32 ether) + localPoolSize + pendingUnstakeSum);
+            (uint256(32 ether) +
+                localPoolMaxSize -
+                localPoolSize +
+                pendingUnstakeSum);
     }
 
     function validatorDestructionAvailability() public view returns (bool) {
@@ -314,7 +401,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         return
             pendingUnstakeSum >=
-            uint256(32 ether) + exitingETH + exitedETH + localPoolSize;
+            uint256(32 ether) +
+                exitingETH +
+                exitedETH +
+                localPoolMaxSize -
+                localPoolSize;
     }
 
     function validatorToDestroy() public view returns (bytes memory) {
