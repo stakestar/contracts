@@ -87,7 +87,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint256 public localPoolMaxSize;
     uint256 public lpuLimit;
     uint256 public lpuFrequencyLimit;
-    mapping(address => uint256) public lpu;
+    mapping(address => uint256) public lpuHistory;
 
     uint256 public reservedTreasuryCommission;
 
@@ -221,13 +221,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         require(eth <= lpuLimit, "localPoolUnstakeLimit");
         require(eth <= localPoolSize, "localPoolSize");
         require(
-            block.number - lpu[msg.sender] > lpuFrequencyLimit,
+            block.number - lpuHistory[msg.sender] > lpuFrequencyLimit,
             "lpuFrequencyLimit"
         );
 
         stakeStarETH.burn(msg.sender, ssETH);
         localPoolSize -= eth;
-        lpu[msg.sender] = block.number;
+        lpuHistory[msg.sender] = block.number;
 
         (bool status, ) = msg.sender.call{value: eth}("");
         require(status, "failed to send Ether");
