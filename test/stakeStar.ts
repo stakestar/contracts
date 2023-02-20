@@ -65,6 +65,9 @@ describe("StakeStar", function () {
       await expect(stakeStarPublic.setQueueParameters(1)).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
+      await expect(stakeStarPublic.setQueueParameters(1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
       await expect(
         stakeStarPublic.createValidator(validatorParams1, 1)
       ).to.be.revertedWith(
@@ -172,6 +175,121 @@ describe("StakeStar", function () {
       await expect(stakeStarPublic.unstake(unstakeAmountSS))
         .to.emit(stakeStarPublic, "Unstake")
         .withArgs(otherAccount.address, unstakeAmountSS, unstakeAmountEth);
+    });
+
+    it("unstake queue", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarManager,
+        stakeStarOwner,
+        otherAccount,
+        manager,
+        owner,
+        validatorParams1,
+        stakeStarRegistry,
+        ssvToken,
+      } = await loadFixture(deployStakeStarFixture);
+
+      await stakeStarPublic.stake({ value: ethers.utils.parseEther("16") });
+      await stakeStarManager.stake({ value: ethers.utils.parseEther("8") });
+      await stakeStarOwner.stake({ value: ethers.utils.parseEther("8") });
+
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        await ssvToken.balanceOf(stakeStarManager.address)
+      );
+
+      await stakeStarOwner.unstake(ethers.utils.parseEther("8"));
+      await stakeStarManager.unstake(ethers.utils.parseEther("8"));
+      await stakeStarPublic.unstake(ethers.utils.parseEther("16"));
+
+      expect(await stakeStarPublic.left()).to.equal(1);
+      expect(await stakeStarPublic.right()).to.equal(4);
+
+      for (let i = 1; i <= 3; i++) {
+        expect(await stakeStarPublic.previous(i)).to.equal(i - 1);
+        expect(await stakeStarPublic.next(i)).to.equal(i + 1);
+      }
+
+      expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
+        0
+      );
+
+      await owner.sendTransaction({
+        to: stakeStarManager.address,
+        value: ethers.utils.parseEther("8"),
+      });
+
+      expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
+        0
+      );
+
+      await owner.sendTransaction({
+        to: stakeStarManager.address,
+        value: ethers.utils.parseEther("8"),
+      });
+
+      expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(2);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
+        0
+      );
+
+      await stakeStarManager.claim();
+
+      expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
+        0
+      );
+      expect(await stakeStarPublic.next(1)).to.equal(3);
+      expect(await stakeStarPublic.previous(3)).to.equal(1);
+
+      expect(await stakeStarPublic.left()).to.equal(1);
+      expect(await stakeStarPublic.right()).to.equal(4);
+
+      await owner.sendTransaction({
+        to: stakeStarManager.address,
+        value: ethers.utils.parseEther("16"),
+      });
+
+      expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
+        3
+      );
+
+      await stakeStarPublic.claim();
+      await stakeStarOwner.claim();
+
+      expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
+        0
+      );
+
+      expect(await stakeStarPublic.left()).to.equal(4);
+      expect(await stakeStarPublic.right()).to.equal(4);
+
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(0);
+
+      expect(await stakeStarPublic.next(4)).to.equal(0);
+      expect(await stakeStarPublic.previous(4)).to.equal(0);
     });
   });
 
@@ -283,6 +401,45 @@ describe("StakeStar", function () {
       ).to.be.revertedWith("localPoolSize");
 
       await stakeStarPublic.unstake(ethers.utils.parseEther("2"));
+      await stakeStarPublic.claim();
+
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.eq(ZERO);
+
+      expect(await stakeStarPublic.pendingUnstakeSum()).to.equal(ZERO);
+      expect(
+        await stakeStarPublic.pendingUnstake(otherAccount.address)
+      ).to.equal(ZERO);
+    });
+
+    it("LocalPoolUnstake when there is pending unstake", async function () {
+      const { stakeStarPublic, stakeStarOwner, otherAccount, stakeStarETH } =
+        await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setLocalPoolParameters(
+        ethers.utils.parseEther("2"),
+        ethers.utils.parseEther("1"),
+        0
+      );
+
+      await otherAccount.sendTransaction({
+        to: stakeStarPublic.address,
+        value: ethers.utils.parseEther("10"),
+      });
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("4"),
+      });
+      await stakeStarPublic.unstake(ethers.utils.parseEther("3"));
+      await stakeStarPublic.localPoolUnstake(ethers.utils.parseEther("1"));
+      await expect(
+        stakeStarPublic.localPoolUnstake(ethers.utils.parseEther("1"))
+      ).to.be.revertedWith("ERC20: burn amount exceeds balance");
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+      await expect(
+        stakeStarPublic.unstake(ethers.utils.parseEther("1"))
+      ).to.be.revertedWith("one unstake at a time only");
+      await stakeStarPublic.localPoolUnstake(ethers.utils.parseEther("1"));
       await stakeStarPublic.claim();
 
       expect(await stakeStarETH.balanceOf(otherAccount.address)).to.eq(ZERO);
