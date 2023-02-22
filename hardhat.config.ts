@@ -16,6 +16,7 @@ import "./scripts/tasks/grant-StakeStarRole";
 import "./scripts/tasks/grant-TreasuryRole";
 import "./scripts/tasks/printAddresses";
 import "./scripts/tasks/printContractVariables";
+import "./scripts/tasks/reactivateAccount";
 import "./scripts/tasks/setAddresses";
 import "./scripts/tasks/setLimits";
 import "./scripts/tasks/setSwapParameters";

@@ -172,6 +172,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         claim();
     }
 
+    function reactivateAccount() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ssvNetwork.reactivateAccount(0);
+    }
+
     function createValidator(
         ValidatorParams calldata validatorParams,
         uint256 ssvDepositAmount
