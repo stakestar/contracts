@@ -9,7 +9,7 @@ import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/ISwapProvider.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
-    event SetCommission(uint24 numerator);
+    event SetCommission(uint24 value);
     event SetAddresses(
         address stakeStarAddress,
         address ssvNetworkAddress,
@@ -17,11 +17,11 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address swapProviderAddress
     );
     event SetRunway(uint256 minRunway, uint256 maxRunway);
-    event Withdraw(uint256 amount);
+    event ReceiveCommission(uint256 value);
+    event Claim(uint256 value);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
-    uint24 public commissionNumerator;
-    uint24 public constant DENOMINATOR = 100_000;
+    uint24 public commission;
 
     address public stakeStar;
 
@@ -36,14 +36,10 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    receive() external payable {}
-
-    function setCommission(
-        uint24 numerator
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(numerator <= DENOMINATOR, "value must be in [0, 100_000]");
-        commissionNumerator = numerator;
-        emit SetCommission(numerator);
+    function setCommission(uint24 value) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(value <= 100_000, "value must be in [0, 100_000]");
+        commission = value;
+        emit SetCommission(value);
     }
 
     function setAddresses(
@@ -77,9 +73,14 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit SetRunway(minRunwayPeriod, maxRunwayPeriod);
     }
 
-    function withdraw(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function receiveCommission() public payable {
+        require(msg.value > 0, "msg.value = 0");
+        emit ReceiveCommission(msg.value);
+    }
+
+    function claim(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         payable(msg.sender).transfer(amount);
-        emit Withdraw(amount);
+        emit Claim(amount);
     }
 
     function swapETHAndDepositSSV() public {
@@ -109,10 +110,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
             balance < burnRate * maxRunway;
     }
 
-    function commission(int256 amount) public view returns (uint256) {
-        return
-            amount > 0
-                ? (uint256(amount) * commissionNumerator) / DENOMINATOR
-                : 0;
+    function getCommission(int256 amount) public view returns (uint256) {
+        return amount > 0 ? (uint256(amount) * commission) / 100_000 : 0;
     }
 }
