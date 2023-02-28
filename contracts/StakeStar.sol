@@ -414,10 +414,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function rate(uint256 timestamp) public view returns (uint256) {
         require(timestamp >= snapshots[1].timestamp, "timestamp from the past");
-        require(
-            snapshots[0].timestamp * snapshots[1].timestamp > 0,
-            "snapshots not initialized"
-        );
+
+        if (snapshots[0].timestamp == 0 || snapshots[1].timestamp == 0) {
+            return 1 ether;
+        }
 
         uint256 rate0 = (snapshots[0].total_ETH * 1 ether) /
             snapshots[0].total_ssETH;

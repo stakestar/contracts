@@ -2,10 +2,9 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { EPOCHS, ZERO } from "../scripts/constants";
+import { ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture";
 import { BigNumber } from "ethers";
-import { currentNetwork } from "../scripts/helpers";
 import { ValidatorStatus } from "../scripts/types";
 
 describe("StakeStar", function () {
@@ -65,9 +64,6 @@ describe("StakeStar", function () {
       await expect(stakeStarPublic.setQueueParameters(1)).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
-      await expect(stakeStarPublic.setQueueParameters(1)).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
-      );
       await expect(
         stakeStarPublic.createValidator(validatorParams1, 1)
       ).to.be.revertedWith(
@@ -97,9 +93,7 @@ describe("StakeStar", function () {
       );
 
       const stakeAmountETH = BigNumber.from(1);
-      const stakeAmountSS = await stakeStarPublic.ETH_to_ssETH_approximate(
-        stakeAmountETH
-      );
+      const stakeAmountSS = await stakeStarPublic.ETH_to_ssETH(stakeAmountETH);
 
       await expect(
         stakeStarPublic.stake({ value: stakeAmountETH })
@@ -131,7 +125,7 @@ describe("StakeStar", function () {
       expect(await stakeStarETH.totalSupply()).to.equal(ssEthAmount);
 
       const unstakeAmountSS = ssEthAmount.div(2);
-      const unstakeAmountEth = await stakeStarPublic.ssETH_to_ETH_approximate(
+      const unstakeAmountEth = await stakeStarPublic.ssETH_to_ETH(
         unstakeAmountSS
       );
       const shouldBeBurntSS = unstakeAmountSS;
@@ -686,7 +680,8 @@ describe("StakeStar", function () {
         stakeStarOwner,
         stakeStarRegistry,
         stakeStarRegistryManager,
-        stakeStarRewards,
+        stakeStarOracleManager,
+        withdrawalAddress,
         ssvToken,
         validatorParams1,
         validatorParams2,
@@ -744,14 +739,20 @@ describe("StakeStar", function () {
 
       await stakeStarOwner.setLocalPoolParameters(0, 0, 0);
       await owner.sendTransaction({
-        to: stakeStarRewards.address,
+        to: withdrawalAddress.address,
         value: hre.ethers.utils.parseEther("32"),
       });
 
       expect(await stakeStarManager.validatorDestructionAvailability()).to.be
         .false;
 
-      await stakeStarPublic.harvest();
+      await stakeStarOracleManager.save(100, hre.ethers.utils.parseEther("32"));
+      await stakeStarManager.commitSnapshot();
+
+      expect(
+        await ethers.getDefaultProvider().getBalance(withdrawalAddress.address)
+      ).to.equal(0);
+
       expect(await stakeStarManager.validatorDestructionAvailability()).to.be
         .false;
 
@@ -791,7 +792,9 @@ describe("StakeStar", function () {
         (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
       );
 
-      expect(await stakeStarManager.validatorToDestroy()).to.eql("0x");
+      await expect(stakeStarPublic.validatorToDestroy()).to.be.revertedWith(
+        "destroy not available"
+      );
 
       await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
 
@@ -808,379 +811,383 @@ describe("StakeStar", function () {
         validatorToDestroy
       );
 
-      expect(await stakeStarManager.validatorToDestroy()).to.eql("0x");
+      await expect(stakeStarPublic.validatorToDestroy()).to.be.revertedWith(
+        "destroy not available"
+      );
 
       await stakeStarManager.destroyValidator(validatorToDestroy);
 
-      expect(await stakeStarManager.validatorToDestroy()).to.eql("0x");
-    });
-  });
-
-  describe("harvest", function () {
-    it("Should pull rewards from StakeStarRewards", async function () {
-      const {
-        stakeStarPublic,
-        stakeStarRewards,
-        stakeStarETH,
-        stakeStarTreasury,
-        otherAccount,
-      } = await loadFixture(deployStakeStarFixture);
-
-      await stakeStarTreasury.setCommission(5000); // 5%
-
-      await expect(stakeStarPublic.harvest()).to.be.revertedWith(
-        "no rewards available"
-      );
-
-      const rateBefore = await stakeStarETH.rate();
-
-      await stakeStarPublic.stake({ value: 1 });
-
-      await otherAccount.sendTransaction({
-        to: stakeStarRewards.address,
-        value: 100,
-      });
-      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
-        [stakeStarPublic, stakeStarRewards],
-        [95, -100]
-      );
-
-      const rateAfter = await stakeStarETH.rate();
-      expect(rateAfter.gt(rateBefore)).to.equal(true);
-
-      await otherAccount.sendTransaction({
-        to: stakeStarRewards.address,
-        value: 100,
-      });
-      await expect(stakeStarPublic.harvest())
-        .to.emit(stakeStarPublic, "Harvest")
-        .withArgs(95);
-
-      await otherAccount.sendTransaction({
-        to: stakeStarRewards.address,
-        value: 100,
-      });
-      await expect(stakeStarPublic.harvest()).to.changeEtherBalance(
-        stakeStarTreasury,
-        5
+      await expect(stakeStarPublic.validatorToDestroy()).to.be.revertedWith(
+        "destroy not available"
       );
     });
   });
 
-  describe("Linear approximation", function () {
-    it("Should approximate ssETH rate", async function () {
-      const {
-        hre,
-        stakeStarOwner,
-        stakeStarPublic,
-        otherAccount,
-        stakeStarETH,
-        stakeStarProvider,
-        stakeStarProviderManager,
-      } = await loadFixture(deployStakeStarFixture);
-      await stakeStarProvider.setLimits(
-        hre.ethers.utils.parseUnits("16"),
-        hre.ethers.utils.parseUnits("40"),
-        24 * 3600,
-        hre.ethers.utils.parseUnits("99999"),
-        3
-      );
-
-      const currentTimestamp = (
-        await hre.ethers.provider.getBlock(
-          await hre.ethers.provider.getBlockNumber()
-        )
-      ).timestamp;
-      const currentEpochNumber = Math.floor(
-        (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
-      );
-
-      const one = ethers.utils.parseEther("1");
-      const oneHundred = ethers.utils.parseEther("100");
-
-      // some stake required because of division by zero
-      await stakeStarPublic.stake({ value: oneHundred });
-      // one to one
-      const balance1 = await stakeStarETH.balanceOf(otherAccount.address);
-      expect(balance1).to.equal(oneHundred);
-
-      const getTime = async function () {
-        return (
-          await hre.ethers.provider.getBlock(
-            await hre.ethers.provider.getBlockNumber()
-          )
-        ).timestamp;
-      };
-      const initialTimestamp = await stakeStarProviderManager.epochTimestamp(
-        currentEpochNumber
-      );
-
-      // not initialized yet
-      await expect(
-        stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-      ).to.be.revertedWith("point A or B not initialized");
-      expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
-
-      // distribute 0.01 first time
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 3,
-        ethers.utils.parseEther("32.01"),
-        1
-      );
-      await expect(stakeStarOwner.commitStakingSurplus())
-        .to.emit(stakeStarOwner, "CommitStakingSurplus")
-        .withArgs(
-          ethers.utils.parseEther("0.01"),
-          await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 3)
-        );
-      // still not initialized yet (only one point)
-      await expect(
-        stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-      ).to.be.revertedWith("point A or B not initialized");
-      expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
-
-      // distribute another 0.01
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 2,
-        ethers.utils.parseEther("32.02"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      // two points initialized. If timestamp = last point, reward = last reward
-      expect(
-        await stakeStarPublic.approximateStakingSurplus(
-          await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 2)
-        )
-      ).to.equal(ethers.utils.parseEther("0.02"));
-
-      // 0.02 will be distributed by 100 staked ethers
-      expect(await stakeStarETH.rate()).to.equal(
-        ethers.utils
-          .parseEther("100.02")
-          .mul(one)
-          .div(ethers.utils.parseEther("100"))
-      );
-
-      // 2 epochs(384 * 2 seconds) spent with rate 0.01 ether / epoch
-      expect(
-        await stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-      ).to.equal(ethers.utils.parseEther("0.04"));
-
-      const getCurrentRate = async function (
-        totalStakedEth: BigNumber,
-        tm: number | undefined = undefined,
-        totalStakedSS: BigNumber | undefined = undefined
-      ) {
-        totalStakedSS = totalStakedSS
-          ? totalStakedSS
-          : await stakeStarETH.totalSupply();
-        tm = tm ? tm : await getTime();
-
-        // current reward = 0.01 / 250 * timedelta + 0.02
-        const currentReward = ethers.utils
-          .parseEther("0.01")
-          .mul(tm - initialTimestamp)
-          .div(384)
-          .add(ethers.utils.parseEther("0.04"));
-        expect(await stakeStarPublic.approximateStakingSurplus(tm)).to.equal(
-          currentReward
-        );
-
-        // so rate (totalStakedEth + currentReward) / total staked
-        const currentRate = totalStakedEth
-          .add(currentReward)
-          .mul(one)
-          .div(totalStakedSS);
-
-        return [currentRate, currentReward];
-      };
-
-      await hre.network.provider.request({ method: "evm_mine", params: [] });
-      let [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
-      expect(await stakeStarPublic.currentApproximateRate()).to.equal(
-        currentRate
-      );
-
-      await hre.network.provider.request({ method: "evm_mine", params: [] });
-      [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
-      expect(await stakeStarPublic.currentApproximateRate()).to.equal(
-        currentRate
-      );
-
-      await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        initialTimestamp.toNumber() + 200,
-      ]);
-      await hre.network.provider.request({ method: "evm_mine", params: [] });
-      await getCurrentRate(ethers.utils.parseEther("100"));
-
-      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
-        balance1
-      );
-
-      // Another Stake 100
-      const constRateBeforeStake = await stakeStarETH.rate();
-      const tx = await stakeStarPublic.stake({
-        value: ethers.utils.parseEther("100"),
-      });
-      // staking shouldn't change constant rate
-      expect(await stakeStarETH.rate()).to.be.equal(constRateBeforeStake);
-      const tx_timestamp = (await hre.ethers.provider.getBlock(tx.blockNumber))
-        .timestamp;
-      const tx_rate = await stakeStarPublic.approximateRate(tx_timestamp);
-
-      let [currentRateB] = await getCurrentRate(
-        ethers.utils.parseEther("100"),
-        tx_timestamp,
-        balance1
-      );
-
-      let newStaked = ethers.utils.parseEther("100").mul(one).div(currentRateB);
-      const balance2 = await stakeStarETH.balanceOf(otherAccount.address);
-      expect(balance2).to.equal(newStaked.add(balance1));
-
-      const totalStakedEth = balance2.mul(constRateBeforeStake).div(one);
-      expect(totalStakedEth).to.be.equal(await stakeStarETH.totalSupplyEth());
-      let [currentRateC] = await getCurrentRate(
-        totalStakedEth.sub(ethers.utils.parseEther("0.02")),
-        tx_timestamp,
-        balance2
-      );
-      expect(currentRateC).to.be.equal(tx_rate);
-
-      await stakeStarPublic.unstake(newStaked);
-      await stakeStarPublic.claim();
-    });
-  });
-
-  describe("reservedTreasuryCommission", function () {
-    it("Should take commission on staking surplus", async function () {
-      const {
-        stakeStarOwner,
-        stakeStarPublic,
-        stakeStarETH,
-        otherAccount,
-        stakeStarProvider,
-        stakeStarProviderManager,
-        ssvToken,
-        stakeStarManager,
-        validatorParams1,
-        stakeStarRegistry,
-        stakeStarRegistryManager,
-        stakeStarTreasury,
-        owner,
-        hre,
-      } = await loadFixture(deployStakeStarFixture);
-
-      await stakeStarProvider.setLimits(
-        hre.ethers.utils.parseUnits("16"),
-        hre.ethers.utils.parseUnits("40"),
-        24 * 3600,
-        hre.ethers.utils.parseUnits("99999"),
-        3
-      );
-
-      const currentTimestamp = (
-        await hre.ethers.provider.getBlock(
-          await hre.ethers.provider.getBlockNumber()
-        )
-      ).timestamp;
-      const currentEpochNumber = Math.floor(
-        (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
-      );
-
-      const thirtyTwoEthers = hre.ethers.utils.parseEther("32");
-
-      await expect(
-        stakeStarPublic.stake({ value: thirtyTwoEthers })
-      ).to.changeTokenBalance(stakeStarETH, otherAccount, thirtyTwoEthers);
-
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
-      );
-      await stakeStarRegistryManager.confirmActivatingValidator(
-        validatorParams1.publicKey
-      );
-
-      await stakeStarTreasury.setCommission(50_000); // 50%
-
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 10,
-        ethers.utils.parseEther("32.00"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
-      expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
-      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
-
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 9,
-        ethers.utils.parseEther("32.00"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
-      expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
-      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
-
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 8,
-        ethers.utils.parseEther("32.000000000000000100"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
-      expect(await stakeStarOwner.stakingSurplusB()).to.eq(50);
-      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(50);
-
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 7,
-        ethers.utils.parseEther("32.000000000000000120"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      expect(await stakeStarOwner.stakingSurplusA()).to.eq(50);
-      expect(await stakeStarOwner.stakingSurplusB()).to.eq(60);
-      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(60);
-
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 6,
-        ethers.utils.parseEther("32.000000000000000010"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      expect(await stakeStarOwner.stakingSurplusA()).to.eq(60);
-      expect(await stakeStarOwner.stakingSurplusB()).to.eq(5);
-      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(5);
-
-      await stakeStarProviderManager.save(
-        currentEpochNumber - 5,
-        ethers.utils.parseEther("31.999999999999999880"),
-        1
-      );
-      await stakeStarOwner.commitStakingSurplus();
-
-      expect(await stakeStarOwner.stakingSurplusA()).to.eq(5);
-      expect(await stakeStarOwner.stakingSurplusB()).to.eq(-120);
-      expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
-    });
-  });
+  // describe("harvest", function () {
+  //   it("Should pull rewards from StakeStarRewards", async function () {
+  //     const {
+  //       stakeStarPublic,
+  //       stakeStarRewards,
+  //       stakeStarETH,
+  //       stakeStarTreasury,
+  //       otherAccount,
+  //     } = await loadFixture(deployStakeStarFixture);
+  //
+  //     await stakeStarTreasury.setCommission(5000); // 5%
+  //
+  //     await expect(stakeStarPublic.harvest()).to.be.revertedWith(
+  //       "no rewards available"
+  //     );
+  //
+  //     const rateBefore = await stakeStarETH.rate();
+  //
+  //     await stakeStarPublic.stake({ value: 1 });
+  //
+  //     await otherAccount.sendTransaction({
+  //       to: stakeStarRewards.address,
+  //       value: 100,
+  //     });
+  //     await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
+  //       [stakeStarPublic, stakeStarRewards],
+  //       [95, -100]
+  //     );
+  //
+  //     const rateAfter = await stakeStarETH.rate();
+  //     expect(rateAfter.gt(rateBefore)).to.equal(true);
+  //
+  //     await otherAccount.sendTransaction({
+  //       to: stakeStarRewards.address,
+  //       value: 100,
+  //     });
+  //     await expect(stakeStarPublic.harvest())
+  //       .to.emit(stakeStarPublic, "Harvest")
+  //       .withArgs(95);
+  //
+  //     await otherAccount.sendTransaction({
+  //       to: stakeStarRewards.address,
+  //       value: 100,
+  //     });
+  //     await expect(stakeStarPublic.harvest()).to.changeEtherBalance(
+  //       stakeStarTreasury,
+  //       5
+  //     );
+  //   });
+  // });
+  //
+  // describe("Linear approximation", function () {
+  //   it("Should approximate ssETH rate", async function () {
+  //     const {
+  //       hre,
+  //       stakeStarOwner,
+  //       stakeStarPublic,
+  //       otherAccount,
+  //       stakeStarETH,
+  //       stakeStarProvider,
+  //       stakeStarProviderManager,
+  //     } = await loadFixture(deployStakeStarFixture);
+  //     await stakeStarProvider.setLimits(
+  //       hre.ethers.utils.parseUnits("16"),
+  //       hre.ethers.utils.parseUnits("40"),
+  //       24 * 3600,
+  //       hre.ethers.utils.parseUnits("99999"),
+  //       3
+  //     );
+  //
+  //     const currentTimestamp = (
+  //       await hre.ethers.provider.getBlock(
+  //         await hre.ethers.provider.getBlockNumber()
+  //       )
+  //     ).timestamp;
+  //     const currentEpochNumber = Math.floor(
+  //       (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
+  //     );
+  //
+  //     const one = ethers.utils.parseEther("1");
+  //     const oneHundred = ethers.utils.parseEther("100");
+  //
+  //     // some stake required because of division by zero
+  //     await stakeStarPublic.stake({ value: oneHundred });
+  //     // one to one
+  //     const balance1 = await stakeStarETH.balanceOf(otherAccount.address);
+  //     expect(balance1).to.equal(oneHundred);
+  //
+  //     const getTime = async function () {
+  //       return (
+  //         await hre.ethers.provider.getBlock(
+  //           await hre.ethers.provider.getBlockNumber()
+  //         )
+  //       ).timestamp;
+  //     };
+  //     const initialTimestamp = await stakeStarProviderManager.epochTimestamp(
+  //       currentEpochNumber
+  //     );
+  //
+  //     // not initialized yet
+  //     await expect(
+  //       stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+  //     ).to.be.revertedWith("point A or B not initialized");
+  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
+  //
+  //     // distribute 0.01 first time
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 3,
+  //       ethers.utils.parseEther("32.01"),
+  //       1
+  //     );
+  //     await expect(stakeStarOwner.commitStakingSurplus())
+  //       .to.emit(stakeStarOwner, "CommitStakingSurplus")
+  //       .withArgs(
+  //         ethers.utils.parseEther("0.01"),
+  //         await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 3)
+  //       );
+  //     // still not initialized yet (only one point)
+  //     await expect(
+  //       stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+  //     ).to.be.revertedWith("point A or B not initialized");
+  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
+  //
+  //     // distribute another 0.01
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 2,
+  //       ethers.utils.parseEther("32.02"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     // two points initialized. If timestamp = last point, reward = last reward
+  //     expect(
+  //       await stakeStarPublic.approximateStakingSurplus(
+  //         await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 2)
+  //       )
+  //     ).to.equal(ethers.utils.parseEther("0.02"));
+  //
+  //     // 0.02 will be distributed by 100 staked ethers
+  //     expect(await stakeStarETH.rate()).to.equal(
+  //       ethers.utils
+  //         .parseEther("100.02")
+  //         .mul(one)
+  //         .div(ethers.utils.parseEther("100"))
+  //     );
+  //
+  //     // 2 epochs(384 * 2 seconds) spent with rate 0.01 ether / epoch
+  //     expect(
+  //       await stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+  //     ).to.equal(ethers.utils.parseEther("0.04"));
+  //
+  //     const getCurrentRate = async function (
+  //       totalStakedEth: BigNumber,
+  //       tm: number | undefined = undefined,
+  //       totalStakedSS: BigNumber | undefined = undefined
+  //     ) {
+  //       totalStakedSS = totalStakedSS
+  //         ? totalStakedSS
+  //         : await stakeStarETH.totalSupply();
+  //       tm = tm ? tm : await getTime();
+  //
+  //       // current reward = 0.01 / 250 * timedelta + 0.02
+  //       const currentReward = ethers.utils
+  //         .parseEther("0.01")
+  //         .mul(tm - initialTimestamp)
+  //         .div(384)
+  //         .add(ethers.utils.parseEther("0.04"));
+  //       expect(await stakeStarPublic.approximateStakingSurplus(tm)).to.equal(
+  //         currentReward
+  //       );
+  //
+  //       // so rate (totalStakedEth + currentReward) / total staked
+  //       const currentRate = totalStakedEth
+  //         .add(currentReward)
+  //         .mul(one)
+  //         .div(totalStakedSS);
+  //
+  //       return [currentRate, currentReward];
+  //     };
+  //
+  //     await hre.network.provider.request({ method: "evm_mine", params: [] });
+  //     let [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
+  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(
+  //       currentRate
+  //     );
+  //
+  //     await hre.network.provider.request({ method: "evm_mine", params: [] });
+  //     [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
+  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(
+  //       currentRate
+  //     );
+  //
+  //     await hre.network.provider.send("evm_setNextBlockTimestamp", [
+  //       initialTimestamp.toNumber() + 200,
+  //     ]);
+  //     await hre.network.provider.request({ method: "evm_mine", params: [] });
+  //     await getCurrentRate(ethers.utils.parseEther("100"));
+  //
+  //     expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+  //       balance1
+  //     );
+  //
+  //     // Another Stake 100
+  //     const constRateBeforeStake = await stakeStarETH.rate();
+  //     const tx = await stakeStarPublic.stake({
+  //       value: ethers.utils.parseEther("100"),
+  //     });
+  //     // staking shouldn't change constant rate
+  //     expect(await stakeStarETH.rate()).to.be.equal(constRateBeforeStake);
+  //     const tx_timestamp = (await hre.ethers.provider.getBlock(tx.blockNumber))
+  //       .timestamp;
+  //     const tx_rate = await stakeStarPublic.approximateRate(tx_timestamp);
+  //
+  //     let [currentRateB] = await getCurrentRate(
+  //       ethers.utils.parseEther("100"),
+  //       tx_timestamp,
+  //       balance1
+  //     );
+  //
+  //     let newStaked = ethers.utils.parseEther("100").mul(one).div(currentRateB);
+  //     const balance2 = await stakeStarETH.balanceOf(otherAccount.address);
+  //     expect(balance2).to.equal(newStaked.add(balance1));
+  //
+  //     const totalStakedEth = balance2.mul(constRateBeforeStake).div(one);
+  //     expect(totalStakedEth).to.be.equal(await stakeStarETH.totalSupplyEth());
+  //     let [currentRateC] = await getCurrentRate(
+  //       totalStakedEth.sub(ethers.utils.parseEther("0.02")),
+  //       tx_timestamp,
+  //       balance2
+  //     );
+  //     expect(currentRateC).to.be.equal(tx_rate);
+  //
+  //     await stakeStarPublic.unstake(newStaked);
+  //     await stakeStarPublic.claim();
+  //   });
+  // });
+  //
+  // describe("reservedTreasuryCommission", function () {
+  //   it("Should take commission on staking surplus", async function () {
+  //     const {
+  //       stakeStarOwner,
+  //       stakeStarPublic,
+  //       stakeStarETH,
+  //       otherAccount,
+  //       stakeStarProvider,
+  //       stakeStarProviderManager,
+  //       ssvToken,
+  //       stakeStarManager,
+  //       validatorParams1,
+  //       stakeStarRegistry,
+  //       stakeStarRegistryManager,
+  //       stakeStarTreasury,
+  //       owner,
+  //       hre,
+  //     } = await loadFixture(deployStakeStarFixture);
+  //
+  //     await stakeStarProvider.setLimits(
+  //       hre.ethers.utils.parseUnits("16"),
+  //       hre.ethers.utils.parseUnits("40"),
+  //       24 * 3600,
+  //       hre.ethers.utils.parseUnits("99999"),
+  //       3
+  //     );
+  //
+  //     const currentTimestamp = (
+  //       await hre.ethers.provider.getBlock(
+  //         await hre.ethers.provider.getBlockNumber()
+  //       )
+  //     ).timestamp;
+  //     const currentEpochNumber = Math.floor(
+  //       (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
+  //     );
+  //
+  //     const thirtyTwoEthers = hre.ethers.utils.parseEther("32");
+  //
+  //     await expect(
+  //       stakeStarPublic.stake({ value: thirtyTwoEthers })
+  //     ).to.changeTokenBalance(stakeStarETH, otherAccount, thirtyTwoEthers);
+  //
+  //     await ssvToken
+  //       .connect(owner)
+  //       .transfer(
+  //         stakeStarManager.address,
+  //         await ssvToken.balanceOf(owner.address)
+  //       );
+  //     for (const operatorId of validatorParams1.operatorIds) {
+  //       await stakeStarRegistry
+  //         .connect(owner)
+  //         .addOperatorToAllowList(operatorId);
+  //     }
+  //     await stakeStarManager.createValidator(
+  //       validatorParams1,
+  //       await ssvToken.balanceOf(stakeStarManager.address)
+  //     );
+  //     await stakeStarRegistryManager.confirmActivatingValidator(
+  //       validatorParams1.publicKey
+  //     );
+  //
+  //     await stakeStarTreasury.setCommission(50_000); // 50%
+  //
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 10,
+  //       ethers.utils.parseEther("32.00"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
+  //     expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
+  //     expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
+  //
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 9,
+  //       ethers.utils.parseEther("32.00"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
+  //     expect(await stakeStarOwner.stakingSurplusB()).to.eq(0);
+  //     expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
+  //
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 8,
+  //       ethers.utils.parseEther("32.000000000000000100"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     expect(await stakeStarOwner.stakingSurplusA()).to.eq(0);
+  //     expect(await stakeStarOwner.stakingSurplusB()).to.eq(50);
+  //     expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(50);
+  //
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 7,
+  //       ethers.utils.parseEther("32.000000000000000120"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     expect(await stakeStarOwner.stakingSurplusA()).to.eq(50);
+  //     expect(await stakeStarOwner.stakingSurplusB()).to.eq(60);
+  //     expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(60);
+  //
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 6,
+  //       ethers.utils.parseEther("32.000000000000000010"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     expect(await stakeStarOwner.stakingSurplusA()).to.eq(60);
+  //     expect(await stakeStarOwner.stakingSurplusB()).to.eq(5);
+  //     expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(5);
+  //
+  //     await stakeStarProviderManager.save(
+  //       currentEpochNumber - 5,
+  //       ethers.utils.parseEther("31.999999999999999880"),
+  //       1
+  //     );
+  //     await stakeStarOwner.commitStakingSurplus();
+  //
+  //     expect(await stakeStarOwner.stakingSurplusA()).to.eq(5);
+  //     expect(await stakeStarOwner.stakingSurplusB()).to.eq(-120);
+  //     expect(await stakeStarOwner.reservedTreasuryCommission()).to.eq(0);
+  //   });
+  // });
 });
