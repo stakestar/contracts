@@ -24,10 +24,10 @@ export async function deployStakeStarFixture() {
     stakeStarRegistry,
     stakeStarTreasury,
     stakeStarETH,
-    stakeStarRewards,
-    stakeStarProvider,
-    chainlinkProvider,
     uniswapV3Provider,
+    withdrawalAddress,
+    feeRecipient,
+    stakeStarOracle,
     twap,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
@@ -37,13 +37,13 @@ export async function deployStakeStarFixture() {
   const stakeStarManager = stakeStarOwner.connect(manager);
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
   const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
-  const stakeStarProviderManager = stakeStarProvider.connect(manager);
+  const stakeStarOracleManager = stakeStarOracle.connect(manager);
 
   await grantAllManagerRoles(
     hre,
     stakeStar.address,
     stakeStarRegistry.address,
-    stakeStarProvider.address,
+    stakeStarOracle.address,
     manager.address
   );
 
@@ -63,7 +63,7 @@ export async function deployStakeStarFixture() {
     RANDOM_PRIVATE_KEY_1,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     OPERATOR_IDS[currentNetwork(hre)],
-    stakeStarRewards.address,
+    withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
 
@@ -71,7 +71,7 @@ export async function deployStakeStarFixture() {
     RANDOM_PRIVATE_KEY_2,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     OPERATOR_IDS[currentNetwork(hre)],
-    stakeStarRewards.address,
+    withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
 
@@ -85,10 +85,8 @@ export async function deployStakeStarFixture() {
     stakeStarRegistryManager,
     stakeStarTreasury,
     stakeStarETH,
-    stakeStarRewards,
-    stakeStarProvider,
-    stakeStarProviderManager,
-    chainlinkProvider,
+    stakeStarOracle,
+    stakeStarOracleManager,
     uniswapV3Provider,
     ssvToken,
     ssvNetwork,
@@ -98,6 +96,8 @@ export async function deployStakeStarFixture() {
     owner,
     manager,
     otherAccount,
+    withdrawalAddress,
+    feeRecipient,
   };
 }
 

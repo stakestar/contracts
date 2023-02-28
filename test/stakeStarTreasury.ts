@@ -37,7 +37,7 @@ describe("StakeStarTreasury", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
       );
       await expect(
-        stakeStarTreasury.connect(otherAccount).withdraw(1)
+        stakeStarTreasury.connect(otherAccount).claim(1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
       );
@@ -77,11 +77,11 @@ describe("StakeStarTreasury", function () {
   });
 
   describe("SetCommission", function () {
-    it("Should set commissionNumerator", async function () {
+    it("Should set commission", async function () {
       const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
 
-      expect(await stakeStarTreasury.commissionNumerator()).to.eq(0);
-      expect(await stakeStarTreasury.commission(1000)).to.eq(0);
+      expect(await stakeStarTreasury.commission()).to.eq(0);
+      expect(await stakeStarTreasury.getCommission(1000)).to.eq(0);
 
       await expect(stakeStarTreasury.setCommission(100_001)).to.be.revertedWith(
         `value must be in [0, 100_000]`
@@ -94,8 +94,8 @@ describe("StakeStarTreasury", function () {
         .to.emit(stakeStarTreasury, "SetCommission")
         .withArgs(7000);
 
-      expect(await stakeStarTreasury.commissionNumerator()).to.eq(7000);
-      expect(await stakeStarTreasury.commission(1000)).to.eq(70);
+      expect(await stakeStarTreasury.commission()).to.eq(7000);
+      expect(await stakeStarTreasury.getCommission(1000)).to.eq(70);
     });
   });
 
@@ -287,7 +287,7 @@ describe("StakeStarTreasury", function () {
     });
   });
 
-  describe("Withdraw", function () {
+  describe("Claim", function () {
     it("Should emit Pull event", async function () {
       const { stakeStarTreasury, owner, otherAccount } = await loadFixture(
         deployStakeStarFixture
@@ -298,8 +298,8 @@ describe("StakeStarTreasury", function () {
         value: 5000,
       });
 
-      await expect(stakeStarTreasury.withdraw(5000))
-        .to.emit(stakeStarTreasury, "Withdraw")
+      await expect(stakeStarTreasury.claim(5000))
+        .to.emit(stakeStarTreasury, "Claim")
         .withArgs(5000);
 
       await otherAccount.sendTransaction({
@@ -307,7 +307,7 @@ describe("StakeStarTreasury", function () {
         value: 6000,
       });
 
-      await expect(stakeStarTreasury.withdraw(6000)).to.changeEtherBalances(
+      await expect(stakeStarTreasury.claim(6000)).to.changeEtherBalances(
         [owner, stakeStarTreasury],
         [6000, -6000]
       );

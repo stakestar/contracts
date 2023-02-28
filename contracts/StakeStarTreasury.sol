@@ -17,7 +17,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address swapProviderAddress
     );
     event SetRunway(uint256 minRunway, uint256 maxRunway);
-    event ReceiveCommission(uint256 value);
+    event ReceiveETH(uint256 value);
     event Claim(uint256 value);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
@@ -31,6 +31,11 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     uint256 public minRunway;
     uint256 public maxRunway;
+
+    receive() external payable {
+        require(msg.value > 0, "msg.value = 0");
+        emit ReceiveETH(msg.value);
+    }
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -73,17 +78,12 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit SetRunway(minRunwayPeriod, maxRunwayPeriod);
     }
 
-    function receiveCommission() public payable {
-        require(msg.value > 0, "msg.value = 0");
-        emit ReceiveCommission(msg.value);
-    }
-
     function claim(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         payable(msg.sender).transfer(amount);
         emit Claim(amount);
     }
 
-    function swapETHAndDepositSSV() public {
+    function swapETHAndDepositSSV() public payable {
         require(minRunway != maxRunway, "runway not set");
         require(swapAvailability(), "swap not available");
 

@@ -28,8 +28,8 @@ abstract contract OracleNetwork is
     function _save(uint32 epoch, uint256 totalBalance) internal {
         uint256 timestamp = epochTimestamp(epoch);
 
-        require(epoch <= _latestEpoch, "epoch too old");
-        require(timestamp >= block.timestamp, "epoch from the future");
+        require(epoch > _latestEpoch, "epoch too old");
+        require(timestamp < block.timestamp, "epoch from the future");
 
         _latestEpoch = epoch;
         _totalBalance[epoch] = totalBalance;

@@ -128,12 +128,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
-
         oracleNetwork = IOracleNetwork(oracleNetworkAddress);
 
         stakeStarETH = StakeStarETH(stakeStarETHAddress);
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
-        stakeStarTreasury = StakeStarTreasury(stakeStarTreasuryAddress);
+        stakeStarTreasury = StakeStarTreasury(
+            payable(stakeStarTreasuryAddress)
+        );
 
         feeRecipient = FeeRecipient(payable(feeRecipientAddress));
         withdrawalAddress = WithdrawalAddress(
