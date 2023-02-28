@@ -7,7 +7,7 @@ export async function grantAllManagerRoles(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
   stakeStarRegistryAddress: string,
-  stakeStarProviderAddress: string,
+  stakeStarOracleAddress: string,
   managerAddress: string
 ) {
   const StakeStar = await hre.ethers.getContractFactory("StakeStar");
@@ -20,12 +20,10 @@ export async function grantAllManagerRoles(
     stakeStarRegistryAddress
   );
 
-  const StakeStarProvider = await hre.ethers.getContractFactory(
-    "StakeStarProvider"
+  const StakeStarOracle = await hre.ethers.getContractFactory(
+    "StakeStarOracle"
   );
-  const stakeStarProvider = await StakeStarProvider.attach(
-    stakeStarProviderAddress
-  );
+  const stakeStarOracle = await StakeStarOracle.attach(stakeStarOracleAddress);
 
   await stakeStar.grantRole(await stakeStar.MANAGER_ROLE(), managerAddress);
   console.log(`StakeStar::MANAGER_ROLE is granted to ${managerAddress}`);
@@ -38,13 +36,11 @@ export async function grantAllManagerRoles(
     `StakeStarRegistry::MANAGER_ROLE is granted to ${managerAddress}`
   );
 
-  await stakeStarProvider.grantRole(
-    await stakeStarProvider.MANAGER_ROLE(),
+  await stakeStarOracle.grantRole(
+    await stakeStarOracle.MANAGER_ROLE(),
     managerAddress
   );
-  console.log(
-    `StakeStarProvider::MANAGER_ROLE is granted to ${managerAddress}`
-  );
+  console.log(`StakeStarOracle::MANAGER_ROLE is granted to ${managerAddress}`);
 }
 
 task("grant-ManagerRole", "Grants a MANAGER_ROLE to the manager").setAction(

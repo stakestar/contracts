@@ -13,13 +13,13 @@ export const ADDRESSES: Record<
     depositContract: string;
     ssvNetwork: string;
     ssvToken: string;
-    consensusDataProvider: string;
-    chainlinkProvider: string;
+    oracleNetwork: string;
     stakeStarProvider: string;
     stakeStarTreasury: string;
     stakeStarRegistry: string;
     stakeStarETH: string;
-    stakeStarRewards: string;
+    withdrawalAddress: string;
+    feeRecipient: string;
     stakeStar: string;
     stakeStarBot: string;
     weth: string;
@@ -35,12 +35,12 @@ export const ADDRESSES: Record<
     depositContract: "",
     ssvNetwork: "",
     ssvToken: "",
-    consensusDataProvider: "",
-    chainlinkProvider: "",
+    oracleNetwork: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
-    stakeStarRewards: "",
+    withdrawalAddress: "",
+    feeRecipient: "",
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",
@@ -56,12 +56,12 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    consensusDataProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
-    chainlinkProvider: "",
+    oracleNetwork: "",
     stakeStarProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
     stakeStarTreasury: "0x52CEd95E80619F7FA269fDf6ea42aCb8212BDD24",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
-    stakeStarRewards: "0xaed21ba98900042bccAA8c2aAf250304D4Cb023D",
+    withdrawalAddress: "",
+    feeRecipient: "",
     stakeStarETH: "0x2BAd1B83595a8F5452C707f127ADD1C28D17D686",
     stakeStar: "0x30ee6090e416234430841e37Ffbc4E855fC133F0",
     stakeStarBot: "0xFfa618ed01B71eC7dc5e11a1766bECb318567002",
@@ -77,12 +77,12 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    consensusDataProvider: "",
-    chainlinkProvider: "",
+    oracleNetwork: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
-    stakeStarRewards: "",
+    withdrawalAddress: "",
+    feeRecipient: "",
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",

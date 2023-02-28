@@ -6,9 +6,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export async function grantAllStakeStarRoles(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
-  stakeStarRegistryAddress: string,
   stakeStarETHAddress: string,
-  stakeStarRewardsAddress: string
+  stakeStarRegistryAddress: string,
+  feeRecipientAddress: string,
+  withdrawalAddressAddress: string
 ) {
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"
@@ -20,11 +21,13 @@ export async function grantAllStakeStarRoles(
   const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
   const stakeStarETH = await StakeStarETH.attach(stakeStarETHAddress);
 
-  const StakeStarRewards = await hre.ethers.getContractFactory(
-    "StakeStarRewards"
+  const FeeRecipient = await hre.ethers.getContractFactory("FeeRecipient");
+  const WithdrawalAddress = await hre.ethers.getContractFactory(
+    "WithdrawalAddress"
   );
-  const stakeStarRewards = await StakeStarRewards.attach(
-    stakeStarRewardsAddress
+  const feeRecipient = await FeeRecipient.attach(feeRecipientAddress);
+  const withdrawalAddress = await WithdrawalAddress.attach(
+    withdrawalAddressAddress
   );
 
   await stakeStarRegistry.grantRole(
@@ -39,12 +42,17 @@ export async function grantAllStakeStarRoles(
     stakeStarAddress
   );
   console.log(`StakeStarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
-  await stakeStarRewards.grantRole(
-    await stakeStarRewards.STAKE_STAR_ROLE(),
+  await feeRecipient.grantRole(
+    await feeRecipient.STAKE_STAR_ROLE(),
+    stakeStarAddress
+  );
+  console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
+  await withdrawalAddress.grantRole(
+    await withdrawalAddress.STAKE_STAR_ROLE(),
     stakeStarAddress
   );
   console.log(
-    `StakeStarRewards.STAKE_STAR_ROLE is granted to StakeStar contract`
+    `WithdrawalAddress.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
 }
 
@@ -58,8 +66,9 @@ task(
   await grantAllStakeStarRoles(
     hre,
     addresses.stakeStar,
-    addresses.stakeStarRegistry,
     addresses.stakeStarETH,
-    addresses.stakeStarRewards
+    addresses.stakeStarRegistry,
+    addresses.feeRecipient,
+    addresses.withdrawalAddress
   );
 });

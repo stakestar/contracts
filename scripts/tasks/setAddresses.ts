@@ -27,11 +27,12 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    addresses.consensusDataProvider,
-    addresses.stakeStarRegistry,
+    addresses.oracleNetwork,
     addresses.stakeStarETH,
-    addresses.stakeStarRewards,
-    addresses.stakeStarTreasury
+    addresses.stakeStarRegistry,
+    addresses.stakeStarTreasury,
+    addresses.feeRecipient,
+    addresses.withdrawalAddress
   );
   console.log(`Addresses are set to StakeStar contract`);
 

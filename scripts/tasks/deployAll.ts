@@ -21,23 +21,14 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await twap.deployed();
   console.log(`TWAP is deployed to ${twap.address}`);
 
-  const StakeStarProvider = await hre.ethers.getContractFactory(
-    "StakeStarProvider"
+  const StakeStarOracle = await hre.ethers.getContractFactory(
+    "StakeStarOracle"
   );
-  const stakeStarProvider = await hre.upgrades.deployProxy(StakeStarProvider, [
+  const stakeStarOracle = await hre.upgrades.deployProxy(StakeStarOracle, [
     zeroEpochTimestamp,
   ]);
-  await stakeStarProvider.deployed();
-  console.log(`StakeStarProvider is deployed to ${stakeStarProvider.address}`);
-
-  const ChainlinkProvider = await hre.ethers.getContractFactory(
-    "ChainlinkProvider"
-  );
-  const chainlinkProvider = await hre.upgrades.deployProxy(ChainlinkProvider, [
-    zeroEpochTimestamp,
-  ]);
-  await chainlinkProvider.deployed();
-  console.log(`ChainlinkProvider is deployed to ${chainlinkProvider.address}`);
+  await stakeStarOracle.deployed();
+  console.log(`StakeStarOracle is deployed to ${stakeStarOracle.address}`);
 
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"
@@ -51,12 +42,17 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await stakeStarETH.deployed();
   console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
 
-  const StakeStarRewards = await hre.ethers.getContractFactory(
-    "StakeStarRewards"
+  const FeeRecipient = await hre.ethers.getContractFactory("FeeRecipient");
+  const feeRecipient = await FeeRecipient.deploy();
+  await feeRecipient.deployed();
+  console.log(`FeeRecipient is deployed to ${feeRecipient.address}`);
+
+  const WithdrawalAddress = await hre.ethers.getContractFactory(
+    "WithdrawalAddress"
   );
-  const stakeStarRewards = await StakeStarRewards.deploy();
-  await stakeStarRewards.deployed();
-  console.log(`StakeStarRewards is deployed to ${stakeStarRewards.address}`);
+  const withdrawalAddress = await WithdrawalAddress.deploy();
+  await withdrawalAddress.deployed();
+  console.log(`WithdrawalAddress is deployed to ${withdrawalAddress.address}`);
 
   const StakeStarTreasury = await hre.ethers.getContractFactory(
     "StakeStarTreasury"
@@ -74,11 +70,12 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    stakeStarProvider.address,
-    stakeStarRegistry.address,
+    stakeStarOracle.address,
     stakeStarETH.address,
-    stakeStarRewards.address,
-    stakeStarTreasury.address
+    stakeStarRegistry.address,
+    stakeStarTreasury.address,
+    feeRecipient.address,
+    withdrawalAddress.address
   );
 
   await stakeStarTreasury.setAddresses(
@@ -100,21 +97,22 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await grantAllStakeStarRoles(
     hre,
     stakeStar.address,
-    stakeStarRegistry.address,
     stakeStarETH.address,
-    stakeStarRewards.address
+    stakeStarRegistry.address,
+    feeRecipient.address,
+    withdrawalAddress.address
   );
 
   return {
     stakeStar,
     stakeStarRegistry,
     stakeStarETH,
-    stakeStarRewards,
     stakeStarTreasury,
-    stakeStarProvider,
-    chainlinkProvider,
+    stakeStarOracle,
     uniswapV3Provider,
     twap,
+    withdrawalAddress,
+    feeRecipient,
   };
 }
 

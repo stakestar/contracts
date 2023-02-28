@@ -42,8 +42,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address stakeStarETH,
         address stakeStarRegistry,
         address stakeStarTreasury,
-        address withdrawalAddress,
-        address feeRecipient
+        address feeRecipient,
+        address withdrawalAddress
     );
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
@@ -122,8 +122,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address stakeStarETHAddress,
         address stakeStarRegistryAddress,
         address stakeStarTreasuryAddress,
-        address withdrawalCredentialsAddress,
-        address feeRecipientAddress
+        address feeRecipientAddress,
+        address withdrawalCredentialsAddress
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
@@ -135,21 +135,21 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         stakeStarRegistry = StakeStarRegistry(stakeStarRegistryAddress);
         stakeStarTreasury = StakeStarTreasury(stakeStarTreasuryAddress);
 
+        feeRecipient = FeeRecipient(payable(feeRecipientAddress));
         withdrawalAddress = WithdrawalAddress(
             payable(withdrawalCredentialsAddress)
         );
-        feeRecipient = FeeRecipient(payable(feeRecipientAddress));
 
         emit SetAddresses(
             depositContractAddress,
             ssvNetworkAddress,
             ssvTokenAddress,
             oracleNetworkAddress,
-            stakeStarRegistryAddress,
             stakeStarETHAddress,
+            stakeStarRegistryAddress,
             stakeStarTreasuryAddress,
-            withdrawalCredentialsAddress,
-            feeRecipientAddress
+            feeRecipientAddress,
+            withdrawalCredentialsAddress
         );
     }
 
