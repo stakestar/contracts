@@ -250,8 +250,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         delete previous[index];
         delete next[index];
 
-        (bool status, ) = msg.sender.call{value: eth}("");
-        require(status, "failed to send Ether");
+        payable(msg.sender).transfer(eth);
 
         emit Claim(msg.sender, eth);
     }
@@ -270,8 +269,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         localPoolSize -= eth;
         lpuHistory[msg.sender] = block.number;
 
-        (bool status, ) = msg.sender.call{value: eth}("");
-        require(status, "failed to send Ether");
+        payable(msg.sender).transfer(eth);
 
         emit LocalPoolUnstake(msg.sender, eth, ssETH);
     }

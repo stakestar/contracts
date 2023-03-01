@@ -127,9 +127,6 @@ contract UniswapV3Provider is SwapProvider {
         amountOut = swapRouter.exactInputSingle{value: amountIn}(params);
 
         uint256 ethBalance = address(this).balance;
-        if (ethBalance > 0) {
-            (bool status, ) = payable(msg.sender).call{value: ethBalance}("");
-            require(status, "failed to send Ether");
-        }
+        if (ethBalance > 0) payable(msg.sender).transfer(ethBalance);
     }
 }
