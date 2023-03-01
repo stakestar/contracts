@@ -45,6 +45,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address feeRecipient,
         address mevRecipient
     );
+    event SetRateParameters(uint256 rateBottomLimit, uint256 rateTopLimit);
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
         uint256 lpuLimit,
@@ -58,6 +59,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Unstake(address indexed who, uint256 eth, uint256 ssETH);
     event Claim(address indexed who, uint256 amount);
     event LocalPoolUnstake(address indexed who, uint256 eth, uint256 ssETH);
+    event TreasurySwap(uint256 ssETH, uint256 ETH);
     event CommitSnapshot(
         uint256 total_ETH,
         uint256 total_ssETH,
@@ -91,8 +93,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint32 public right;
     uint32 public loopLimit;
 
-    uint32 public rateBottomLimit;
-    uint32 public rateTopLimit;
+    uint256 public rateBottomLimit;
+    uint256 public rateTopLimit;
 
     // lpu - Local Pool Unstake
     uint256 public localPoolSize;
@@ -156,6 +158,16 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
+    function setRateParameters(
+        uint256 _rateBottomLimit,
+        uint256 _rateTopLimit
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        rateBottomLimit = _rateBottomLimit;
+        rateTopLimit = _rateTopLimit;
+
+        emit SetRateParameters(_rateBottomLimit, _rateTopLimit);
+    }
+
     function setLocalPoolParameters(
         uint256 _localPoolMaxSize,
         uint256 _lpuLimit,
@@ -185,6 +197,17 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         uint256 ssETH = ETH_to_ssETH(msg.value);
         stakeStarETH.mint(msg.sender, ssETH);
+
+        uint256 treasury_ssETH = stakeStarETH.balanceOf(
+            address(stakeStarTreasury)
+        );
+        if (treasury_ssETH > 0) {
+            uint256 toBurn = treasury_ssETH > ssETH ? ssETH : treasury_ssETH;
+            uint256 toTransfer = ssETH_to_ETH(toBurn);
+            stakeStarETH.burn(address(stakeStarTreasury), toBurn);
+            payable(stakeStarTreasury).transfer(toTransfer);
+            emit TreasurySwap(toBurn, toTransfer);
+        }
 
         localPoolSize = localPoolSize + msg.value > localPoolMaxSize
             ? localPoolMaxSize
@@ -380,12 +403,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return
-            address(this).balance >=
-            (uint256(32 ether) +
-                localPoolMaxSize -
-                localPoolSize +
-                pendingUnstakeSum);
+        return address(this).balance >= (uint256(32 ether) + pendingUnstakeSum);
     }
 
     function validatorDestructionAvailability() public view returns (bool) {
@@ -401,13 +419,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 exitedETH = address(this).balance +
             address(withdrawalAddress).balance;
 
-        return
-            pendingUnstakeSum >=
-            uint256(32 ether) +
-                exitingETH +
-                exitedETH +
-                localPoolMaxSize -
-                localPoolSize;
+        return pendingUnstakeSum >= uint256(32 ether) + exitingETH + exitedETH;
     }
 
     function validatorToDestroy() public view returns (bytes memory) {
@@ -437,6 +449,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             ((rate1 - rate0) * (timestamp - snapshots[1].timestamp)) /
             (snapshots[1].timestamp - snapshots[0].timestamp) +
             rate1;
+    }
+
+    function rate() public view returns (uint256) {
+        return rate(block.timestamp);
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {

@@ -39,6 +39,7 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
 
   await stakeStarTreasury.setAddresses(
     addresses.stakeStar,
+    addresses.stakeStarETH,
     addresses.ssvNetwork,
     addresses.ssvToken,
     addresses.swapProvider

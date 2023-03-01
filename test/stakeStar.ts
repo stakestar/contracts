@@ -2,10 +2,12 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { ZERO } from "../scripts/constants";
+import { EPOCHS, ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
+import { currentNetwork } from "../scripts/helpers";
+import { BlockTag } from "@ethersproject/providers";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -56,6 +58,9 @@ describe("StakeStar", function () {
       const defaultAdminRole = await stakeStarPublic.DEFAULT_ADMIN_ROLE();
       const managerRole = await stakeStarPublic.MANAGER_ROLE();
 
+      await expect(stakeStarPublic.setRateParameters(1, 1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
       await expect(
         stakeStarPublic.setLocalPoolParameters(1, 1, 1)
       ).to.be.revertedWith(
@@ -487,7 +492,7 @@ describe("StakeStar", function () {
       ).to.emit(stakeStarManager, "CreateValidator");
     });
 
-    it("Should take into account balance, localPoolSize, pendingUnstakeSum", async function () {
+    it("Should take into account balance, pendingUnstakeSum", async function () {
       const {
         stakeStarOwner,
         stakeStarManager,
@@ -510,19 +515,6 @@ describe("StakeStar", function () {
       await owner.sendTransaction({
         to: stakeStarPublic.address,
         value: ethers.utils.parseEther("32"),
-      });
-      expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
-        true
-      );
-
-      await stakeStarOwner.setLocalPoolParameters(1, 0, 0);
-      expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
-        false
-      );
-
-      await owner.sendTransaction({
-        to: stakeStarPublic.address,
-        value: 1,
       });
       expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
         true
@@ -677,7 +669,6 @@ describe("StakeStar", function () {
       const {
         stakeStarPublic,
         stakeStarManager,
-        stakeStarOwner,
         stakeStarRegistry,
         stakeStarRegistryManager,
         stakeStarOracleManager,
@@ -732,12 +723,6 @@ describe("StakeStar", function () {
       expect(await stakeStarManager.validatorDestructionAvailability()).to.be
         .true;
 
-      await stakeStarOwner.setLocalPoolParameters(1, 0, 0);
-
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .false;
-
-      await stakeStarOwner.setLocalPoolParameters(0, 0, 0);
       await owner.sendTransaction({
         to: withdrawalAddress.address,
         value: hre.ethers.utils.parseEther("32"),
@@ -857,192 +842,199 @@ describe("StakeStar", function () {
     });
   });
 
-  // describe("Linear approximation", function () {
-  //   it("Should approximate ssETH rate", async function () {
-  //     const {
-  //       hre,
-  //       stakeStarOwner,
-  //       stakeStarPublic,
-  //       otherAccount,
-  //       stakeStarETH,
-  //       stakeStarProvider,
-  //       stakeStarProviderManager,
-  //     } = await loadFixture(deployStakeStarFixture);
-  //     await stakeStarProvider.setLimits(
-  //       hre.ethers.utils.parseUnits("16"),
-  //       hre.ethers.utils.parseUnits("40"),
-  //       24 * 3600,
-  //       hre.ethers.utils.parseUnits("99999"),
-  //       3
-  //     );
-  //
-  //     const currentTimestamp = (
-  //       await hre.ethers.provider.getBlock(
-  //         await hre.ethers.provider.getBlockNumber()
-  //       )
-  //     ).timestamp;
-  //     const currentEpochNumber = Math.floor(
-  //       (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
-  //     );
-  //
-  //     const one = ethers.utils.parseEther("1");
-  //     const oneHundred = ethers.utils.parseEther("100");
-  //
-  //     // some stake required because of division by zero
-  //     await stakeStarPublic.stake({ value: oneHundred });
-  //     // one to one
-  //     const balance1 = await stakeStarETH.balanceOf(otherAccount.address);
-  //     expect(balance1).to.equal(oneHundred);
-  //
-  //     const getTime = async function () {
-  //       return (
-  //         await hre.ethers.provider.getBlock(
-  //           await hre.ethers.provider.getBlockNumber()
-  //         )
-  //       ).timestamp;
-  //     };
-  //     const initialTimestamp = await stakeStarProviderManager.epochTimestamp(
-  //       currentEpochNumber
-  //     );
-  //
-  //     // not initialized yet
-  //     await expect(
-  //       stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-  //     ).to.be.revertedWith("point A or B not initialized");
-  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
-  //
-  //     // distribute 0.01 first time
-  //     await stakeStarProviderManager.save(
-  //       currentEpochNumber - 3,
-  //       ethers.utils.parseEther("32.01"),
-  //       1
-  //     );
-  //     await expect(stakeStarOwner.commitStakingSurplus())
-  //       .to.emit(stakeStarOwner, "CommitStakingSurplus")
-  //       .withArgs(
-  //         ethers.utils.parseEther("0.01"),
-  //         await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 3)
-  //       );
-  //     // still not initialized yet (only one point)
-  //     await expect(
-  //       stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-  //     ).to.be.revertedWith("point A or B not initialized");
-  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(one);
-  //
-  //     // distribute another 0.01
-  //     await stakeStarProviderManager.save(
-  //       currentEpochNumber - 2,
-  //       ethers.utils.parseEther("32.02"),
-  //       1
-  //     );
-  //     await stakeStarOwner.commitStakingSurplus();
-  //
-  //     // two points initialized. If timestamp = last point, reward = last reward
-  //     expect(
-  //       await stakeStarPublic.approximateStakingSurplus(
-  //         await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 2)
-  //       )
-  //     ).to.equal(ethers.utils.parseEther("0.02"));
-  //
-  //     // 0.02 will be distributed by 100 staked ethers
-  //     expect(await stakeStarETH.rate()).to.equal(
-  //       ethers.utils
-  //         .parseEther("100.02")
-  //         .mul(one)
-  //         .div(ethers.utils.parseEther("100"))
-  //     );
-  //
-  //     // 2 epochs(384 * 2 seconds) spent with rate 0.01 ether / epoch
-  //     expect(
-  //       await stakeStarPublic.approximateStakingSurplus(initialTimestamp)
-  //     ).to.equal(ethers.utils.parseEther("0.04"));
-  //
-  //     const getCurrentRate = async function (
-  //       totalStakedEth: BigNumber,
-  //       tm: number | undefined = undefined,
-  //       totalStakedSS: BigNumber | undefined = undefined
-  //     ) {
-  //       totalStakedSS = totalStakedSS
-  //         ? totalStakedSS
-  //         : await stakeStarETH.totalSupply();
-  //       tm = tm ? tm : await getTime();
-  //
-  //       // current reward = 0.01 / 250 * timedelta + 0.02
-  //       const currentReward = ethers.utils
-  //         .parseEther("0.01")
-  //         .mul(tm - initialTimestamp)
-  //         .div(384)
-  //         .add(ethers.utils.parseEther("0.04"));
-  //       expect(await stakeStarPublic.approximateStakingSurplus(tm)).to.equal(
-  //         currentReward
-  //       );
-  //
-  //       // so rate (totalStakedEth + currentReward) / total staked
-  //       const currentRate = totalStakedEth
-  //         .add(currentReward)
-  //         .mul(one)
-  //         .div(totalStakedSS);
-  //
-  //       return [currentRate, currentReward];
-  //     };
-  //
-  //     await hre.network.provider.request({ method: "evm_mine", params: [] });
-  //     let [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
-  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(
-  //       currentRate
-  //     );
-  //
-  //     await hre.network.provider.request({ method: "evm_mine", params: [] });
-  //     [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
-  //     expect(await stakeStarPublic.currentApproximateRate()).to.equal(
-  //       currentRate
-  //     );
-  //
-  //     await hre.network.provider.send("evm_setNextBlockTimestamp", [
-  //       initialTimestamp.toNumber() + 200,
-  //     ]);
-  //     await hre.network.provider.request({ method: "evm_mine", params: [] });
-  //     await getCurrentRate(ethers.utils.parseEther("100"));
-  //
-  //     expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
-  //       balance1
-  //     );
-  //
-  //     // Another Stake 100
-  //     const constRateBeforeStake = await stakeStarETH.rate();
-  //     const tx = await stakeStarPublic.stake({
-  //       value: ethers.utils.parseEther("100"),
-  //     });
-  //     // staking shouldn't change constant rate
-  //     expect(await stakeStarETH.rate()).to.be.equal(constRateBeforeStake);
-  //     const tx_timestamp = (await hre.ethers.provider.getBlock(tx.blockNumber))
-  //       .timestamp;
-  //     const tx_rate = await stakeStarPublic.approximateRate(tx_timestamp);
-  //
-  //     let [currentRateB] = await getCurrentRate(
-  //       ethers.utils.parseEther("100"),
-  //       tx_timestamp,
-  //       balance1
-  //     );
-  //
-  //     let newStaked = ethers.utils.parseEther("100").mul(one).div(currentRateB);
-  //     const balance2 = await stakeStarETH.balanceOf(otherAccount.address);
-  //     expect(balance2).to.equal(newStaked.add(balance1));
-  //
-  //     const totalStakedEth = balance2.mul(constRateBeforeStake).div(one);
-  //     expect(totalStakedEth).to.be.equal(await stakeStarETH.totalSupplyEth());
-  //     let [currentRateC] = await getCurrentRate(
-  //       totalStakedEth.sub(ethers.utils.parseEther("0.02")),
-  //       tx_timestamp,
-  //       balance2
-  //     );
-  //     expect(currentRateC).to.be.equal(tx_rate);
-  //
-  //     await stakeStarPublic.unstake(newStaked);
-  //     await stakeStarPublic.claim();
-  //   });
-  // });
-  //
+  describe("Linear approximation by Sasha U. King of legacy test", function () {
+    it("Should approximate ssETH rate", async function () {
+      const {
+        hre,
+        stakeStarOwner,
+        stakeStarPublic,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+      } = await loadFixture(deployStakeStarFixture);
+      const currentTimestamp = (
+        await hre.ethers.provider.getBlock(
+          await hre.ethers.provider.getBlockNumber()
+        )
+      ).timestamp;
+      const currentEpochNumber = Math.floor(
+        (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
+      );
+
+      const one = ethers.utils.parseEther("1");
+      const oneHundred = ethers.utils.parseEther("100");
+
+      await stakeStarOwner.setRateParameters(0, ethers.utils.parseEther("2"));
+
+      // some stake required because of division by zero
+      await stakeStarPublic.stake({ value: oneHundred });
+      // one to one
+      const balance1 = await stakeStarETH.balanceOf(otherAccount.address);
+      expect(balance1).to.equal(oneHundred);
+
+      const getTime = async function () {
+        return (
+          await hre.ethers.provider.getBlock(
+            await hre.ethers.provider.getBlockNumber()
+          )
+        ).timestamp;
+      };
+      const initialTimestamp = await stakeStarOracleManager.epochTimestamp(
+        currentEpochNumber
+      );
+
+      // not initialized yet
+      // await expect(
+      //   stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+      // ).to.be.revertedWith("point A or B not initialized");
+      expect(await stakeStarPublic["rate()"]()).to.equal(one);
+
+      // distribute 0.01 first time
+      await stakeStarOracleManager.save(
+        currentEpochNumber - 3,
+        ethers.utils.parseEther("0.01")
+      );
+      await expect(stakeStarOwner.commitSnapshot())
+        .to.emit(stakeStarOwner, "CommitSnapshot")
+        .withArgs(
+          ethers.utils.parseEther("100.01"),
+          ethers.utils.parseEther("100"),
+          await stakeStarOracleManager.epochTimestamp(currentEpochNumber - 3),
+          ethers.utils
+            .parseEther("100.01")
+            .mul(ethers.utils.parseEther("1"))
+            .div(ethers.utils.parseEther("100"))
+        );
+      // still not initialized yet (only one point)
+      // await expect(
+      //   stakeStarPublic.approximateStakingSurplus(initialTimestamp)
+      // ).to.be.revertedWith("point A or B not initialized");
+      expect(await stakeStarPublic["rate()"]()).to.equal(one);
+
+      // // distribute another 0.01
+      await stakeStarOracleManager.save(
+        currentEpochNumber - 2,
+        ethers.utils.parseEther("0.02")
+      );
+      await stakeStarOwner.commitSnapshot();
+
+      // // two points initialized. If timestamp = last point, reward = last reward
+      // expect(
+      //   await stakeStarPublic.approximateStakingSurplus(
+      //     await stakeStarProviderManager.epochTimestamp(currentEpochNumber - 2)
+      //   )
+      // ).to.equal(ethers.utils.parseEther("0.02"));
+      //
+      // // 0.02 will be distributed by 100 staked ethers
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(currentEpochNumber - 2)
+        )
+      ).to.equal(
+        ethers.utils
+          .parseEther("100.02")
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("100"))
+      );
+
+      // // 2 epochs(384 * 2 seconds) spent with rate 0.01 ether / epoch
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(currentEpochNumber)
+        )
+      ).to.equal(
+        ethers.utils
+          .parseEther("100.04")
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("100"))
+      );
+
+      const getCurrentRate = async function (
+        totalStakedEth: BigNumber,
+        tm: number | undefined = undefined,
+        totalStakedSS: BigNumber | undefined = undefined
+      ) {
+        totalStakedSS = totalStakedSS
+          ? totalStakedSS
+          : await stakeStarETH.totalSupply();
+        tm = tm ? tm : await getTime();
+
+        // current reward = 0.01 / 250 * timedelta + 0.02
+        const currentReward = ethers.utils
+          .parseEther("0.01")
+          .mul(tm - initialTimestamp.toNumber())
+          .div(384)
+          .add(ethers.utils.parseEther("0.04"));
+
+        // so rate (totalStakedEth + currentReward) / total staked
+        const currentRate = totalStakedEth
+          .add(currentReward)
+          .mul(one)
+          .div(totalStakedSS);
+
+        expect(await stakeStarPublic["rate()"]()).to.equal(currentRate);
+
+        return [currentRate, currentReward];
+      };
+
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      let [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
+      expect(await stakeStarPublic["rate()"]()).to.equal(currentRate);
+
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      [currentRate] = await getCurrentRate(ethers.utils.parseEther("100"));
+      expect(await stakeStarPublic["rate()"]()).to.equal(currentRate);
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        initialTimestamp.toNumber() + 200,
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      await getCurrentRate(ethers.utils.parseEther("100"));
+
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        balance1
+      );
+
+      // // Another Stake 100
+      // const constRateBeforeStake = await stakeStarPublic["rate()"]();
+      const tx = await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("100"),
+      });
+      // staking shouldn't change constant rate
+      // expect(await stakeStarPublic["rate()"]()).to.be.equal(
+      //   constRateBeforeStake
+      // );
+      const tx_timestamp = (
+        await hre.ethers.provider.getBlock(tx.blockNumber as BlockTag)
+      ).timestamp;
+      // const tx_rate = await stakeStarPublic["rate(uint256)"](tx_timestamp);
+
+      let [currentRateB] = await getCurrentRate(
+        ethers.utils.parseEther("100"),
+        tx_timestamp,
+        balance1
+      );
+
+      let newStaked = ethers.utils.parseEther("100").mul(one).div(currentRateB);
+      const balance2 = await stakeStarETH.balanceOf(otherAccount.address);
+      expect(balance2).to.equal(newStaked.add(balance1));
+
+      // const totalStakedEth = balance2.mul(constRateBeforeStake).div(one);
+      // expect(totalStakedEth).to.be.equal(
+      //   await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      // );
+      // let [currentRateC] = await getCurrentRate(
+      //   totalStakedEth.sub(ethers.utils.parseEther("0.02")),
+      //   tx_timestamp,
+      //   balance2
+      // );
+      // expect(currentRateC).to.be.equal(tx_rate);
+
+      await stakeStarPublic.unstake(newStaked);
+      await stakeStarPublic.claim();
+    });
+  });
+
   // describe("reservedTreasuryCommission", function () {
   //   it("Should take commission on staking surplus", async function () {
   //     const {

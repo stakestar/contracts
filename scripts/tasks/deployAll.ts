@@ -19,9 +19,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const stakeStarRegistry = await StakeStarRegistry.attach(
     stakeStarRegistryProxy.address
   );
-  console.log(
-    `StakeStarRegistry is deployed to ${stakeStarRegistryProxy.address}`
-  );
+  console.log(`StakeStarRegistry is deployed to ${stakeStarRegistry.address}`);
 
   const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
   const stakeStarETH = await StakeStarETH.deploy();
@@ -38,15 +36,13 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const stakeStarTreasury = await StakeStarTreasury.attach(
     stakeStarTreasuryProxy.address
   );
-  console.log(
-    `StakeStarTreasury is deployed to ${stakeStarTreasuryProxy.address}`
-  );
+  console.log(`StakeStarTreasury is deployed to ${stakeStarTreasury.address}`);
 
   const StakeStar = await hre.ethers.getContractFactory("StakeStar");
   const stakeStarProxy = await hre.upgrades.deployProxy(StakeStar);
   await stakeStarProxy.deployed();
   const stakeStar = await StakeStar.attach(stakeStarProxy.address);
-  console.log(`StakeStar is deployed to ${stakeStarProxy.address}`);
+  console.log(`StakeStar is deployed to ${stakeStar.address}`);
 
   const UniswapV3Provider = await hre.ethers.getContractFactory(
     "UniswapV3Provider"
@@ -58,9 +54,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const uniswapV3Provider = await UniswapV3Provider.attach(
     uniswapV3ProviderProxy.address
   );
-  console.log(
-    `UniswapV3Provider is deployed to ${uniswapV3ProviderProxy.address}`
-  );
+  console.log(`UniswapV3Provider is deployed to ${uniswapV3Provider.address}`);
 
   const TWAP = await hre.ethers.getContractFactory("TWAP");
   const twap = await TWAP.deploy();
@@ -77,7 +71,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const stakeStarOracle = await StakeStarOracle.attach(
     stakeStarOracleProxy.address
   );
-  console.log(`StakeStarOracle is deployed to ${stakeStarOracleProxy.address}`);
+  console.log(`StakeStarOracle is deployed to ${stakeStarOracle.address}`);
 
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
   const withdrawalAddress = await ETHReceiver.deploy();
@@ -90,27 +84,28 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await mevRecipient.deployed();
   console.log(`MevRecipient is deployed to ${mevRecipient.address}`);
 
-  await stakeStarProxy.setAddresses(
+  await stakeStar.setAddresses(
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    stakeStarOracleProxy.address,
+    stakeStarOracle.address,
     stakeStarETH.address,
-    stakeStarRegistryProxy.address,
-    stakeStarTreasuryProxy.address,
+    stakeStarRegistry.address,
+    stakeStarTreasury.address,
     withdrawalAddress.address,
     feeRecipient.address,
     mevRecipient.address
   );
 
-  await stakeStarTreasuryProxy.setAddresses(
-    stakeStarProxy.address,
+  await stakeStarTreasury.setAddresses(
+    stakeStar.address,
+    stakeStarETH.address,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    uniswapV3ProviderProxy.address
+    uniswapV3Provider.address
   );
 
-  await uniswapV3ProviderProxy.setAddresses(
+  await uniswapV3Provider.setAddresses(
     addresses.swapRouter,
     addresses.quoter,
     twap.address,
@@ -121,9 +116,9 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
 
   await grantAllStakeStarRoles(
     hre,
-    stakeStarProxy.address,
+    stakeStar.address,
     stakeStarETH.address,
-    stakeStarRegistryProxy.address,
+    stakeStarRegistry.address,
     withdrawalAddress.address,
     feeRecipient.address,
     mevRecipient.address

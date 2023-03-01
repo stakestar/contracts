@@ -42,7 +42,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
       "reservedTreasuryCommission",
       humanify(await stakeStar.reservedTreasuryCommission())
     );
-    console.log("rate", humanify(await stakeStar.rate(Date.now())));
+    console.log("rate", humanify(await stakeStar["rate(uint256)"](Date.now())));
     console.log();
 
     const StakeStarRegistry = await hre.ethers.getContractFactory(

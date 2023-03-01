@@ -7,23 +7,26 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/ISwapProvider.sol";
+import "./interfaces/IStakingPool.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SetCommission(uint24 value);
     event SetAddresses(
         address stakeStarAddress,
+        address stakeStarETHAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
         address swapProviderAddress
     );
     event SetRunway(uint256 minRunway, uint256 maxRunway);
     event ReceiveETH(uint256 value);
-    event Claim(uint256 value);
+    event Claim(uint256 amount_ETH, uint256 amount_ssETH);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
     uint24 public commission;
 
-    address public stakeStar;
+    IStakingPool public stakeStar;
+    IERC20 public stakeStarETH;
 
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
@@ -49,17 +52,20 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function setAddresses(
         address stakeStarAddress,
+        address stakeStarETHAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
         address swapProviderAddress
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        stakeStar = stakeStarAddress;
+        stakeStar = IStakingPool(stakeStarAddress);
+        stakeStarETH = IERC20(stakeStarETHAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
         swapProvider = ISwapProvider(swapProviderAddress);
 
         emit SetAddresses(
             stakeStarAddress,
+            stakeStarETHAddress,
             ssvNetworkAddress,
             ssvTokenAddress,
             swapProviderAddress
@@ -78,31 +84,37 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit SetRunway(minRunwayPeriod, maxRunwayPeriod);
     }
 
-    function claim(uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        payable(msg.sender).transfer(amount);
-        emit Claim(amount);
+    function claim(
+        uint256 amount_ETH,
+        uint256 amount_ssETH
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (amount_ETH > 0) payable(msg.sender).transfer(amount_ETH);
+        if (amount_ssETH > 0) stakeStarETH.transfer(msg.sender, amount_ssETH);
+        emit Claim(amount_ETH, amount_ssETH);
     }
 
     function swapETHAndDepositSSV() public payable {
         require(minRunway != maxRunway, "runway not set");
         require(swapAvailability(), "swap not available");
 
-        uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
-        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
+        address stakeStarAddress = address(stakeStar);
+        uint256 balance = ssvNetwork.getAddressBalance(stakeStarAddress);
+        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStarAddress);
         (uint256 amountIn, uint256 amountOut) = swapProvider.swap{
             value: address(this).balance
         }(burnRate * maxRunway - balance);
 
         uint256 depositAmount = (ssvToken.balanceOf(address(this)) / 1e7) * 1e7;
         ssvToken.approve(address(ssvNetwork), depositAmount);
-        ssvNetwork.deposit(stakeStar, depositAmount);
+        ssvNetwork.deposit(stakeStarAddress, depositAmount);
 
         emit SwapETHAndDepositSSV(amountIn, amountOut, depositAmount);
     }
 
     function swapAvailability() public view returns (bool) {
-        uint256 balance = ssvNetwork.getAddressBalance(stakeStar);
-        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStar);
+        address stakeStarAddress = address(stakeStar);
+        uint256 balance = ssvNetwork.getAddressBalance(stakeStarAddress);
+        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStarAddress);
 
         return
             address(this).balance > 0 &&
