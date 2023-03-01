@@ -449,8 +449,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             snapshots[1].total_ssETH
         );
 
-        if (timestamp == snapshots[1].timestamp) return rate1;
-
         return
             MathUpgradeable.mulDiv(
                 rate1 - rate0,
