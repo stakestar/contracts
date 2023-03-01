@@ -823,57 +823,40 @@ describe("StakeStar", function () {
     });
   });
 
-  // describe("harvest", function () {
-  //   it("Should pull rewards from StakeStarRewards", async function () {
-  //     const {
-  //       stakeStarPublic,
-  //       stakeStarRewards,
-  //       stakeStarETH,
-  //       stakeStarTreasury,
-  //       otherAccount,
-  //     } = await loadFixture(deployStakeStarFixture);
-  //
-  //     await stakeStarTreasury.setCommission(5000); // 5%
-  //
-  //     await expect(stakeStarPublic.harvest()).to.be.revertedWith(
-  //       "no rewards available"
-  //     );
-  //
-  //     const rateBefore = await stakeStarETH.rate();
-  //
-  //     await stakeStarPublic.stake({ value: 1 });
-  //
-  //     await otherAccount.sendTransaction({
-  //       to: stakeStarRewards.address,
-  //       value: 100,
-  //     });
-  //     await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
-  //       [stakeStarPublic, stakeStarRewards],
-  //       [95, -100]
-  //     );
-  //
-  //     const rateAfter = await stakeStarETH.rate();
-  //     expect(rateAfter.gt(rateBefore)).to.equal(true);
-  //
-  //     await otherAccount.sendTransaction({
-  //       to: stakeStarRewards.address,
-  //       value: 100,
-  //     });
-  //     await expect(stakeStarPublic.harvest())
-  //       .to.emit(stakeStarPublic, "Harvest")
-  //       .withArgs(95);
-  //
-  //     await otherAccount.sendTransaction({
-  //       to: stakeStarRewards.address,
-  //       value: 100,
-  //     });
-  //     await expect(stakeStarPublic.harvest()).to.changeEtherBalance(
-  //       stakeStarTreasury,
-  //       5
-  //     );
-  //   });
-  // });
-  //
+  describe("harvest", function () {
+    it("Should pull ETH from FeeRecipient and MevRecipient", async function () {
+      const { stakeStarPublic, feeRecipient, mevRecipient, otherAccount } =
+        await loadFixture(deployStakeStarFixture);
+      const snapshot0before = await stakeStarPublic.snapshots(0);
+      const snapshot1before = await stakeStarPublic.snapshots(1);
+
+      await otherAccount.sendTransaction({
+        to: feeRecipient.address,
+        value: 122,
+      });
+      await otherAccount.sendTransaction({
+        to: mevRecipient.address,
+        value: 125,
+      });
+
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
+        [feeRecipient, mevRecipient, stakeStarPublic],
+        [-122, -125, 247]
+      );
+
+      const snapshot0after = await stakeStarPublic.snapshots(0);
+      const snapshot1after = await stakeStarPublic.snapshots(1);
+
+      expect(snapshot0before).to.eql(snapshot0after);
+      expect(snapshot1before).to.eql(snapshot1after);
+
+      await expect(stakeStarPublic.harvest()).to.changeEtherBalances(
+        [feeRecipient, mevRecipient, stakeStarPublic],
+        [0, 0, 0]
+      );
+    });
+  });
+
   // describe("Linear approximation", function () {
   //   it("Should approximate ssETH rate", async function () {
   //     const {

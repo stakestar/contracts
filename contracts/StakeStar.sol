@@ -342,6 +342,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         emit DestroyValidator(publicKey);
     }
 
+    function harvest() public {
+        if (address(feeRecipient).balance > 0) feeRecipient.pull();
+        if (address(mevRecipient).balance > 0) mevRecipient.pull();
+    }
+
     function commitSnapshot() public {
         (uint256 totalBalance, uint256 timestamp) = oracleNetwork
             .latestTotalBalance();
@@ -351,7 +356,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             "timestamps too close"
         );
 
-        feeRecipient.pull();
+        harvest();
 
         uint256 total_ETH = totalBalance +
             address(this).balance -

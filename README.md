@@ -15,3 +15,4 @@
 - rate are calculated correctly
 - how to take into account feeRecipient and mevCoinbase
 - add library with common constants
+- refill local pool on harvest? 

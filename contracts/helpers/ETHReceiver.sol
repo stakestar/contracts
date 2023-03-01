@@ -14,8 +14,13 @@ contract ETHReceiver is AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function pull() public payable onlyRole(STAKE_STAR_ROLE) {
-        uint256 balance = address(this).balance;
+    function pull()
+        public
+        payable
+        onlyRole(STAKE_STAR_ROLE)
+        returns (uint256 balance)
+    {
+        balance = address(this).balance;
         payable(msg.sender).transfer(balance);
         emit Pull(msg.sender, balance);
     }

@@ -27,6 +27,7 @@ export async function deployStakeStarFixture() {
     uniswapV3Provider,
     withdrawalAddress,
     feeRecipient,
+    mevRecipient,
     stakeStarOracle,
     twap,
   } = await deployAll(hre);
@@ -98,6 +99,7 @@ export async function deployStakeStarFixture() {
     otherAccount,
     withdrawalAddress,
     feeRecipient,
+    mevRecipient,
   };
 }
 
