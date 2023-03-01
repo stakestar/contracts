@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "./fixture";
+import { ConstantsLib } from "../scripts/constants";
 
 describe("StakeStarETH", function () {
   describe("Deployment", function () {
@@ -17,38 +18,35 @@ describe("StakeStarETH", function () {
 
       expect(
         await stakeStarETH.hasRole(
-          await stakeStarETH.STAKE_STAR_ROLE(),
+          ConstantsLib.STAKE_STAR_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(true);
       expect(
-        await stakeStarETH.hasRole(
-          await stakeStarETH.STAKE_STAR_ROLE(),
-          owner.address
-        )
+        await stakeStarETH.hasRole(ConstantsLib.STAKE_STAR_ROLE, owner.address)
       ).to.equal(false);
       expect(
         await stakeStarETH.hasRole(
-          await stakeStarETH.STAKE_STAR_ROLE(),
+          ConstantsLib.STAKE_STAR_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
 
       expect(
         await stakeStarETH.hasRole(
-          await stakeStarETH.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(false);
       expect(
         await stakeStarETH.hasRole(
-          await stakeStarETH.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           owner.address
         )
       ).to.equal(true);
       expect(
         await stakeStarETH.hasRole(
-          await stakeStarETH.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
@@ -59,7 +57,7 @@ describe("StakeStarETH", function () {
         deployStakeStarFixture
       );
 
-      const stakeStarRole = await stakeStarETH.STAKE_STAR_ROLE();
+      const stakeStarRole = ConstantsLib.STAKE_STAR_ROLE;
 
       await expect(
         stakeStarETH.connect(otherAccount).mint(otherAccount.address, 1)
@@ -78,10 +76,7 @@ describe("StakeStarETH", function () {
     it("Should mint value of ssETH", async function () {
       const { stakeStarETH, owner } = await loadFixture(deployStakeStarFixture);
 
-      await stakeStarETH.grantRole(
-        await stakeStarETH.STAKE_STAR_ROLE(),
-        owner.address
-      );
+      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       await expect(stakeStarETH.mint(owner.address, 127))
         .to.emit(stakeStarETH, "Mint")
@@ -95,10 +90,7 @@ describe("StakeStarETH", function () {
     it("Should burn value of ssETH", async function () {
       const { stakeStarETH, owner } = await loadFixture(deployStakeStarFixture);
 
-      await stakeStarETH.grantRole(
-        await stakeStarETH.STAKE_STAR_ROLE(),
-        owner.address
-      );
+      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       await stakeStarETH.mint(owner.address, 127);
 

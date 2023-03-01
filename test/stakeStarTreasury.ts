@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "./fixture";
 import { ethers } from "hardhat";
+import { ConstantsLib } from "../scripts/constants";
 
 describe("StakeStarTreasury", function () {
   describe("Deployment", function () {
@@ -231,10 +232,12 @@ describe("StakeStarTreasury", function () {
       expect(aBurnRate).to.be.greaterThan(0);
 
       await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        `AccessControl: account ${stakeStarTreasury.address.toLowerCase()} is missing role ${await uniswapV3Provider.TREASURY_ROLE()}`
+        `AccessControl: account ${stakeStarTreasury.address.toLowerCase()} is missing role ${
+          ConstantsLib.TREASURY_ROLE
+        }`
       );
       await uniswapV3Provider.grantRole(
-        await uniswapV3Provider.TREASURY_ROLE(),
+        ConstantsLib.TREASURY_ROLE,
         stakeStarTreasury.address
       );
 
@@ -317,10 +320,7 @@ describe("StakeStarTreasury", function () {
         [6000, -6000]
       );
 
-      await stakeStarETH.grantRole(
-        await stakeStarETH.STAKE_STAR_ROLE(),
-        owner.address
-      );
+      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
       await stakeStarETH.mint(stakeStarTreasury.address, 7000);
 
       await expect(stakeStarTreasury.claim(0, 3000)).to.changeTokenBalances(

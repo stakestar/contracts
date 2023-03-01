@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/PoRAddressList.sol";
+import "./helpers/Constants.sol";
 
 contract StakeStarRegistry is
     Initializable,
@@ -26,20 +27,17 @@ contract StakeStarRegistry is
         ValidatorStatus statusTo
     );
 
-    bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
-    bytes32 public constant MANAGER_ROLE = keccak256("Manager");
-
     mapping(uint32 => bool) public allowListOfOperators;
     mapping(bytes => ValidatorStatus) public validatorStatuses;
     bytes[] public validatorPublicKeys;
 
     function initialize() public initializer {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function addOperatorToAllowList(
         uint32 operatorId
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         require(!allowListOfOperators[operatorId], "operator already added");
         allowListOfOperators[operatorId] = true;
         emit AddOperatorToAllowList(operatorId);
@@ -47,7 +45,7 @@ contract StakeStarRegistry is
 
     function removeOperatorFromAllowList(
         uint32 operatorId
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         require(allowListOfOperators[operatorId], "operator not added");
         delete allowListOfOperators[operatorId];
         emit RemoveOperatorFromAllowList(operatorId);
@@ -55,7 +53,7 @@ contract StakeStarRegistry is
 
     function initiateActivatingValidator(
         bytes memory publicKey
-    ) public onlyRole(STAKE_STAR_ROLE) {
+    ) public onlyRole(Constants.STAKE_STAR_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.MISSING,
             "validator status not MISSING"
@@ -71,7 +69,7 @@ contract StakeStarRegistry is
 
     function confirmActivatingValidator(
         bytes memory publicKey
-    ) public onlyRole(MANAGER_ROLE) {
+    ) public onlyRole(Constants.MANAGER_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.PENDING,
             "validator status not PENDING"
@@ -86,7 +84,7 @@ contract StakeStarRegistry is
 
     function initiateExitingValidator(
         bytes memory publicKey
-    ) public onlyRole(MANAGER_ROLE) {
+    ) public onlyRole(Constants.MANAGER_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.ACTIVE,
             "validator status not ACTIVE"
@@ -101,7 +99,7 @@ contract StakeStarRegistry is
 
     function confirmExitingValidator(
         bytes memory publicKey
-    ) public onlyRole(STAKE_STAR_ROLE) {
+    ) public onlyRole(Constants.STAKE_STAR_ROLE) {
         require(
             validatorStatuses[publicKey] == ValidatorStatus.EXITING,
             "validator status not EXITING"

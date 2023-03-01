@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "../fixture";
+import { ConstantsLib } from "../../scripts/constants";
 
 describe("StakeStarOracle", function () {
   describe("Deployment", function () {
@@ -11,14 +12,14 @@ describe("StakeStarOracle", function () {
 
       expect(
         await stakeStarOracle.hasRole(
-          await stakeStarOracle.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           owner.address
         )
       ).to.equal(true);
 
       expect(
         await stakeStarOracle.hasRole(
-          await stakeStarOracle.MANAGER_ROLE(),
+          ConstantsLib.MANAGER_ROLE,
           manager.address
         )
       ).to.equal(true);
@@ -41,7 +42,9 @@ describe("StakeStarOracle", function () {
       );
 
       await expect(stakeStarOracle.save(1, 1)).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarOracle.MANAGER_ROLE()}`
+        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${
+          ConstantsLib.MANAGER_ROLE
+        }`
       );
 
       await stakeStarOracleManager.save(10, 10);

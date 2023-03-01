@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "../fixture";
 import { ethers } from "hardhat";
+import { ConstantsLib } from "../../scripts/constants";
 
 describe("ETHReceiver", function () {
   describe("Deployment", function () {
@@ -11,38 +12,35 @@ describe("ETHReceiver", function () {
 
       expect(
         await feeRecipient.hasRole(
-          await feeRecipient.STAKE_STAR_ROLE(),
+          ConstantsLib.STAKE_STAR_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(true);
       expect(
-        await feeRecipient.hasRole(
-          await feeRecipient.STAKE_STAR_ROLE(),
-          owner.address
-        )
+        await feeRecipient.hasRole(ConstantsLib.STAKE_STAR_ROLE, owner.address)
       ).to.equal(false);
       expect(
         await feeRecipient.hasRole(
-          await feeRecipient.STAKE_STAR_ROLE(),
+          ConstantsLib.STAKE_STAR_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
 
       expect(
         await feeRecipient.hasRole(
-          await feeRecipient.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(false);
       expect(
         await feeRecipient.hasRole(
-          await feeRecipient.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           owner.address
         )
       ).to.equal(true);
       expect(
         await feeRecipient.hasRole(
-          await feeRecipient.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
@@ -58,7 +56,9 @@ describe("ETHReceiver", function () {
       await expect(
         feeRecipient.connect(otherAccount).pull()
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await feeRecipient.STAKE_STAR_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.STAKE_STAR_ROLE
+        }`
       );
     });
   });
@@ -87,10 +87,7 @@ describe("ETHReceiver", function () {
         value: value,
       });
 
-      await feeRecipient.grantRole(
-        await feeRecipient.STAKE_STAR_ROLE(),
-        owner.address
-      );
+      await feeRecipient.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       await expect(feeRecipient.pull()).to.changeEtherBalances(
         [owner, feeRecipient],

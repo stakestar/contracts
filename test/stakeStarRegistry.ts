@@ -3,6 +3,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "./fixture";
 import { Wallet } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
+import { ConstantsLib } from "../scripts/constants";
 
 describe("StakeStarRegistry", function () {
   describe("Deployment", function () {
@@ -12,26 +13,26 @@ describe("StakeStarRegistry", function () {
 
       expect(
         await stakeStarRegistry.hasRole(
-          await stakeStarRegistry.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           owner.address
         )
       ).to.equal(true);
       expect(
         await stakeStarRegistry.hasRole(
-          await stakeStarRegistry.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
 
       expect(
         await stakeStarRegistry.hasRole(
-          await stakeStarRegistry.STAKE_STAR_ROLE(),
+          ConstantsLib.STAKE_STAR_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(true);
       expect(
         await stakeStarRegistry.hasRole(
-          await stakeStarRegistry.STAKE_STAR_ROLE(),
+          ConstantsLib.STAKE_STAR_ROLE,
           owner.address
         )
       ).to.equal(false);
@@ -46,12 +47,16 @@ describe("StakeStarRegistry", function () {
       await expect(
         stakeStarRegistry.connect(otherAccount).addOperatorToAllowList(1)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRegistry.DEFAULT_ADMIN_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
       await expect(
         stakeStarRegistry.connect(otherAccount).removeOperatorFromAllowList(1)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRegistry.DEFAULT_ADMIN_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
 
       await expect(
@@ -59,27 +64,35 @@ describe("StakeStarRegistry", function () {
           .connect(owner)
           .initiateActivatingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
+        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${
+          ConstantsLib.STAKE_STAR_ROLE
+        }`
       );
       await expect(
         stakeStarRegistry
           .connect(otherAccount)
           .initiateExitingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.MANAGER_ROLE
+        }`
       );
       await expect(
         stakeStarRegistry
           .connect(otherAccount)
           .confirmExitingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarRegistry.STAKE_STAR_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.STAKE_STAR_ROLE
+        }`
       );
 
       await expect(
         stakeStarRegistry.confirmActivatingValidator(validatorParams1.publicKey)
       ).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${await stakeStarRegistry.MANAGER_ROLE()}`
+        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${
+          ConstantsLib.MANAGER_ROLE
+        }`
       );
     });
   });
@@ -170,7 +183,7 @@ describe("StakeStarRegistry", function () {
 
       await stakeStarRegistry
         .connect(owner)
-        .grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), owner.address);
+        .grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       const publicKey1 = Wallet.createRandom().publicKey;
       const publicKey2 = Wallet.createRandom().publicKey;
@@ -228,7 +241,7 @@ describe("StakeStarRegistry", function () {
 
       await stakeStarRegistry
         .connect(owner)
-        .grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), owner.address);
+        .grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       const publicKey1 = Wallet.createRandom().publicKey;
 
@@ -266,7 +279,7 @@ describe("StakeStarRegistry", function () {
         await loadFixture(deployStakeStarFixture);
 
       await stakeStarRegistry.grantRole(
-        await stakeStarRegistry.STAKE_STAR_ROLE(),
+        ConstantsLib.STAKE_STAR_ROLE,
         owner.address
       );
 
@@ -341,7 +354,7 @@ describe("StakeStarRegistry", function () {
         await loadFixture(deployStakeStarFixture);
 
       await stakeStarRegistry.grantRole(
-        await stakeStarRegistry.STAKE_STAR_ROLE(),
+        ConstantsLib.STAKE_STAR_ROLE,
         owner.address
       );
 
@@ -373,7 +386,7 @@ describe("StakeStarRegistry", function () {
 
       await stakeStarRegistry
         .connect(owner)
-        .grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), owner.address);
+        .grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       const publicKey1 = Wallet.createRandom().publicKey;
       const publicKey2 = Wallet.createRandom().publicKey;
@@ -411,7 +424,7 @@ describe("StakeStarRegistry", function () {
 
       await stakeStarRegistry
         .connect(owner)
-        .grantRole(await stakeStarRegistry.STAKE_STAR_ROLE(), owner.address);
+        .grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
       expect(await stakeStarRegistry.getPoRAddressList(0, 1)).to.eql([]);
 

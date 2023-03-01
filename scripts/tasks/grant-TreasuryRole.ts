@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { ADDRESSES } from "../constants";
+import { ADDRESSES, ConstantsLib } from "../constants";
 import { currentNetwork } from "../helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -16,7 +16,7 @@ export async function grantAllTreasuryRoles(
   );
 
   await uniswapV3Provider.grantRole(
-    await uniswapV3Provider.TREASURY_ROLE(),
+    ConstantsLib.TREASURY_ROLE,
     stakeStarTreasuryAddress
   );
   console.log(

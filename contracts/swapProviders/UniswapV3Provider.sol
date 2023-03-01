@@ -39,7 +39,7 @@ contract UniswapV3Provider is SwapProvider {
     uint256 public minETHLiquidity;
 
     function initialize() public initializer {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function setAddresses(
@@ -49,7 +49,7 @@ contract UniswapV3Provider is SwapProvider {
         address wETHAddress,
         address ssvTokenAddress,
         address poolAddress
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         swapRouter = ISwapRouter(swapRouterAddress);
         quoter = IQuoter(quoterAddress);
         twap = ITWAP(twapAddress);
@@ -72,7 +72,7 @@ contract UniswapV3Provider is SwapProvider {
         uint24 numerator,
         uint32 interval,
         uint256 minLiquidity
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         require(interval > 0, "twapInterval = 0");
         require(numerator <= DENOMINATOR, "slippage must be in [0, 100_000]");
         require(minLiquidity > 0, "minLiquidity = 0");

@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../interfaces/IOracleNetwork.sol";
+import "../helpers/Constants.sol";
 
 abstract contract OracleNetwork is
     IOracleNetwork,
@@ -17,13 +18,9 @@ abstract contract OracleNetwork is
         _;
     }
 
-    bytes32 public constant MANAGER_ROLE = keccak256("Manager");
-
+    uint256 public _zeroEpochTimestamp;
     uint32 public _latestEpoch;
     mapping(uint32 => uint256) public _totalBalance;
-
-    uint256 public _zeroEpochTimestamp;
-    uint256 public constant EPOCH_DURATION = 384;
 
     function _save(uint32 epoch, uint256 totalBalance) internal {
         uint256 timestamp = epochTimestamp(epoch);
@@ -48,6 +45,6 @@ abstract contract OracleNetwork is
 
     function epochTimestamp(uint32 epoch) public view returns (uint256) {
         require(_zeroEpochTimestamp > 0, "not initialized");
-        return _zeroEpochTimestamp + EPOCH_DURATION * uint256(epoch);
+        return _zeroEpochTimestamp + Constants.EPOCH_DURATION * uint256(epoch);
     }
 }

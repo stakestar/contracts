@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/ISwapProvider.sol";
 import "./interfaces/IStakingPool.sol";
+import "./helpers/Constants.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SetCommission(uint24 value);
@@ -19,7 +20,6 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address swapProviderAddress
     );
     event SetRunway(uint256 minRunway, uint256 maxRunway);
-    event ReceiveETH(uint256 value);
     event Claim(uint256 amount_ETH, uint256 amount_ssETH);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
@@ -35,16 +35,15 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     uint256 public minRunway;
     uint256 public maxRunway;
 
-    receive() external payable {
-        require(msg.value > 0, "msg.value = 0");
-        emit ReceiveETH(msg.value);
-    }
+    receive() external payable {}
 
     function initialize() public initializer {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function setCommission(uint24 value) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setCommission(
+        uint24 value
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         require(value <= 100_000, "value must be in [0, 100_000]");
         commission = value;
         emit SetCommission(value);
@@ -56,7 +55,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address ssvNetworkAddress,
         address ssvTokenAddress,
         address swapProviderAddress
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         stakeStar = IStakingPool(stakeStarAddress);
         stakeStarETH = IERC20(stakeStarETHAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
@@ -75,7 +74,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     function setRunway(
         uint256 minRunwayPeriod,
         uint256 maxRunwayPeriod
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         require(minRunwayPeriod <= maxRunwayPeriod, "minRunway > maxRunway");
 
         minRunway = minRunwayPeriod;
@@ -87,7 +86,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     function claim(
         uint256 amount_ETH,
         uint256 amount_ssETH
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         if (amount_ETH > 0) payable(msg.sender).transfer(amount_ETH);
         if (amount_ssETH > 0) stakeStarETH.transfer(msg.sender, amount_ssETH);
         emit Claim(amount_ETH, amount_ssETH);

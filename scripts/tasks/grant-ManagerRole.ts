@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { ADDRESSES } from "../constants";
+import { ADDRESSES, ConstantsLib } from "../constants";
 import { currentNetwork } from "../helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
@@ -25,21 +25,15 @@ export async function grantAllManagerRoles(
   );
   const stakeStarOracle = await StakeStarOracle.attach(stakeStarOracleAddress);
 
-  await stakeStar.grantRole(await stakeStar.MANAGER_ROLE(), managerAddress);
+  await stakeStar.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
   console.log(`StakeStar::MANAGER_ROLE is granted to ${managerAddress}`);
 
-  await stakeStarRegistry.grantRole(
-    await stakeStarRegistry.MANAGER_ROLE(),
-    managerAddress
-  );
+  await stakeStarRegistry.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
   console.log(
     `StakeStarRegistry::MANAGER_ROLE is granted to ${managerAddress}`
   );
 
-  await stakeStarOracle.grantRole(
-    await stakeStarOracle.MANAGER_ROLE(),
-    managerAddress
-  );
+  await stakeStarOracle.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
   console.log(`StakeStarOracle::MANAGER_ROLE is granted to ${managerAddress}`);
 }
 

@@ -2,22 +2,21 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./Constants.sol";
 
 contract ETHReceiver is AccessControl {
     event Pull(address indexed to, uint256 value);
 
-    bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");
-
     receive() external payable {}
 
     constructor() {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function pull()
         public
         payable
-        onlyRole(STAKE_STAR_ROLE)
+        onlyRole(Constants.STAKE_STAR_ROLE)
         returns (uint256 balance)
     {
         balance = address(this).balance;
