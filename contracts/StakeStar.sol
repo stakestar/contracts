@@ -14,8 +14,7 @@ import "./StakeStarETH.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarTreasury.sol";
 
-import "./eth-receivers/FeeRecipient.sol";
-import "./eth-receivers/WithdrawalAddress.sol";
+import "./helpers/ETHReceiver.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
@@ -71,8 +70,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     StakeStarRegistry public stakeStarRegistry;
     StakeStarTreasury public stakeStarTreasury;
 
-    FeeRecipient public feeRecipient;
-    WithdrawalAddress public withdrawalAddress;
+    ETHReceiver public feeRecipient;
+    ETHReceiver public withdrawalAddress;
 
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
@@ -136,10 +135,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             payable(stakeStarTreasuryAddress)
         );
 
-        feeRecipient = FeeRecipient(payable(feeRecipientAddress));
-        withdrawalAddress = WithdrawalAddress(
-            payable(withdrawalCredentialsAddress)
-        );
+        feeRecipient = ETHReceiver(payable(feeRecipientAddress));
+        withdrawalAddress = ETHReceiver(payable(withdrawalCredentialsAddress));
 
         emit SetAddresses(
             depositContractAddress,

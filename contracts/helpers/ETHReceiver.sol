@@ -3,7 +3,7 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-abstract contract ETHReceiver is AccessControl {
+contract ETHReceiver is AccessControl {
     event Pull(address indexed to, uint256 value);
 
     bytes32 public constant STAKE_STAR_ROLE = keccak256("StakeStar");

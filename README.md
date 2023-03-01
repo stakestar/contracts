@@ -14,3 +14,4 @@
 - validator creation/destroy availability
 - rate are calculated correctly
 - how to take into account feeRecipient and mevCoinbase
+- add library with common constants

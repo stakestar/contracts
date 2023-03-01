@@ -3,7 +3,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployStakeStarFixture } from "../fixture";
 import { ethers } from "hardhat";
 
-describe("FeeRecipient", function () {
+describe("ETHReceiver", function () {
   describe("Deployment", function () {
     it("Should set the right STAKE_STAR_ROLE", async function () {
       const { stakeStarPublic, feeRecipient, owner, otherAccount } =

@@ -42,15 +42,11 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await stakeStarETH.deployed();
   console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
 
-  const FeeRecipient = await hre.ethers.getContractFactory("FeeRecipient");
-  const feeRecipient = await FeeRecipient.deploy();
+  const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
+  const feeRecipient = await ETHReceiver.deploy();
   await feeRecipient.deployed();
   console.log(`FeeRecipient is deployed to ${feeRecipient.address}`);
-
-  const WithdrawalAddress = await hre.ethers.getContractFactory(
-    "WithdrawalAddress"
-  );
-  const withdrawalAddress = await WithdrawalAddress.deploy();
+  const withdrawalAddress = await ETHReceiver.deploy();
   await withdrawalAddress.deployed();
   console.log(`WithdrawalAddress is deployed to ${withdrawalAddress.address}`);
 
@@ -111,8 +107,8 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarOracle,
     uniswapV3Provider,
     twap,
-    withdrawalAddress,
     feeRecipient,
+    withdrawalAddress,
   };
 }
 

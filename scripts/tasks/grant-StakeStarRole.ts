@@ -21,14 +21,9 @@ export async function grantAllStakeStarRoles(
   const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
   const stakeStarETH = await StakeStarETH.attach(stakeStarETHAddress);
 
-  const FeeRecipient = await hre.ethers.getContractFactory("FeeRecipient");
-  const WithdrawalAddress = await hre.ethers.getContractFactory(
-    "WithdrawalAddress"
-  );
-  const feeRecipient = await FeeRecipient.attach(feeRecipientAddress);
-  const withdrawalAddress = await WithdrawalAddress.attach(
-    withdrawalAddressAddress
-  );
+  const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
+  const feeRecipient = await ETHReceiver.attach(feeRecipientAddress);
+  const withdrawalAddress = await ETHReceiver.attach(withdrawalAddressAddress);
 
   await stakeStarRegistry.grantRole(
     await stakeStarRegistry.STAKE_STAR_ROLE(),

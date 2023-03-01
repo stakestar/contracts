@@ -6,10 +6,8 @@ task("printPullEvents", "Prints Pull events").setAction(async (args, hre) => {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
 
-  const WithdrawalAddress = await hre.ethers.getContractFactory(
-    "WithdrawalAddress"
-  );
-  const withdrawalAddress = await WithdrawalAddress.attach(
+  const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
+  const withdrawalAddress = await ETHReceiver.attach(
     addresses.withdrawalAddress
   );
 
