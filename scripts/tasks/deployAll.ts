@@ -9,6 +9,30 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const addresses = ADDRESSES[network];
   const zeroEpochTimestamp = EPOCHS[network];
 
+  const StakeStarRegistry = await hre.ethers.getContractFactory(
+    "StakeStarRegistry"
+  );
+  const stakeStarRegistry = await hre.upgrades.deployProxy(StakeStarRegistry);
+  await stakeStarRegistry.deployed();
+  console.log(`StakeStarRegistry is deployed to ${stakeStarRegistry.address}`);
+
+  const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
+  const stakeStarETH = await StakeStarETH.deploy();
+  await stakeStarETH.deployed();
+  console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
+
+  const StakeStarTreasury = await hre.ethers.getContractFactory(
+    "StakeStarTreasury"
+  );
+  const stakeStarTreasury = await hre.upgrades.deployProxy(StakeStarTreasury);
+  await stakeStarTreasury.deployed();
+  console.log(`StakeStarTreasury is deployed to ${stakeStarTreasury.address}`);
+
+  const StakeStar = await hre.ethers.getContractFactory("StakeStar");
+  const stakeStar = await hre.upgrades.deployProxy(StakeStar);
+  await stakeStar.deployed();
+  console.log(`StakeStar is deployed to ${stakeStar.address}`);
+
   const UniswapV3Provider = await hre.ethers.getContractFactory(
     "UniswapV3Provider"
   );
@@ -30,37 +54,16 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await stakeStarOracle.deployed();
   console.log(`StakeStarOracle is deployed to ${stakeStarOracle.address}`);
 
-  const StakeStarRegistry = await hre.ethers.getContractFactory(
-    "StakeStarRegistry"
-  );
-  const stakeStarRegistry = await hre.upgrades.deployProxy(StakeStarRegistry);
-  await stakeStarRegistry.deployed();
-  console.log(`StakeStarRegistry is deployed to ${stakeStarRegistry.address}`);
-
-  const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
-  const stakeStarETH = await StakeStarETH.deploy();
-  await stakeStarETH.deployed();
-  console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
-
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
-  const feeRecipient = await ETHReceiver.deploy();
-  await feeRecipient.deployed();
-  console.log(`FeeRecipient is deployed to ${feeRecipient.address}`);
   const withdrawalAddress = await ETHReceiver.deploy();
   await withdrawalAddress.deployed();
   console.log(`WithdrawalAddress is deployed to ${withdrawalAddress.address}`);
-
-  const StakeStarTreasury = await hre.ethers.getContractFactory(
-    "StakeStarTreasury"
-  );
-  const stakeStarTreasury = await hre.upgrades.deployProxy(StakeStarTreasury);
-  await stakeStarTreasury.deployed();
-  console.log(`StakeStarTreasury is deployed to ${stakeStarTreasury.address}`);
-
-  const StakeStar = await hre.ethers.getContractFactory("StakeStar");
-  const stakeStar = await hre.upgrades.deployProxy(StakeStar);
-  await stakeStar.deployed();
-  console.log(`StakeStar is deployed to ${stakeStar.address}`);
+  const feeRecipient = await ETHReceiver.deploy();
+  await feeRecipient.deployed();
+  console.log(`FeeRecipient is deployed to ${feeRecipient.address}`);
+  const mevRecipient = await ETHReceiver.deploy();
+  await mevRecipient.deployed();
+  console.log(`MevRecipient is deployed to ${mevRecipient.address}`);
 
   await stakeStar.setAddresses(
     addresses.depositContract,
@@ -70,8 +73,9 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarETH.address,
     stakeStarRegistry.address,
     stakeStarTreasury.address,
+    withdrawalAddress.address,
     feeRecipient.address,
-    withdrawalAddress.address
+    mevRecipient.address
   );
 
   await stakeStarTreasury.setAddresses(
@@ -95,8 +99,9 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStar.address,
     stakeStarETH.address,
     stakeStarRegistry.address,
+    withdrawalAddress.address,
     feeRecipient.address,
-    withdrawalAddress.address
+    mevRecipient.address
   );
 
   return {
@@ -105,10 +110,11 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStarETH,
     stakeStarTreasury,
     stakeStarOracle,
+    withdrawalAddress,
+    feeRecipient,
+    mevRecipient,
     uniswapV3Provider,
     twap,
-    feeRecipient,
-    withdrawalAddress,
   };
 }
 

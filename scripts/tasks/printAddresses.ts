@@ -15,8 +15,9 @@ task("printAddresses", "Prints addresses of the contracts").setAction(
     console.log("StakeStarRegistry", await stakeStar.stakeStarRegistry());
     console.log("StakeStarTreasury", await stakeStar.stakeStarTreasury());
 
-    console.log("FeeRecipient", await stakeStar.feeRecipient());
     console.log("WithdrawalAddress", await stakeStar.withdrawalAddress());
+    console.log("FeeRecipient", await stakeStar.feeRecipient());
+    console.log("MevRecipient", await stakeStar.mevRecipient());
 
     console.log("DepositContract", await stakeStar.depositContract());
     console.log("SSV Network", await stakeStar.ssvNetwork());

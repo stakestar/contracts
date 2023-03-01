@@ -20,6 +20,7 @@ export const ADDRESSES: Record<
     stakeStarETH: string;
     withdrawalAddress: string;
     feeRecipient: string;
+    mevRecipient: string;
     stakeStar: string;
     stakeStarBot: string;
     weth: string;
@@ -41,6 +42,7 @@ export const ADDRESSES: Record<
     stakeStarRegistry: "",
     withdrawalAddress: "",
     feeRecipient: "",
+    mevRecipient: "",
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",
@@ -62,6 +64,7 @@ export const ADDRESSES: Record<
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
     withdrawalAddress: "",
     feeRecipient: "",
+    mevRecipient: "",
     stakeStarETH: "0x2BAd1B83595a8F5452C707f127ADD1C28D17D686",
     stakeStar: "0x30ee6090e416234430841e37Ffbc4E855fC133F0",
     stakeStarBot: "0xFfa618ed01B71eC7dc5e11a1766bECb318567002",
@@ -83,6 +86,7 @@ export const ADDRESSES: Record<
     stakeStarRegistry: "",
     withdrawalAddress: "",
     feeRecipient: "",
+    mevRecipient: "",
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",

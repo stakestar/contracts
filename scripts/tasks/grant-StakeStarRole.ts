@@ -8,8 +8,9 @@ export async function grantAllStakeStarRoles(
   stakeStarAddress: string,
   stakeStarETHAddress: string,
   stakeStarRegistryAddress: string,
+  withdrawalAddressAddress: string,
   feeRecipientAddress: string,
-  withdrawalAddressAddress: string
+  mevRecipientAddress: string
 ) {
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"
@@ -22,8 +23,9 @@ export async function grantAllStakeStarRoles(
   const stakeStarETH = await StakeStarETH.attach(stakeStarETHAddress);
 
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
-  const feeRecipient = await ETHReceiver.attach(feeRecipientAddress);
   const withdrawalAddress = await ETHReceiver.attach(withdrawalAddressAddress);
+  const feeRecipient = await ETHReceiver.attach(feeRecipientAddress);
+  const mevRecipient = await ETHReceiver.attach(mevRecipientAddress);
 
   await stakeStarRegistry.grantRole(
     await stakeStarRegistry.STAKE_STAR_ROLE(),
@@ -37,11 +39,7 @@ export async function grantAllStakeStarRoles(
     stakeStarAddress
   );
   console.log(`StakeStarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
-  await feeRecipient.grantRole(
-    await feeRecipient.STAKE_STAR_ROLE(),
-    stakeStarAddress
-  );
-  console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
+
   await withdrawalAddress.grantRole(
     await withdrawalAddress.STAKE_STAR_ROLE(),
     stakeStarAddress
@@ -49,6 +47,16 @@ export async function grantAllStakeStarRoles(
   console.log(
     `WithdrawalAddress.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
+  await feeRecipient.grantRole(
+    await feeRecipient.STAKE_STAR_ROLE(),
+    stakeStarAddress
+  );
+  console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
+  await mevRecipient.grantRole(
+    await mevRecipient.STAKE_STAR_ROLE(),
+    stakeStarAddress
+  );
+  console.log(`MevRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 }
 
 task(
@@ -63,7 +71,8 @@ task(
     addresses.stakeStar,
     addresses.stakeStarETH,
     addresses.stakeStarRegistry,
+    addresses.withdrawalAddress,
     addresses.feeRecipient,
-    addresses.withdrawalAddress
+    addresses.mevRecipient
   );
 });

@@ -41,8 +41,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address stakeStarETH,
         address stakeStarRegistry,
         address stakeStarTreasury,
+        address withdrawalAddress,
         address feeRecipient,
-        address withdrawalAddress
+        address mevRecipient
     );
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
@@ -70,8 +71,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     StakeStarRegistry public stakeStarRegistry;
     StakeStarTreasury public stakeStarTreasury;
 
-    ETHReceiver public feeRecipient;
     ETHReceiver public withdrawalAddress;
+    ETHReceiver public feeRecipient;
+    ETHReceiver public mevRecipient;
 
     IDepositContract public depositContract;
     ISSVNetwork public ssvNetwork;
@@ -121,8 +123,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address stakeStarETHAddress,
         address stakeStarRegistryAddress,
         address stakeStarTreasuryAddress,
+        address withdrawalCredentialsAddress,
         address feeRecipientAddress,
-        address withdrawalCredentialsAddress
+        address mevRecipientAddress
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
@@ -135,8 +138,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             payable(stakeStarTreasuryAddress)
         );
 
-        feeRecipient = ETHReceiver(payable(feeRecipientAddress));
         withdrawalAddress = ETHReceiver(payable(withdrawalCredentialsAddress));
+        feeRecipient = ETHReceiver(payable(feeRecipientAddress));
+        mevRecipient = ETHReceiver(payable(mevRecipientAddress));
 
         emit SetAddresses(
             depositContractAddress,
@@ -146,8 +150,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             stakeStarETHAddress,
             stakeStarRegistryAddress,
             stakeStarTreasuryAddress,
+            withdrawalCredentialsAddress,
             feeRecipientAddress,
-            withdrawalCredentialsAddress
+            mevRecipientAddress
         );
     }
 
