@@ -8,15 +8,9 @@
 
 ## To do
 
-- ~~define what we send to Treasury: ssETH or ETH~~
-  - we send ssETH when take commission
-  - then on user stake we swap back to ETH
-- ~~all required setters/getters~~
-- ~~withdrawalAddress/feeRecipient/mevCoinbase addresses are taken into account~~
-- ~~validator creation/destroy availability~~
-- rate are calculated correctly
-- ~~how to take into account feeRecipient and mevCoinbase~~
-- add library with common constants
-- ~~refill local pool on harvest?~~
-  - no, only on user stakes
-- ~~refactor Treasury~~
+ - use fullmath.mulDiv for precision
+ - create library with constants?
+ - add basic tests for all contracts
+ - add very detailed tests for rate
+ - add commission logic
+ - 2 tokens instead of one?
