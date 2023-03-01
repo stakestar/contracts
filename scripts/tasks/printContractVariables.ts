@@ -38,10 +38,6 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     console.log();
 
-    console.log(
-      "reservedTreasuryCommission",
-      humanify(await stakeStar.reservedTreasuryCommission())
-    );
     console.log("rate", humanify(await stakeStar["rate(uint256)"](Date.now())));
     console.log();
 

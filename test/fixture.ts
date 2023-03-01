@@ -29,7 +29,7 @@ export async function deployStakeStarFixture() {
     feeRecipient,
     mevRecipient,
     stakeStarOracle,
-    twap,
+    uniswapHelper,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
@@ -91,7 +91,7 @@ export async function deployStakeStarFixture() {
     uniswapV3Provider,
     ssvToken,
     ssvNetwork,
-    twap,
+    twap: uniswapHelper,
     validatorParams1,
     validatorParams2,
     owner,

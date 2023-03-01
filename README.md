@@ -8,9 +8,8 @@
 
 ## To do
 
- - use fullmath.mulDiv for precision
- - create library with constants?
- - add basic tests for all contracts
- - add very detailed tests for rate
- - add commission logic
- - 2 tokens instead of one?
+- add basic tests for all contracts
+- add very detailed tests for rate
+- add commission logic
+- 2 tokens instead of one?
+- use mulDiv from openZeppelin

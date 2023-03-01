@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 
 import "./interfaces/IStakingPool.sol";
 import "./interfaces/IDepositContract.sol";
@@ -384,7 +385,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         snapshots[0] = snapshots[1];
         snapshots[1] = Snapshot(total_ETH, total_ssETH, timestamp);
 
-        uint256 currentRate = (total_ETH * 1 ether) / total_ssETH;
+        uint256 currentRate = MathUpgradeable.mulDiv(
+            total_ETH,
+            1 ether,
+            total_ssETH
+        );
         require(
             rateBottomLimit <= currentRate && currentRate <= rateTopLimit,
             "rate out of range"
@@ -433,17 +438,25 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             return 1 ether;
         }
 
-        uint256 rate0 = (snapshots[0].total_ETH * 1 ether) /
-            snapshots[0].total_ssETH;
-        uint256 rate1 = (snapshots[1].total_ETH * 1 ether) /
-            snapshots[1].total_ssETH;
+        uint256 rate0 = MathUpgradeable.mulDiv(
+            snapshots[0].total_ETH,
+            1 ether,
+            snapshots[0].total_ssETH
+        );
+        uint256 rate1 = MathUpgradeable.mulDiv(
+            snapshots[1].total_ETH,
+            1 ether,
+            snapshots[1].total_ssETH
+        );
 
         if (timestamp == snapshots[1].timestamp) return rate1;
 
         return
-            ((rate1 - rate0) * (timestamp - snapshots[1].timestamp)) /
-            (snapshots[1].timestamp - snapshots[0].timestamp) +
-            rate1;
+            MathUpgradeable.mulDiv(
+                rate1 - rate0,
+                timestamp - snapshots[1].timestamp,
+                snapshots[1].timestamp - snapshots[0].timestamp
+            ) + rate1;
     }
 
     function rate() public view returns (uint256) {
@@ -451,10 +464,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
-        return (ssETH * rate(block.timestamp)) / 1 ether;
+        return MathUpgradeable.mulDiv(ssETH, rate(block.timestamp), 1 ether);
     }
 
     function ETH_to_ssETH(uint256 eth) public view returns (uint256) {
-        return (eth * 1 ether) / rate(block.timestamp);
+        return MathUpgradeable.mulDiv(eth, 1 ether, rate(block.timestamp));
     }
 }

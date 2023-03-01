@@ -2,17 +2,18 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 
 import "./SwapProvider.sol";
-import "../interfaces/ITWAP.sol";
+import "../interfaces/IUniswapHelper.sol";
 
 contract UniswapV3Provider is SwapProvider {
     event SetAddresses(
         address swapRouter,
         address quoter,
-        address twap,
+        address uniswapHelper,
         address wETH,
         address ssvToken,
         address pool
@@ -26,7 +27,7 @@ contract UniswapV3Provider is SwapProvider {
 
     ISwapRouter public swapRouter;
     IQuoter public quoter;
-    ITWAP public twap;
+    IUniswapHelper public uniswapHelper;
 
     address public wETH;
     address public ssvToken;
@@ -44,14 +45,14 @@ contract UniswapV3Provider is SwapProvider {
     function setAddresses(
         address swapRouterAddress,
         address quoterAddress,
-        address twapAddress,
+        address uniswapHelperAddress,
         address wETHAddress,
         address ssvTokenAddress,
         address poolAddress
     ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         swapRouter = ISwapRouter(swapRouterAddress);
         quoter = IQuoter(quoterAddress);
-        twap = ITWAP(twapAddress);
+        uniswapHelper = IUniswapHelper(uniswapHelperAddress);
         wETH = wETHAddress;
         ssvToken = ssvTokenAddress;
         pool = poolAddress;
@@ -59,7 +60,7 @@ contract UniswapV3Provider is SwapProvider {
         emit SetAddresses(
             swapRouterAddress,
             quoterAddress,
-            twapAddress,
+            uniswapHelperAddress,
             wETHAddress,
             ssvTokenAddress,
             poolAddress
@@ -106,11 +107,11 @@ contract UniswapV3Provider is SwapProvider {
 
         if (amountIn > address(this).balance) amountIn = address(this).balance;
 
-        uint256 expectedPrice = twap.getPriceFromSqrtPriceX96(
-            twap.getSqrtTwapX96(pool, twapInterval)
+        uint256 expectedPrice = uniswapHelper.getPriceFromSqrtPriceX96(
+            uniswapHelper.getSqrtTwapX96(pool, twapInterval)
         );
-        uint256 amountOutMinimum = twap.mulDiv(
-            twap.mulDiv(amountIn, 1e18, expectedPrice),
+        uint256 amountOutMinimum = MathUpgradeable.mulDiv(
+            MathUpgradeable.mulDiv(amountIn, 1e18, expectedPrice),
             slippage,
             Constants.BASE
         );

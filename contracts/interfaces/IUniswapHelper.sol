@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0;
 
-interface ITWAP {
+interface IUniswapHelper {
     function getSqrtTwapX96(
         address uniswapV3Pool,
         uint32 twapInterval
@@ -10,10 +10,4 @@ interface ITWAP {
     function getPriceFromSqrtPriceX96(
         uint160 sqrtPriceX96
     ) external pure returns (uint256 price);
-
-    function mulDiv(
-        uint256 a,
-        uint256 b,
-        uint256 denominator
-    ) external pure returns (uint256 result);
 }

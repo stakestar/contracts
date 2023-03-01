@@ -49,7 +49,7 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
   await uniswapV3Provider.setAddresses(
     addresses.swapRouter,
     addresses.quoter,
-    addresses.twap,
+    addresses.uniswapHelper,
     addresses.weth,
     addresses.ssvToken,
     addresses.pool

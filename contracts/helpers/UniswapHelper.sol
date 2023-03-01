@@ -5,9 +5,9 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import "../interfaces/ITWAP.sol";
+import "../interfaces/IUniswapHelper.sol";
 
-contract TWAP is ITWAP {
+contract UniswapHelper is IUniswapHelper {
     function getSqrtTwapX96(
         address uniswapV3Pool,
         uint32 twapInterval
@@ -32,18 +32,10 @@ contract TWAP is ITWAP {
         uint160 sqrtPriceX96
     ) public pure override returns (uint256 price) {
         return
-            mulDiv(
-                mulDiv(sqrtPriceX96, sqrtPriceX96, FixedPoint96.Q96),
+            FullMath.mulDiv(
+                FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, FixedPoint96.Q96),
                 1e18,
                 FixedPoint96.Q96
             );
-    }
-
-    function mulDiv(
-        uint256 a,
-        uint256 b,
-        uint256 denominator
-    ) public pure override returns (uint256 result) {
-        return FullMath.mulDiv(a, b, denominator);
     }
 }

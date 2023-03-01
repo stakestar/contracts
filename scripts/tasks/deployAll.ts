@@ -56,10 +56,10 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   );
   console.log(`UniswapV3Provider is deployed to ${uniswapV3Provider.address}`);
 
-  const TWAP = await hre.ethers.getContractFactory("TWAP");
-  const twap = await TWAP.deploy();
-  await twap.deployed();
-  console.log(`TWAP is deployed to ${twap.address}`);
+  const UniswapHelper = await hre.ethers.getContractFactory("UniswapHelper");
+  const uniswapHelper = await UniswapHelper.deploy();
+  await uniswapHelper.deployed();
+  console.log(`UniswapHelper is deployed to ${uniswapHelper.address}`);
 
   const StakeStarOracle = await hre.ethers.getContractFactory(
     "StakeStarOracle"
@@ -108,7 +108,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await uniswapV3Provider.setAddresses(
     addresses.swapRouter,
     addresses.quoter,
-    twap.address,
+    uniswapHelper.address,
     addresses.weth,
     addresses.ssvToken,
     addresses.pool
@@ -134,7 +134,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     feeRecipient,
     mevRecipient,
     uniswapV3Provider,
-    twap,
+    uniswapHelper,
   };
 }
 
