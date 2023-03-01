@@ -102,8 +102,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint256 public lpuFrequencyLimit;
     mapping(address => uint256) public lpuHistory;
 
-    uint256 public reservedTreasuryCommission;
-
     Snapshot[2] public snapshots;
 
     receive() external payable {}
