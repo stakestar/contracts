@@ -34,7 +34,6 @@ contract UniswapV3Provider is SwapProvider {
 
     uint24 public poolFee;
     uint24 public slippage;
-    uint24 public constant DENOMINATOR = 100_000;
     uint32 public twapInterval;
     uint256 public minETHLiquidity;
 
@@ -74,7 +73,10 @@ contract UniswapV3Provider is SwapProvider {
         uint256 minLiquidity
     ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
         require(interval > 0, "twapInterval = 0");
-        require(numerator <= DENOMINATOR, "slippage must be in [0, 100_000]");
+        require(
+            numerator <= Constants.BASE,
+            "slippage must be in [0, 100_000]"
+        );
         require(minLiquidity > 0, "minLiquidity = 0");
 
         poolFee = fee;
@@ -110,7 +112,7 @@ contract UniswapV3Provider is SwapProvider {
         uint256 amountOutMinimum = twap.mulDiv(
             twap.mulDiv(amountIn, 1e18, expectedPrice),
             slippage,
-            DENOMINATOR
+            Constants.BASE
         );
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter

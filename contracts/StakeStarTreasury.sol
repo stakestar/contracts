@@ -44,7 +44,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     function setCommission(
         uint24 value
     ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
-        require(value <= 100_000, "value must be in [0, 100_000]");
+        require(value <= Constants.BASE, "value must be in [0, 100_000]");
         commission = value;
         emit SetCommission(value);
     }
@@ -122,6 +122,6 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     }
 
     function getCommission(int256 amount) public view returns (uint256) {
-        return amount > 0 ? (uint256(amount) * commission) / 100_000 : 0;
+        return amount > 0 ? (uint256(amount) * commission) / Constants.BASE : 0;
     }
 }
