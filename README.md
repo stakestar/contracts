@@ -9,18 +9,19 @@
 ## To do
 
 - add basic tests **DONE**
-  - access control **DONE**
-  - setters **DONE**
+    - access control **DONE**
+    - setters **DONE**
 - replace rateBottomLimit/rateTopLimit with relative check instead **DONE**
-  - add "force" method to submit without the check **DONE**
+    - add "force" method to submit without the check **DONE**
 - add very detailed tests
-  - rate **DONE**
-  - rate deviation **DONE**
-  - availability methods **DONE**
-  - TreasurySwap
-  - CommitSnapshot validations
-  - OracleNetwork
+    - rate **DONE**
+    - rate deviation **DONE**
+    - availability methods **DONE**
+    - TreasurySwap
+    - CommitSnapshot validations
 - add commission logic
 - replace StakeStarETH with 2 receipt tokens
-  - this should be made in a separate branch
+    - should be made in a separate branch
 - introduce OracleNetwork with N out of M consensus
+    - with corresponding tests
+    - should be made in a separate branch
