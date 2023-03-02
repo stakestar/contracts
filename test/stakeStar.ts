@@ -185,16 +185,14 @@ describe("StakeStar", function () {
         const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
 
         expect(await stakeStarOwner.maxRateDeviation()).to.equal(500);
-        expect(await stakeStarOwner.rateDeviationCheckEnabled()).to.equal(true);
+        expect(await stakeStarOwner.rateDeviationCheck()).to.equal(true);
 
         await expect(stakeStarOwner.setRateParameters(100_000, false))
           .to.emit(stakeStarOwner, "SetRateParameters")
           .withArgs(100_000, false);
 
         expect(await stakeStarOwner.maxRateDeviation()).to.equal(100_000);
-        expect(await stakeStarOwner.rateDeviationCheckEnabled()).to.equal(
-          false
-        );
+        expect(await stakeStarOwner.rateDeviationCheck()).to.equal(false);
       });
     });
 

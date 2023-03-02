@@ -47,10 +47,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address feeRecipient,
         address mevRecipient
     );
-    event SetRateParameters(
-        uint24 maxRateDeviation,
-        bool rateDeviationCheckEnabled
-    );
+    event SetRateParameters(uint24 maxRateDeviation, bool rateDeviationCheck);
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
         uint256 lpuLimit,
@@ -97,7 +94,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint32 public loopLimit;
 
     uint24 public maxRateDeviation;
-    bool public rateDeviationCheckEnabled;
+    bool public rateDeviationCheck;
 
     // lpu - Local Pool Unstake
     uint256 public localPoolSize;
@@ -115,7 +112,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         right = 1;
         loopLimit = 25;
         maxRateDeviation = 500;
-        rateDeviationCheckEnabled = true;
+        rateDeviationCheck = true;
 
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -163,7 +160,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setRateParameters(
         uint24 _maxRateDeviation,
-        bool _rateDeviationCheckEnabled
+        bool _rateDeviationCheck
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(
             _maxRateDeviation <= Utils.BASE,
@@ -171,9 +168,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
 
         maxRateDeviation = _maxRateDeviation;
-        rateDeviationCheckEnabled = _rateDeviationCheckEnabled;
+        rateDeviationCheck = _rateDeviationCheck;
 
-        emit SetRateParameters(_maxRateDeviation, rateDeviationCheckEnabled);
+        emit SetRateParameters(_maxRateDeviation, rateDeviationCheck);
     }
 
     function setLocalPoolParameters(
@@ -411,7 +408,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             uint256 maxRate = MathUpgradeable.max(currentRate, lastRate);
             uint256 minRate = MathUpgradeable.min(currentRate, lastRate);
 
-            if (rateDeviationCheckEnabled) {
+            if (rateDeviationCheck) {
                 require(
                     MathUpgradeable.mulDiv(
                         maxRate - minRate,
@@ -421,7 +418,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
                     "rate deviation too big"
                 );
             } else {
-                rateDeviationCheckEnabled = true;
+                rateDeviationCheck = true;
             }
         }
 
