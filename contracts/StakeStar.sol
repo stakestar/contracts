@@ -47,7 +47,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address feeRecipient,
         address mevRecipient
     );
-    event SetRateParameters(uint256 rateBottomLimit, uint256 rateTopLimit);
+    event SetRateParameters(
+        uint24 maxRateDeviation,
+        bool rateDeviationCheckEnabled
+    );
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
         uint256 lpuLimit,
@@ -93,8 +96,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint32 public right;
     uint32 public loopLimit;
 
-    uint256 public rateBottomLimit;
-    uint256 public rateTopLimit;
+    uint24 public maxRateDeviation;
+    bool public rateDeviationCheckEnabled;
 
     // lpu - Local Pool Unstake
     uint256 public localPoolSize;
@@ -111,6 +114,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         left = 1;
         right = 1;
         loopLimit = 25;
+        maxRateDeviation = 500;
+        rateDeviationCheckEnabled = true;
 
         _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -157,13 +162,18 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function setRateParameters(
-        uint256 _rateBottomLimit,
-        uint256 _rateTopLimit
+        uint24 _maxRateDeviation,
+        bool _rateDeviationCheckEnabled
     ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
-        rateBottomLimit = _rateBottomLimit;
-        rateTopLimit = _rateTopLimit;
+        require(
+            _maxRateDeviation <= Constants.BASE,
+            "maxRateDeviation must be in [0, 100_000]"
+        );
 
-        emit SetRateParameters(_rateBottomLimit, _rateTopLimit);
+        maxRateDeviation = _maxRateDeviation;
+        rateDeviationCheckEnabled = _rateDeviationCheckEnabled;
+
+        emit SetRateParameters(_maxRateDeviation, rateDeviationCheckEnabled);
     }
 
     function setLocalPoolParameters(
@@ -389,15 +399,33 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             1 ether,
             total_ssETH
         );
-        require(
-            rateBottomLimit <= currentRate && currentRate <= rateTopLimit,
-            "rate out of range"
-        );
+
+        if (snapshots[1].timestamp > 0) {
+            uint256 lastRate = MathUpgradeable.mulDiv(
+                snapshots[1].total_ETH,
+                1 ether,
+                snapshots[1].total_ssETH
+            );
+
+            uint256 maxRate = MathUpgradeable.max(currentRate, lastRate);
+            uint256 minRate = MathUpgradeable.min(currentRate, lastRate);
+
+            if (rateDeviationCheckEnabled) {
+                require(
+                    MathUpgradeable.mulDiv(
+                        maxRate - minRate,
+                        Constants.BASE,
+                        maxRate
+                    ) <= uint256(maxRateDeviation),
+                    "rate deviation too big"
+                );
+            } else {
+                rateDeviationCheckEnabled = true;
+            }
+        }
 
         snapshots[0] = snapshots[1];
         snapshots[1] = Snapshot(total_ETH, total_ssETH, timestamp);
-
-        // TODO: mint ssETH to Treasury based on rewards
 
         withdrawalAddress.pull();
 
