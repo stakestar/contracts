@@ -8,8 +8,13 @@
 
 ## To do
 
-- add basic tests for all contracts
-- add very detailed tests for rate
+- add basic tests
+  - access control **DONE**
+  - setters
+- add very detailed tests
+  - rate
+  - *availability methods
+  - oracle network
 - add commission logic
-- 2 tokens instead of one?
-- use mulDiv from openZeppelin
+- replace StakeStarETH with 2 receipt tokens
+  - this should be made in a separate branch
