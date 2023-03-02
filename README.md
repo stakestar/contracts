@@ -8,11 +8,11 @@
 
 ## To do
 
-- add basic tests
+- add basic tests **DONE**
     - access control **DONE**
     - setters **DONE**
-- replace rateBottomLimit/rateTopLimit with relative check instead
-    - add "force" method to submit without the check
+- replace rateBottomLimit/rateTopLimit with relative check instead **DONE**
+    - add "force" method to submit without the check **DONE**
 - add very detailed tests
     - rate **DONE**
     - rate deviation **DONE**
