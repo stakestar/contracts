@@ -17,7 +17,7 @@
     - rate **DONE**
     - rate deviation **DONE**
     - availability methods **DONE**
-    - TreasurySwap
+    - TreasuryPayback
     - CommitSnapshot validations
 - add commission logic
 - replace StakeStarETH with 2 receipt tokens

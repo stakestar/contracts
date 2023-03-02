@@ -64,7 +64,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event Unstake(address indexed who, uint256 eth, uint256 ssETH);
     event Claim(address indexed who, uint256 amount);
     event LocalPoolUnstake(address indexed who, uint256 eth, uint256 ssETH);
-    event TreasurySwap(uint256 ssETH, uint256 ETH);
+    event TreasuryPayback(uint256 ssETH, uint256 ETH);
     event CommitSnapshot(
         uint256 total_ETH,
         uint256 total_ssETH,
@@ -214,7 +214,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             uint256 toTransfer = ssETH_to_ETH(toBurn);
             stakeStarETH.burn(address(stakeStarTreasury), toBurn);
             payable(stakeStarTreasury).transfer(toTransfer);
-            emit TreasurySwap(toBurn, toTransfer);
+            emit TreasuryPayback(toBurn, toTransfer);
         }
 
         localPoolSize = localPoolSize + msg.value > localPoolMaxSize
