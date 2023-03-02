@@ -106,6 +106,136 @@ describe("StakeStar", function () {
     });
   });
 
+  describe("Setters", function () {
+    describe("setAddresses", function () {
+      it("Should setAddresses", async function () {
+        const {
+          stakeStarOwner,
+          addresses,
+          stakeStarOracle,
+          stakeStarETH,
+          stakeStarRegistry,
+          stakeStarTreasury,
+          withdrawalAddress,
+          feeRecipient,
+          mevRecipient,
+        } = await loadFixture(deployStakeStarFixture);
+
+        await expect(
+          stakeStarOwner.setAddresses(
+            addresses.depositContract,
+            addresses.ssvNetwork,
+            addresses.ssvToken,
+            stakeStarOracle.address,
+            stakeStarETH.address,
+            stakeStarRegistry.address,
+            stakeStarTreasury.address,
+            withdrawalAddress.address,
+            feeRecipient.address,
+            mevRecipient.address
+          )
+        )
+          .to.emit(stakeStarOwner, "SetAddresses")
+          .withArgs(
+            addresses.depositContract,
+            addresses.ssvNetwork,
+            addresses.ssvToken,
+            stakeStarOracle.address,
+            stakeStarETH.address,
+            stakeStarRegistry.address,
+            stakeStarTreasury.address,
+            withdrawalAddress.address,
+            feeRecipient.address,
+            mevRecipient.address
+          );
+
+        expect(await stakeStarOwner.depositContract()).to.eql(
+          addresses.depositContract
+        );
+        expect(await stakeStarOwner.ssvNetwork()).to.eql(addresses.ssvNetwork);
+        expect(await stakeStarOwner.ssvToken()).to.eql(addresses.ssvToken);
+        expect(await stakeStarOwner.oracleNetwork()).to.eql(
+          stakeStarOracle.address
+        );
+        expect(await stakeStarOwner.stakeStarETH()).to.eql(
+          stakeStarETH.address
+        );
+        expect(await stakeStarOwner.stakeStarRegistry()).to.eql(
+          stakeStarRegistry.address
+        );
+        expect(await stakeStarOwner.stakeStarTreasury()).to.eql(
+          stakeStarTreasury.address
+        );
+        expect(await stakeStarOwner.withdrawalAddress()).to.eql(
+          withdrawalAddress.address
+        );
+        expect(await stakeStarOwner.feeRecipient()).to.eql(
+          feeRecipient.address
+        );
+        expect(await stakeStarOwner.mevRecipient()).to.eql(
+          mevRecipient.address
+        );
+      });
+    });
+
+    describe("setRateParameters", function () {
+      it("Should setRateParameters", async function () {
+        const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarOwner.rateBottomLimit()).to.equal(0);
+        expect(await stakeStarOwner.rateTopLimit()).to.equal(0);
+
+        await expect(
+          stakeStarOwner.setRateParameters(
+            ethers.utils.parseEther("0.5"),
+            ethers.utils.parseEther("1.1")
+          )
+        )
+          .to.emit(stakeStarOwner, "SetRateParameters")
+          .withArgs(
+            ethers.utils.parseEther("0.5"),
+            ethers.utils.parseEther("1.1")
+          );
+
+        expect(await stakeStarOwner.rateBottomLimit()).to.equal(
+          ethers.utils.parseEther("0.5")
+        );
+        expect(await stakeStarOwner.rateTopLimit()).to.equal(
+          ethers.utils.parseEther("1.1")
+        );
+      });
+    });
+
+    describe("setLocalPoolParameters", function () {
+      it("Should setLocalPoolParameters", async function () {
+        const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarOwner.localPoolMaxSize()).to.equal(0);
+        expect(await stakeStarOwner.lpuLimit()).to.equal(0);
+        expect(await stakeStarOwner.lpuFrequencyLimit()).to.equal(0);
+
+        await expect(stakeStarOwner.setLocalPoolParameters(1, 2, 3))
+          .to.emit(stakeStarOwner, "SetLocalPoolParameters")
+          .withArgs(1, 2, 3);
+        expect(await stakeStarOwner.localPoolMaxSize()).to.equal(1);
+        expect(await stakeStarOwner.lpuLimit()).to.equal(2);
+        expect(await stakeStarOwner.lpuFrequencyLimit()).to.equal(3);
+      });
+    });
+
+    describe("setQueueParameters", function () {
+      it("Should setQueueParameters", async function () {
+        const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarOwner.loopLimit()).to.eql(25);
+        await expect(stakeStarOwner.setQueueParameters(30))
+          .to.emit(stakeStarOwner, "SetQueueParameters")
+          .withArgs(30);
+        expect(await stakeStarOwner.loopLimit()).to.eql(30);
+      });
+    });
+  });
+
   describe("Stake", function () {
     it("Should send ETH to the contract", async function () {
       const { stakeStarPublic, stakeStarETH, otherAccount } = await loadFixture(

@@ -10,7 +10,7 @@
 
 - add basic tests
   - access control **DONE**
-  - setters
+  - setters **DONE**
 - add very detailed tests
   - rate
   - *availability methods

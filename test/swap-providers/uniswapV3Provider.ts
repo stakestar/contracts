@@ -75,4 +75,64 @@ describe("UniswapV3Provider", function () {
       );
     });
   });
+
+  describe("Setters", function () {
+    describe("setAddresses", function () {
+      it("Should setAddresses", async function () {
+        const { uniswapV3Provider, addresses, uniswapHelper } =
+          await loadFixture(deployStakeStarFixture);
+
+        await expect(
+          uniswapV3Provider.setAddresses(
+            addresses.swapRouter,
+            addresses.quoter,
+            uniswapHelper.address,
+            addresses.weth,
+            addresses.ssvToken,
+            addresses.pool
+          )
+        )
+          .to.emit(uniswapV3Provider, "SetAddresses")
+          .withArgs(
+            addresses.swapRouter,
+            addresses.quoter,
+            uniswapHelper.address,
+            addresses.weth,
+            addresses.ssvToken,
+            addresses.pool
+          );
+
+        expect(await uniswapV3Provider.swapRouter()).to.equal(
+          addresses.swapRouter
+        );
+        expect(await uniswapV3Provider.quoter()).to.equal(addresses.quoter);
+        expect(await uniswapV3Provider.uniswapHelper()).to.equal(
+          uniswapHelper.address
+        );
+        expect(await uniswapV3Provider.wETH()).to.equal(addresses.weth);
+        expect(await uniswapV3Provider.ssvToken()).to.equal(addresses.ssvToken);
+        expect(await uniswapV3Provider.pool()).to.equal(addresses.pool);
+      });
+    });
+
+    describe("setParameters", function () {
+      it("Should setParameters", async function () {
+        const { uniswapV3Provider } = await loadFixture(deployStakeStarFixture);
+
+        expect(await uniswapV3Provider.poolFee()).to.equal(0);
+        expect(await uniswapV3Provider.slippage()).to.equal(0);
+        expect(await uniswapV3Provider.twapInterval()).to.equal(0);
+        expect(await uniswapV3Provider.minETHLiquidity()).to.equal(0);
+
+        await expect(uniswapV3Provider.setParameters(1, 2, 3, 4))
+          .to.emit(uniswapV3Provider, "SetParameters")
+          .withArgs(1, 2, 3, 4);
+
+        expect(await uniswapV3Provider.poolFee()).to.equal(1);
+        expect(await uniswapV3Provider.slippage()).to.equal(2);
+        expect(await uniswapV3Provider.twapInterval()).to.equal(3);
+        expect(await uniswapV3Provider.minETHLiquidity()).to.equal(4);
+      });
+    });
+  });
 });

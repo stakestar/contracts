@@ -86,86 +86,92 @@ describe("StakeStarTreasury", function () {
     });
   });
 
-  describe("SetCommission", function () {
-    it("Should set commission", async function () {
-      const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
+  describe("Setters", function () {
+    describe("SetAddresses", function () {
+      it("Should set addresses", async function () {
+        const {
+          stakeStarTreasury,
+          stakeStarPublic,
+          stakeStarETH,
+          uniswapV3Provider,
+          addresses,
+        } = await loadFixture(deployStakeStarFixture);
 
-      expect(await stakeStarTreasury.commission()).to.eq(0);
-      expect(await stakeStarTreasury.getCommission(1000)).to.eq(0);
-
-      await expect(stakeStarTreasury.setCommission(100_001)).to.be.revertedWith(
-        `value must be in [0, 100_000]`
-      );
-
-      await stakeStarTreasury.setCommission(0);
-      await stakeStarTreasury.setCommission(100_000);
-
-      await expect(stakeStarTreasury.setCommission(7000))
-        .to.emit(stakeStarTreasury, "SetCommission")
-        .withArgs(7000);
-
-      expect(await stakeStarTreasury.commission()).to.eq(7000);
-      expect(await stakeStarTreasury.getCommission(1000)).to.eq(70);
-    });
-  });
-
-  describe("SetAddresses", function () {
-    it("Should set addresses", async function () {
-      const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
-
-      await expect(
-        stakeStarTreasury.setAddresses(
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address
+        await expect(
+          stakeStarTreasury.setAddresses(
+            stakeStarPublic.address,
+            stakeStarETH.address,
+            addresses.ssvNetwork,
+            addresses.ssvToken,
+            uniswapV3Provider.address
+          )
         )
-      )
-        .to.emit(stakeStarTreasury, "SetAddresses")
-        .withArgs(
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address,
-          stakeStarTreasury.address
+          .to.emit(stakeStarTreasury, "SetAddresses")
+          .withArgs(
+            stakeStarPublic.address,
+            stakeStarETH.address,
+            addresses.ssvNetwork,
+            addresses.ssvToken,
+            uniswapV3Provider.address
+          );
+
+        expect(await stakeStarTreasury.stakeStar()).to.eq(
+          stakeStarPublic.address
+        );
+        expect(await stakeStarTreasury.stakeStarETH()).to.eq(
+          stakeStarETH.address
+        );
+        expect(await stakeStarTreasury.ssvNetwork()).to.eq(
+          addresses.ssvNetwork
+        );
+        expect(await stakeStarTreasury.ssvToken()).to.eq(addresses.ssvToken);
+        expect(await stakeStarTreasury.swapProvider()).to.eq(
+          uniswapV3Provider.address
+        );
+      });
+    });
+
+    describe("SetCommission", function () {
+      it("Should set commission", async function () {
+        const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarTreasury.commission()).to.eq(0);
+        expect(await stakeStarTreasury.getCommission(1000)).to.eq(0);
+
+        await expect(
+          stakeStarTreasury.setCommission(100_001)
+        ).to.be.revertedWith(`value must be in [0, 100_000]`);
+
+        await stakeStarTreasury.setCommission(0);
+        await stakeStarTreasury.setCommission(100_000);
+
+        await expect(stakeStarTreasury.setCommission(7000))
+          .to.emit(stakeStarTreasury, "SetCommission")
+          .withArgs(7000);
+
+        expect(await stakeStarTreasury.commission()).to.eq(7000);
+        expect(await stakeStarTreasury.getCommission(1000)).to.eq(70);
+      });
+    });
+
+    describe("SetRunway", function () {
+      it("Should set runway", async function () {
+        const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarTreasury.minRunway()).to.eq(0);
+        expect(await stakeStarTreasury.maxRunway()).to.eq(0);
+
+        await expect(stakeStarTreasury.setRunway(3, 1)).to.be.revertedWith(
+          "minRunway > maxRunway"
         );
 
-      expect(await stakeStarTreasury.stakeStar()).to.eq(
-        stakeStarTreasury.address
-      );
-      expect(await stakeStarTreasury.stakeStarETH()).to.eq(
-        stakeStarTreasury.address
-      );
-      expect(await stakeStarTreasury.ssvNetwork()).to.eq(
-        stakeStarTreasury.address
-      );
-      expect(await stakeStarTreasury.ssvToken()).to.eq(
-        stakeStarTreasury.address
-      );
-      expect(await stakeStarTreasury.swapProvider()).to.eq(
-        stakeStarTreasury.address
-      );
-    });
-  });
+        await expect(stakeStarTreasury.setRunway(8, 9))
+          .to.emit(stakeStarTreasury, "SetRunway")
+          .withArgs(8, 9);
 
-  describe("SetRunway", function () {
-    it("Should set runway", async function () {
-      const { stakeStarTreasury } = await loadFixture(deployStakeStarFixture);
-
-      expect(await stakeStarTreasury.minRunway()).to.eq(0);
-      expect(await stakeStarTreasury.maxRunway()).to.eq(0);
-
-      await expect(stakeStarTreasury.setRunway(3, 1)).to.be.revertedWith(
-        "minRunway > maxRunway"
-      );
-
-      await expect(stakeStarTreasury.setRunway(8, 9))
-        .to.emit(stakeStarTreasury, "SetRunway")
-        .withArgs(8, 9);
-
-      expect(await stakeStarTreasury.minRunway()).to.eq(8);
-      expect(await stakeStarTreasury.maxRunway()).to.eq(9);
+        expect(await stakeStarTreasury.minRunway()).to.eq(8);
+        expect(await stakeStarTreasury.maxRunway()).to.eq(9);
+      });
     });
   });
 
