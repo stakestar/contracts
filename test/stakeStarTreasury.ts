@@ -13,13 +13,13 @@ describe("StakeStarTreasury", function () {
 
       expect(
         await stakeStarTreasury.hasRole(
-          await stakeStarTreasury.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           owner.address
         )
       ).to.equal(true);
       expect(
         await stakeStarTreasury.hasRole(
-          await stakeStarTreasury.DEFAULT_ADMIN_ROLE(),
+          ConstantsLib.DEFAULT_ADMIN_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
@@ -35,12 +35,9 @@ describe("StakeStarTreasury", function () {
       await expect(
         stakeStarTreasury.connect(otherAccount).setCommission(1)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
-      );
-      await expect(
-        stakeStarTreasury.connect(otherAccount).claim(1, 0)
-      ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
       await expect(
         stakeStarTreasury
@@ -53,12 +50,23 @@ describe("StakeStarTreasury", function () {
             stakeStarTreasury.address
           )
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
       await expect(
         stakeStarTreasury.connect(otherAccount).setRunway(1, 1)
       ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${await stakeStarTreasury.DEFAULT_ADMIN_ROLE()}`
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
+      );
+      await expect(
+        stakeStarTreasury.connect(otherAccount).claim(1, 0)
+      ).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
     });
   });
@@ -230,16 +238,6 @@ describe("StakeStarTreasury", function () {
 
       expect(aBalance).to.be.greaterThan(0);
       expect(aBurnRate).to.be.greaterThan(0);
-
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        `AccessControl: account ${stakeStarTreasury.address.toLowerCase()} is missing role ${
-          ConstantsLib.TREASURY_ROLE
-        }`
-      );
-      await uniswapV3Provider.grantRole(
-        ConstantsLib.TREASURY_ROLE,
-        stakeStarTreasury.address
-      );
 
       await uniswapV3Provider.setParameters(
         3000,

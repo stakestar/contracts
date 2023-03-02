@@ -91,7 +91,7 @@ export async function deployStakeStarFixture() {
     uniswapV3Provider,
     ssvToken,
     ssvNetwork,
-    twap: uniswapHelper,
+    uniswapHelper,
     validatorParams1,
     validatorParams2,
     owner,

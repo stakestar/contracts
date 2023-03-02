@@ -3,6 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
 import { ADDRESSES, EPOCHS } from "../constants";
 import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
+import { grantAllTreasuryRoles } from "./grant-TreasuryRole";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
@@ -122,6 +123,12 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     withdrawalAddress.address,
     feeRecipient.address,
     mevRecipient.address
+  );
+
+  await grantAllTreasuryRoles(
+    hre,
+    uniswapV3Provider.address,
+    stakeStarTreasury.address
   );
 
   return {

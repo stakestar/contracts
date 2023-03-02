@@ -434,6 +434,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function rate(uint256 timestamp) public view returns (uint256) {
         require(timestamp >= snapshots[1].timestamp, "timestamp from the past");
 
+        // TODO fix this
         if (snapshots[0].timestamp == 0 || snapshots[1].timestamp == 0) {
             return 1 ether;
         }

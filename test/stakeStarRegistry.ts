@@ -69,6 +69,13 @@ describe("StakeStarRegistry", function () {
         }`
       );
       await expect(
+        stakeStarRegistry.confirmActivatingValidator(validatorParams1.publicKey)
+      ).to.be.revertedWith(
+        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${
+          ConstantsLib.MANAGER_ROLE
+        }`
+      );
+      await expect(
         stakeStarRegistry
           .connect(otherAccount)
           .initiateExitingValidator(validatorParams1.publicKey)
@@ -84,14 +91,6 @@ describe("StakeStarRegistry", function () {
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
           ConstantsLib.STAKE_STAR_ROLE
-        }`
-      );
-
-      await expect(
-        stakeStarRegistry.confirmActivatingValidator(validatorParams1.publicKey)
-      ).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${
-          ConstantsLib.MANAGER_ROLE
         }`
       );
     });

@@ -11,7 +11,6 @@ import "./interfaces/IStakingPool.sol";
 import "./helpers/Constants.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
-    event SetCommission(uint24 value);
     event SetAddresses(
         address stakeStarAddress,
         address stakeStarETHAddress,
@@ -19,6 +18,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address ssvTokenAddress,
         address swapProviderAddress
     );
+    event SetCommission(uint24 value);
     event SetRunway(uint256 minRunway, uint256 maxRunway);
     event Claim(uint256 amount_ETH, uint256 amount_ssETH);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
@@ -41,14 +41,6 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function setCommission(
-        uint24 value
-    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
-        require(value <= Constants.BASE, "value must be in [0, 100_000]");
-        commission = value;
-        emit SetCommission(value);
-    }
-
     function setAddresses(
         address stakeStarAddress,
         address stakeStarETHAddress,
@@ -69,6 +61,14 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
             ssvTokenAddress,
             swapProviderAddress
         );
+    }
+
+    function setCommission(
+        uint24 value
+    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+        require(value <= Constants.BASE, "value must be in [0, 100_000]");
+        commission = value;
+        emit SetCommission(value);
     }
 
     function setRunway(

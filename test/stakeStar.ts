@@ -24,30 +24,30 @@ describe("StakeStar", function () {
       ).to.equal(true);
     });
 
-    // it("Should set the right manager", async function () {
-    //   const { stakeStarPublic, manager } = await loadFixture(
-    //     deployStakeStarFixture
-    //   );
-    //
-    //   expect(
-    //     await stakeStarPublic.hasRole(
-    //       await stakeStarPublic.MANAGER_ROLE(),
-    //       manager.address
-    //     )
-    //   ).to.equal(true);
-    // });
-    //
-    // it("Should set the right owner for ssETH", async function () {
-    //   const { stakeStarPublic, stakeStarETH } = await loadFixture(
-    //     deployStakeStarFixture
-    //   );
-    //   expect(
-    //     await stakeStarETH.hasRole(
-    //       await stakeStarETH.STAKE_STAR_ROLE(),
-    //       stakeStarPublic.address
-    //     )
-    //   ).to.equal(true);
-    // });
+    it("Should set the right manager", async function () {
+      const { stakeStarPublic, manager } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      expect(
+        await stakeStarPublic.hasRole(
+          ConstantsLib.MANAGER_ROLE,
+          manager.address
+        )
+      ).to.equal(true);
+    });
+
+    it("Should set the right owner for ssETH", async function () {
+      const { stakeStarPublic, stakeStarETH } = await loadFixture(
+        deployStakeStarFixture
+      );
+      expect(
+        await stakeStarETH.hasRole(
+          ConstantsLib.MANAGER_ROLE,
+          stakeStarPublic.address
+        )
+      ).to.equal(true);
+    });
   });
 
   describe("AccessControl", function () {
@@ -58,6 +58,22 @@ describe("StakeStar", function () {
       const defaultAdminRole = ConstantsLib.DEFAULT_ADMIN_ROLE;
       const managerRole = ConstantsLib.MANAGER_ROLE;
 
+      await expect(
+        stakeStarPublic.setAddresses(
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address,
+          stakeStarPublic.address
+        )
+      ).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
       await expect(stakeStarPublic.setRateParameters(1, 1)).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
@@ -67,6 +83,9 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
       await expect(stakeStarPublic.setQueueParameters(1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
+      await expect(stakeStarPublic.reactivateAccount()).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
       await expect(
