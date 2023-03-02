@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../interfaces/ISwapProvider.sol";
-import "../helpers/Constants.sol";
+import "../helpers/Utils.sol";
 
 abstract contract SwapProvider is
     ISwapProvider,
@@ -19,7 +19,7 @@ abstract contract SwapProvider is
         public
         payable
         override
-        onlyRole(Constants.TREASURY_ROLE)
+        onlyRole(Utils.TREASURY_ROLE)
         returns (uint256 amountIn, uint256 amountOut)
     {
         (amountIn, amountOut) = _swap(desiredAmountOut);

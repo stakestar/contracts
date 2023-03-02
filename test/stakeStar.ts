@@ -1744,4 +1744,137 @@ describe("StakeStar", function () {
       await stakeStarPublic.commitSnapshot();
     });
   });
+
+  describe("TreasuryPayback", function () {
+    it("Should payback on stake if treasury has ssETH when equal amount", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+      const userBalance = await provider.getBalance(otherAccount.address);
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
+      await stakeStarETH.mint(
+        stakeStarTreasury.address,
+        ethers.utils.parseEther("1")
+      );
+
+      expect(await stakeStarETH.balanceOf(stakeStarPublic.address)).to.equal(0);
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      expect(await stakeStarETH.balanceOf(stakeStarPublic.address)).to.equal(0);
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("2")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+
+      expect(await provider.getBalance(otherAccount.address)).to.be.closeTo(
+        userBalance.sub(ethers.utils.parseEther("2")),
+        10000000000000000n
+      );
+      expect(await provider.getBalance(stakeStarPublic.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+    });
+
+    it("Should payback on stake if treasury has ssETH when stake is less", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
+      await stakeStarETH.mint(
+        stakeStarTreasury.address,
+        ethers.utils.parseEther("10")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("2")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("9")
+      );
+
+      expect(await provider.getBalance(stakeStarPublic.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+    });
+
+    it("Should payback on stake if treasury has ssETH when stake is less", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
+      await stakeStarETH.mint(
+        stakeStarTreasury.address,
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("11")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+
+      expect(await provider.getBalance(stakeStarPublic.address)).to.equal(
+        ethers.utils.parseEther("10")
+      );
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+    });
+  });
 });

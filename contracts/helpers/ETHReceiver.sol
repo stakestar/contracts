@@ -2,7 +2,7 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./Constants.sol";
+import "./Utils.sol";
 
 contract ETHReceiver is AccessControl {
     event Pull(address indexed to, uint256 value);
@@ -10,17 +10,17 @@ contract ETHReceiver is AccessControl {
     receive() external payable {}
 
     constructor() {
-        _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function pull()
         public
         payable
-        onlyRole(Constants.STAKE_STAR_ROLE)
+        onlyRole(Utils.STAKE_STAR_ROLE)
         returns (uint256 balance)
     {
         balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
+        Utils.safeTransferETH(msg.sender, balance);
         emit Pull(msg.sender, balance);
     }
 }

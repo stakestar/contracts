@@ -15,8 +15,8 @@ import "./StakeStarETH.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarTreasury.sol";
 
-import "./helpers/Constants.sol";
 import "./helpers/ETHReceiver.sol";
+import "./helpers/Utils.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
@@ -117,7 +117,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         maxRateDeviation = 500;
         rateDeviationCheckEnabled = true;
 
-        _setupRole(Constants.DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function setAddresses(
@@ -131,7 +131,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address withdrawalCredentialsAddress,
         address feeRecipientAddress,
         address mevRecipientAddress
-    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
@@ -164,9 +164,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function setRateParameters(
         uint24 _maxRateDeviation,
         bool _rateDeviationCheckEnabled
-    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(
-            _maxRateDeviation <= Constants.BASE,
+            _maxRateDeviation <= Utils.BASE,
             "maxRateDeviation must be in [0, 100_000]"
         );
 
@@ -180,7 +180,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 _localPoolMaxSize,
         uint256 _lpuLimit,
         uint256 _lpuFrequencyLimit
-    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         localPoolMaxSize = _localPoolMaxSize;
         lpuLimit = _lpuLimit;
         lpuFrequencyLimit = _lpuFrequencyLimit;
@@ -194,7 +194,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setQueueParameters(
         uint32 _loopLimit
-    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         loopLimit = _loopLimit;
 
         emit SetQueueParameters(_loopLimit);
@@ -213,7 +213,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             uint256 toBurn = treasury_ssETH > ssETH ? ssETH : treasury_ssETH;
             uint256 toTransfer = ssETH_to_ETH(toBurn);
             stakeStarETH.burn(address(stakeStarTreasury), toBurn);
-            payable(stakeStarTreasury).transfer(toTransfer);
+            Utils.safeTransferETH(address(stakeStarTreasury), toTransfer);
+
             emit TreasuryPayback(toBurn, toTransfer);
         }
 
@@ -258,7 +259,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         delete previous[index];
         delete next[index];
 
-        payable(msg.sender).transfer(eth);
+        Utils.safeTransferETH(msg.sender, eth);
 
         emit Claim(msg.sender, eth);
     }
@@ -277,7 +278,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         localPoolSize -= eth;
         lpuHistory[msg.sender] = block.number;
 
-        payable(msg.sender).transfer(eth);
+        Utils.safeTransferETH(msg.sender, eth);
 
         emit LocalPoolUnstake(msg.sender, eth, ssETH);
     }
@@ -299,14 +300,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         return 0;
     }
 
-    function reactivateAccount() public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+    function reactivateAccount() public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         ssvNetwork.reactivateAccount(0);
     }
 
     function createValidator(
         ValidatorParams calldata validatorParams,
         uint256 ssvDepositAmount
-    ) public onlyRole(Constants.MANAGER_ROLE) {
+    ) public onlyRole(Utils.MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
         require(
             stakeStarRegistry.verifyOperators(validatorParams.operatorIds),
@@ -339,7 +340,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function updateValidator(
         ValidatorParams calldata validatorParams,
         uint256 ssvDepositAmount
-    ) public onlyRole(Constants.DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(
             stakeStarRegistry.validatorStatuses(validatorParams.publicKey) !=
                 StakeStarRegistry.ValidatorStatus.MISSING,
@@ -364,7 +365,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function destroyValidator(
         bytes memory publicKey
-    ) public onlyRole(Constants.MANAGER_ROLE) {
+    ) public onlyRole(Utils.MANAGER_ROLE) {
         stakeStarRegistry.confirmExitingValidator(publicKey);
         ssvNetwork.removeValidator(publicKey);
 
@@ -381,7 +382,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             .latestTotalBalance();
 
         require(
-            timestamp >= snapshots[1].timestamp + Constants.EPOCH_DURATION,
+            timestamp >= snapshots[1].timestamp + Utils.EPOCH_DURATION,
             "timestamps too close"
         );
 
@@ -414,7 +415,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
                 require(
                     MathUpgradeable.mulDiv(
                         maxRate - minRate,
-                        Constants.BASE,
+                        Utils.BASE,
                         maxRate
                     ) <= uint256(maxRateDeviation),
                     "rate deviation too big"

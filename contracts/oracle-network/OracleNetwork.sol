@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../interfaces/IOracleNetwork.sol";
-import "../helpers/Constants.sol";
+import "../helpers/Utils.sol";
 
 abstract contract OracleNetwork is
     IOracleNetwork,
@@ -45,6 +45,6 @@ abstract contract OracleNetwork is
 
     function epochTimestamp(uint32 epoch) public view returns (uint256) {
         require(_zeroEpochTimestamp > 0, "not initialized");
-        return _zeroEpochTimestamp + Constants.EPOCH_DURATION * uint256(epoch);
+        return _zeroEpochTimestamp + Utils.EPOCH_DURATION * uint256(epoch);
     }
 }
