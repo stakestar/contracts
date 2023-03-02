@@ -18,3 +18,4 @@
 - add commission logic
 - replace StakeStarETH with 2 receipt tokens
   - this should be made in a separate branch
+- introduce OracleNetwork with N out of M consensus
