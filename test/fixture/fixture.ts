@@ -5,13 +5,13 @@ import {
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY_1,
   RANDOM_PRIVATE_KEY_2,
-} from "../scripts/constants";
+} from "../../scripts/constants";
 import hre from "hardhat";
-import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
-import { deployAll } from "../scripts/tasks/deployAll";
+import { currentNetwork, generateValidatorParams } from "../../scripts/helpers";
+import { deployAll } from "../../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Contract } from "ethers";
-import { grantAllManagerRoles } from "../scripts/tasks/grant-ManagerRole";
+import { grantAllManagerRoles } from "../../scripts/tasks/grant-ManagerRole";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,

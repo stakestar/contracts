@@ -382,9 +382,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             pendingUnstakeSum;
         uint256 total_ssETH = stakeStarETH.totalSupply();
 
-        snapshots[0] = snapshots[1];
-        snapshots[1] = Snapshot(total_ETH, total_ssETH, timestamp);
-
         uint256 currentRate = MathUpgradeable.mulDiv(
             total_ETH,
             1 ether,
@@ -394,6 +391,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             rateBottomLimit <= currentRate && currentRate <= rateTopLimit,
             "rate out of range"
         );
+
+        snapshots[0] = snapshots[1];
+        snapshots[1] = Snapshot(total_ETH, total_ssETH, timestamp);
 
         // TODO: mint ssETH to Treasury based on rewards
 
@@ -434,20 +434,24 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function rate(uint256 timestamp) public view returns (uint256) {
         require(timestamp >= snapshots[1].timestamp, "timestamp from the past");
 
-        // TODO fix this
-        if (snapshots[0].timestamp == 0 || snapshots[1].timestamp == 0) {
+        if (snapshots[0].timestamp == 0 && snapshots[1].timestamp == 0) {
             return 1 ether;
+        }
+
+        uint256 rate1 = MathUpgradeable.mulDiv(
+            snapshots[1].total_ETH,
+            1 ether,
+            snapshots[1].total_ssETH
+        );
+
+        if (snapshots[0].timestamp == 0) {
+            return rate1;
         }
 
         uint256 rate0 = MathUpgradeable.mulDiv(
             snapshots[0].total_ETH,
             1 ether,
             snapshots[0].total_ssETH
-        );
-        uint256 rate1 = MathUpgradeable.mulDiv(
-            snapshots[1].total_ETH,
-            1 ether,
-            snapshots[1].total_ssETH
         );
 
         return
