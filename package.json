@@ -15,8 +15,8 @@
   "license": "MIT",
   "scripts": {
     "build": "hardhat clean && hardhat compile && rm -rf dist && tsc",
+    "test": "hardhat test",
     "bump": "bump --commit 'Release v' --tag",
-    "test": "hardhat clean && hardhat test",
     "solhint": "solhint contracts/**/*",
     "prettier": "prettier --write ."
   },

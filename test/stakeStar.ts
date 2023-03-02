@@ -633,7 +633,7 @@ describe("StakeStar", function () {
       ).to.emit(stakeStarManager, "CreateValidator");
     });
 
-    it("Should take into account balance, pendingUnstakeSum", async function () {
+    it("Should take into account balance, pendingUnstakeSum, localPoolSize", async function () {
       const {
         stakeStarOwner,
         stakeStarManager,
@@ -679,8 +679,22 @@ describe("StakeStar", function () {
 
       await owner.sendTransaction({
         to: stakeStarPublic.address,
-        value: ethers.utils.parseEther("32"),
+        value: ethers.utils.parseEther("31"),
       });
+      expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
+        false
+      );
+
+      await stakeStarOwner.setLocalPoolParameters(
+        ethers.utils.parseEther("3"),
+        ethers.utils.parseEther("1"),
+        10
+      );
+      await stakeStarPublic.stake({ value: ethers.utils.parseEther("3") });
+      expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
+        false
+      );
+      await stakeStarPublic.stake({ value: ethers.utils.parseEther("1") });
       expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
         true
       );
@@ -806,89 +820,226 @@ describe("StakeStar", function () {
       ).to.be.eql(0);
     });
 
-    it("validatorDestructionAvailability", async function () {
-      const {
-        stakeStarPublic,
-        stakeStarManager,
-        stakeStarOwner,
-        stakeStarRegistry,
-        stakeStarRegistryManager,
-        stakeStarOracleManager,
-        withdrawalAddress,
-        ssvToken,
-        validatorParams1,
-        validatorParams2,
-        hre,
-        owner,
-      } = await loadFixture(deployStakeStarFixture);
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .false;
+    describe("validatorDestructionAvailability", function () {
+      it("16 eth limit", async function () {
+        const {
+          stakeStarPublic,
+          stakeStarManager,
+          stakeStarRegistry,
+          stakeStarRegistryManager,
+          ssvToken,
+          validatorParams1,
+          validatorParams2,
+          hre,
+          owner,
+        } = await loadFixture(deployStakeStarFixture);
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
 
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
+        await ssvToken
           .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
+          .transfer(
+            stakeStarManager.address,
+            await ssvToken.balanceOf(owner.address)
+          );
+        for (const operatorId of validatorParams1.operatorIds) {
+          await stakeStarRegistry
+            .connect(owner)
+            .addOperatorToAllowList(operatorId);
+        }
 
-      await stakeStarPublic.stake({ value: hre.ethers.utils.parseEther("64") });
+        await stakeStarPublic.stake({
+          value: hre.ethers.utils.parseEther("64"),
+        });
 
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
-      );
-      await stakeStarManager.createValidator(
-        validatorParams2,
-        await ssvToken.balanceOf(stakeStarManager.address)
-      );
+        await stakeStarManager.createValidator(
+          validatorParams1,
+          (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+        );
+        await stakeStarManager.createValidator(
+          validatorParams2,
+          await ssvToken.balanceOf(stakeStarManager.address)
+        );
 
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .false;
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
 
-      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
+        await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
 
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .false;
+        await stakeStarRegistryManager.confirmActivatingValidator(
+          validatorParams1.publicKey
+        );
+        await stakeStarRegistryManager.confirmActivatingValidator(
+          validatorParams2.publicKey
+        );
 
-      await stakeStarRegistryManager.confirmActivatingValidator(
-        validatorParams1.publicKey
-      );
-      await stakeStarRegistryManager.confirmActivatingValidator(
-        validatorParams2.publicKey
-      );
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .true;
 
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .true;
+        await owner.sendTransaction({
+          to: stakeStarManager.address,
+          value: hre.ethers.utils.parseEther("32"),
+        });
+        await stakeStarPublic.claim();
 
-      await owner.sendTransaction({
-        to: withdrawalAddress.address,
-        value: hre.ethers.utils.parseEther("32"),
+        await stakeStarPublic.unstake(hre.ethers.utils.parseEther("14"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
+        await owner.sendTransaction({
+          to: stakeStarManager.address,
+          value: hre.ethers.utils.parseEther("14"),
+        });
+        await stakeStarPublic.claim();
+
+        await stakeStarPublic.unstake(hre.ethers.utils.parseEther("16"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .true;
       });
 
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .false;
+      it("takes pendingUnstakeSum, localPoolSize, WA, feeRecipient, mevRecipient, free eth", async function () {
+        const {
+          stakeStarPublic,
+          stakeStarManager,
+          stakeStarOwner,
+          stakeStarRegistry,
+          stakeStarRegistryManager,
+          ssvToken,
+          validatorParams1,
+          validatorParams2,
+          hre,
+          owner,
+          withdrawalAddress,
+          feeRecipient,
+          mevRecipient,
+        } = await loadFixture(deployStakeStarFixture);
+        await ssvToken
+          .connect(owner)
+          .transfer(
+            stakeStarManager.address,
+            await ssvToken.balanceOf(owner.address)
+          );
+        for (const operatorId of validatorParams1.operatorIds) {
+          await stakeStarRegistry
+            .connect(owner)
+            .addOperatorToAllowList(operatorId);
+        }
 
-      await stakeStarOwner.setRateParameters(100_000, true);
+        await stakeStarPublic.stake({
+          value: hre.ethers.utils.parseEther("64"),
+        });
 
-      await stakeStarOracleManager.save(100, hre.ethers.utils.parseEther("64"));
-      await stakeStarManager.commitSnapshot();
+        await stakeStarManager.createValidator(
+          validatorParams1,
+          (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+        );
+        await stakeStarManager.createValidator(
+          validatorParams2,
+          await ssvToken.balanceOf(stakeStarManager.address)
+        );
 
-      expect(
-        await ethers.getDefaultProvider().getBalance(withdrawalAddress.address)
-      ).to.equal(0);
+        await stakeStarRegistryManager.confirmActivatingValidator(
+          validatorParams1.publicKey
+        );
+        await stakeStarRegistryManager.confirmActivatingValidator(
+          validatorParams2.publicKey
+        );
 
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .false;
+        await stakeStarOwner.setLocalPoolParameters(
+          hre.ethers.utils.parseEther("2"),
+          0,
+          0
+        );
+        await stakeStarOwner.stake({ value: hre.ethers.utils.parseEther("1") });
+        await stakeStarManager.stake({
+          value: hre.ethers.utils.parseEther("1"),
+        });
 
-      await stakeStarPublic.claim();
-      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("32"));
-      expect(await stakeStarManager.validatorDestructionAvailability()).to.be
-        .true;
+        await owner.sendTransaction({
+          to: withdrawalAddress.address,
+          value: hre.ethers.utils.parseEther("0.1"),
+        });
+        await owner.sendTransaction({
+          to: feeRecipient.address,
+          value: hre.ethers.utils.parseEther("0.01"),
+        });
+        await owner.sendTransaction({
+          to: mevRecipient.address,
+          value: hre.ethers.utils.parseEther("0.001"),
+        });
+
+        // 2 validators in Cons Layer: 2 active, 0 exiting
+        // localPoolSize = 2 eth
+        // balances: WA - 0.1 eth, FR - 0.01 eth, MR - 0.001 eth
+        await stakeStarPublic.unstake(hre.ethers.utils.parseEther("16"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
+        await stakeStarOwner.unstake(hre.ethers.utils.parseEther("0.110"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
+        await stakeStarManager.unstake(hre.ethers.utils.parseEther("0.001"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .true;
+      });
+
+      it("takes pendingUnstakeSum, exitingETH", async function () {
+        const {
+          stakeStarPublic,
+          stakeStarManager,
+          stakeStarRegistry,
+          stakeStarRegistryManager,
+          ssvToken,
+          validatorParams1,
+          validatorParams2,
+          hre,
+          owner,
+        } = await loadFixture(deployStakeStarFixture);
+        await ssvToken
+          .connect(owner)
+          .transfer(
+            stakeStarManager.address,
+            await ssvToken.balanceOf(owner.address)
+          );
+        for (const operatorId of validatorParams1.operatorIds) {
+          await stakeStarRegistry
+            .connect(owner)
+            .addOperatorToAllowList(operatorId);
+        }
+
+        await stakeStarPublic.stake({
+          value: hre.ethers.utils.parseEther("64"),
+        });
+
+        await stakeStarManager.createValidator(
+          validatorParams1,
+          (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+        );
+        await stakeStarManager.createValidator(
+          validatorParams2,
+          await ssvToken.balanceOf(stakeStarManager.address)
+        );
+
+        await stakeStarRegistryManager.confirmActivatingValidator(
+          validatorParams1.publicKey
+        );
+        await stakeStarRegistryManager.confirmActivatingValidator(
+          validatorParams2.publicKey
+        );
+
+        await stakeStarPublic.unstake(hre.ethers.utils.parseEther("16"));
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .true;
+
+        // 2 validators in Cons Layer: 0 active, 1 exiting
+        // localPoolSize = 0 eth
+        // balances: WA - 0 eth, FR - 0 eth, MR - 0 eth
+        await stakeStarRegistryManager.initiateExitingValidator(
+          validatorParams1.publicKey
+        );
+        expect(await stakeStarManager.validatorDestructionAvailability()).to.be
+          .false;
+      });
     });
 
     it("validatorToDestroy", async function () {

@@ -433,7 +433,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function validatorCreationAvailability() public view returns (bool) {
-        return address(this).balance >= (uint256(32 ether) + pendingUnstakeSum);
+        return
+            address(this).balance >=
+            (uint256(32 ether) + pendingUnstakeSum + localPoolSize);
     }
 
     function validatorDestructionAvailability() public view returns (bool) {
@@ -442,14 +444,18 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
         if (activeValidators == 0) return false;
 
+        uint256 freeETH = address(this).balance - localPoolSize;
+        uint256 exitedETH = address(withdrawalAddress).balance;
+        uint256 fees = address(feeRecipient).balance +
+            address(mevRecipient).balance;
         uint256 exitingValidators = stakeStarRegistry.countValidatorPublicKeys(
             StakeStarRegistry.ValidatorStatus.EXITING
         );
         uint256 exitingETH = exitingValidators * uint256(32 ether);
-        uint256 exitedETH = address(this).balance +
-            address(withdrawalAddress).balance;
 
-        return pendingUnstakeSum >= uint256(32 ether) + exitingETH + exitedETH;
+        return
+            pendingUnstakeSum >=
+            uint256(16 ether) + freeETH + exitedETH + fees + exitingETH;
     }
 
     function validatorToDestroy() public view returns (bytes memory) {
