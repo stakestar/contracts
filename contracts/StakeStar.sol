@@ -382,6 +382,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             pendingUnstakeSum;
         uint256 total_ssETH = stakeStarETH.totalSupply();
 
+        require(total_ETH > 0 && total_ssETH > 0, "totals must be > 0");
+
         uint256 currentRate = MathUpgradeable.mulDiv(
             total_ETH,
             1 ether,
@@ -454,12 +456,23 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             snapshots[0].total_ssETH
         );
 
-        return
-            MathUpgradeable.mulDiv(
-                rate1 - rate0,
-                timestamp - snapshots[1].timestamp,
-                snapshots[1].timestamp - snapshots[0].timestamp
-            ) + rate1;
+        if (rate1 > rate0) {
+            return
+                rate1 +
+                MathUpgradeable.mulDiv(
+                    rate1 - rate0,
+                    timestamp - snapshots[1].timestamp,
+                    snapshots[1].timestamp - snapshots[0].timestamp
+                );
+        } else {
+            return
+                rate1 -
+                MathUpgradeable.mulDiv(
+                    rate0 - rate1,
+                    timestamp - snapshots[1].timestamp,
+                    snapshots[1].timestamp - snapshots[0].timestamp
+                );
+        }
     }
 
     function rate() public view returns (uint256) {

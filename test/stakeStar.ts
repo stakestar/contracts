@@ -994,7 +994,7 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("Linear approximation by Sasha U. King of legacy test", function () {
+  describe("Linear approximation by Sasha U. Kind of legacy test", function () {
     it("Should approximate ssETH rate", async function () {
       const {
         hre,
@@ -1160,6 +1160,388 @@ describe("StakeStar", function () {
 
       await stakeStarPublic.unstake(newStaked);
       await stakeStarPublic.claim();
+    });
+  });
+
+  describe("Rate", function () {
+    it("Rate shouldn't change before any oracles submissions and be equal 1 ether", async function () {
+      const { stakeStarPublic, stakeStarOwner, stakeStarETH, otherAccount } =
+        await loadFixture(deployStakeStarFixture);
+
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1.23"),
+      });
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("1.23")
+      );
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.unstake(ethers.utils.parseEther("1.23"));
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(await stakeStarETH.totalSupply()).to.equal(0);
+
+      await stakeStarPublic.claim();
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarOwner.setLocalPoolParameters(
+        ethers.utils.parseEther("1.23"),
+        ethers.utils.parseEther("1.23"),
+        1
+      );
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1.23"),
+      });
+      await stakeStarPublic.localPoolUnstake(ethers.utils.parseEther("1.23"));
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(await stakeStarETH.totalSupply()).to.equal(0);
+    });
+
+    it("Rate should be equal last snapshot rate(> 1) if only one snapshot submitted", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracleManager,
+        stakeStarETH,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setRateParameters(
+        ethers.utils.parseEther("0.5"),
+        ethers.utils.parseEther("2")
+      );
+
+      await stakeStarOracleManager.save(1, 1);
+      await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
+        "totals must be > 0"
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("2"),
+      });
+      await stakeStarOracleManager.save(2, ethers.utils.parseEther("0.2"));
+      await stakeStarPublic.commitSnapshot();
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1.1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("2"),
+      });
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1.1")
+      );
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("4.2"), 1e9);
+      expect(
+        (await stakeStarETH.totalSupply())
+          .mul(ethers.utils.parseEther("1.1"))
+          .div(ethers.utils.parseEther("1"))
+      ).to.be.closeTo(ethers.utils.parseEther("4.2"), 1e9);
+
+      await stakeStarPublic.unstake(ethers.utils.parseEther("2"));
+      await stakeStarPublic.claim();
+
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1.1")
+      );
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("2"), 1e9);
+      expect(
+        (await stakeStarETH.totalSupply())
+          .mul(ethers.utils.parseEther("1.1"))
+          .div(ethers.utils.parseEther("1"))
+      ).to.be.closeTo(ethers.utils.parseEther("2"), 1e9);
+    });
+
+    it("Rate should be equal last snapshot rate(< 1) if only one snapshot submitted", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracleManager,
+        stakeStarETH,
+        stakeStarRegistry,
+        validatorParams1,
+        ssvToken,
+        stakeStarManager,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setRateParameters(
+        ethers.utils.parseEther("0.5"),
+        ethers.utils.parseEther("2")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("32"),
+      });
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        await ssvToken.balanceOf(stakeStarManager.address)
+      );
+
+      await stakeStarOracleManager.save(1, ethers.utils.parseEther("16"));
+      await stakeStarPublic.commitSnapshot();
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("0.5")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("2"),
+      });
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("0.5")
+      );
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("18"), 1e9);
+      expect(
+        (await stakeStarETH.totalSupply())
+          .mul(ethers.utils.parseEther("0.5"))
+          .div(ethers.utils.parseEther("1"))
+      ).to.be.closeTo(ethers.utils.parseEther("18"), 1e9);
+
+      await stakeStarPublic.unstake(ethers.utils.parseEther("2"));
+      await stakeStarPublic.claim();
+
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("0.5")
+      );
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("17"), 1e9);
+      expect(
+        (await stakeStarETH.totalSupply())
+          .mul(ethers.utils.parseEther("0.5"))
+          .div(ethers.utils.parseEther("1"))
+      ).to.be.closeTo(ethers.utils.parseEther("17"), 1e9);
+    });
+
+    it("Rate should be equal last snapshot rate(= 1) if only one snapshot submitted", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracleManager,
+        stakeStarETH,
+        stakeStarRegistry,
+        validatorParams1,
+        ssvToken,
+        stakeStarManager,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setRateParameters(
+        ethers.utils.parseEther("0.5"),
+        ethers.utils.parseEther("2")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("32"),
+      });
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        await ssvToken.balanceOf(stakeStarManager.address)
+      );
+
+      await stakeStarOracleManager.save(1, ethers.utils.parseEther("32"));
+      await stakeStarPublic.commitSnapshot();
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("2"),
+      });
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("34"), 1e9);
+      expect(
+        (await stakeStarETH.totalSupply())
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("1"))
+      ).to.be.closeTo(ethers.utils.parseEther("34"), 1e9);
+
+      await stakeStarPublic.unstake(ethers.utils.parseEther("2"));
+      await stakeStarPublic.claim();
+
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("32"), 1e9);
+      expect(
+        (await stakeStarETH.totalSupply())
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("1"))
+      ).to.be.closeTo(ethers.utils.parseEther("32"), 1e9);
+    });
+
+    it("Rate should be approximated based on 2 snapshots (eth amount increasing)", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracleManager,
+        stakeStarRegistry,
+        validatorParams1,
+        ssvToken,
+        stakeStarManager,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setRateParameters(
+        ethers.utils.parseEther("0.5"),
+        ethers.utils.parseEther("2")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("34"),
+      });
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        await ssvToken.balanceOf(stakeStarManager.address)
+      );
+
+      await stakeStarOracleManager.save(1, ethers.utils.parseEther("32"));
+      await stakeStarPublic.commitSnapshot();
+
+      // we gained 34 eth
+      await stakeStarOracleManager.save(11, ethers.utils.parseEther("66"));
+      await stakeStarPublic.commitSnapshot();
+
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(11)
+        )
+      ).to.equal(ethers.utils.parseEther("2"));
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(21)
+        )
+      ).to.equal(ethers.utils.parseEther("3"));
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(31)
+        )
+      ).to.equal(ethers.utils.parseEther("4"));
+    });
+
+    it("Rate should be approximated based on 2 snapshots (eth amount decreasing)", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracleManager,
+        stakeStarRegistry,
+        validatorParams1,
+        ssvToken,
+        stakeStarManager,
+        owner,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setRateParameters(
+        ethers.utils.parseEther("0.5"),
+        ethers.utils.parseEther("2")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("34"),
+      });
+      for (const operatorId of validatorParams1.operatorIds) {
+        await stakeStarRegistry
+          .connect(owner)
+          .addOperatorToAllowList(operatorId);
+      }
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          stakeStarManager.address,
+          await ssvToken.balanceOf(owner.address)
+        );
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        await ssvToken.balanceOf(stakeStarManager.address)
+      );
+
+      await stakeStarOracleManager.save(1, ethers.utils.parseEther("32"));
+      await stakeStarPublic.commitSnapshot();
+
+      // we lost 2 eth
+      await stakeStarOracleManager.save(11, ethers.utils.parseEther("30"));
+      await stakeStarPublic.commitSnapshot();
+
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(11)
+        )
+      ).to.equal(
+        ethers.utils
+          .parseEther("32")
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("34"))
+      );
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(21)
+        )
+      ).to.equal(
+        ethers.utils
+          .parseEther("30")
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("34"))
+      );
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(31)
+        )
+      ).to.equal(
+        ethers.utils
+          .parseEther("28")
+          .mul(ethers.utils.parseEther("1"))
+          .div(ethers.utils.parseEther("34"))
+      );
     });
   });
 });

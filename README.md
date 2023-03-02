@@ -12,10 +12,13 @@
   - access control **DONE**
   - setters **DONE**
 - add very detailed tests
-  - rate
-  - *availability methods
+  - rate **DONE**
+  - availability methods
   - oracle network
+  - TreasurySwap
+  - CommitSnapshot validations
 - add commission logic
 - replace StakeStarETH with 2 receipt tokens
   - this should be made in a separate branch
 - introduce OracleNetwork with N out of M consensus
+- can rate between SubmitSnapshot be out of range?
