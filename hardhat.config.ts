@@ -22,7 +22,7 @@ import "./scripts/tasks/setSwapParameters";
 import "./scripts/tasks/setTreasuryCommission";
 import "./scripts/tasks/setTreasuryRunway";
 import "./scripts/tasks/upgrade-StakeStar";
-import "./scripts/tasks/upgrade-StakeStarProvider";
+import "./scripts/tasks/upgrade-StakeStarOracle";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
 import "./scripts/tasks/upgrade-StakeStarTreasury";
 

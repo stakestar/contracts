@@ -45,7 +45,7 @@ task("grant-ManagerRole", "Grants a MANAGER_ROLE to the manager").setAction(
       hre,
       addresses.stakeStar,
       addresses.stakeStarRegistry,
-      addresses.stakeStarProvider,
+      addresses.stakeStarOracle,
       addresses.stakeStarBot
     );
   }
