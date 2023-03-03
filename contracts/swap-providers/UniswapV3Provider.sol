@@ -2,17 +2,18 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 
 import "./SwapProvider.sol";
-import "../interfaces/ITWAP.sol";
+import "../interfaces/IUniswapHelper.sol";
 
 contract UniswapV3Provider is SwapProvider {
     event SetAddresses(
         address swapRouter,
         address quoter,
-        address twap,
+        address uniswapHelper,
         address wETH,
         address ssvToken,
         address pool
@@ -26,7 +27,7 @@ contract UniswapV3Provider is SwapProvider {
 
     ISwapRouter public swapRouter;
     IQuoter public quoter;
-    ITWAP public twap;
+    IUniswapHelper public uniswapHelper;
 
     address public wETH;
     address public ssvToken;
@@ -34,25 +35,24 @@ contract UniswapV3Provider is SwapProvider {
 
     uint24 public poolFee;
     uint24 public slippage;
-    uint24 public constant DENOMINATOR = 100_000;
     uint32 public twapInterval;
     uint256 public minETHLiquidity;
 
     function initialize() public initializer {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function setAddresses(
         address swapRouterAddress,
         address quoterAddress,
-        address twapAddress,
+        address uniswapHelperAddress,
         address wETHAddress,
         address ssvTokenAddress,
         address poolAddress
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         swapRouter = ISwapRouter(swapRouterAddress);
         quoter = IQuoter(quoterAddress);
-        twap = ITWAP(twapAddress);
+        uniswapHelper = IUniswapHelper(uniswapHelperAddress);
         wETH = wETHAddress;
         ssvToken = ssvTokenAddress;
         pool = poolAddress;
@@ -60,7 +60,7 @@ contract UniswapV3Provider is SwapProvider {
         emit SetAddresses(
             swapRouterAddress,
             quoterAddress,
-            twapAddress,
+            uniswapHelperAddress,
             wETHAddress,
             ssvTokenAddress,
             poolAddress
@@ -72,9 +72,9 @@ contract UniswapV3Provider is SwapProvider {
         uint24 numerator,
         uint32 interval,
         uint256 minLiquidity
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(interval > 0, "twapInterval = 0");
-        require(numerator <= DENOMINATOR, "slippage must be in [0, 100_000]");
+        require(numerator <= Utils.BASE, "slippage must be in [0, 100_000]");
         require(minLiquidity > 0, "minLiquidity = 0");
 
         poolFee = fee;
@@ -104,13 +104,13 @@ contract UniswapV3Provider is SwapProvider {
 
         if (amountIn > address(this).balance) amountIn = address(this).balance;
 
-        uint256 expectedPrice = twap.getPriceFromSqrtPriceX96(
-            twap.getSqrtTwapX96(pool, twapInterval)
+        uint256 expectedPrice = uniswapHelper.getPriceFromSqrtPriceX96(
+            uniswapHelper.getSqrtTwapX96(pool, twapInterval)
         );
-        uint256 amountOutMinimum = twap.mulDiv(
-            twap.mulDiv(amountIn, 1e18, expectedPrice),
+        uint256 amountOutMinimum = MathUpgradeable.mulDiv(
+            MathUpgradeable.mulDiv(amountIn, 1e18, expectedPrice),
             slippage,
-            DENOMINATOR
+            Utils.BASE
         );
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
@@ -127,9 +127,6 @@ contract UniswapV3Provider is SwapProvider {
         amountOut = swapRouter.exactInputSingle{value: amountIn}(params);
 
         uint256 ethBalance = address(this).balance;
-        if (ethBalance > 0) {
-            (bool status, ) = payable(msg.sender).call{value: ethBalance}("");
-            require(status, "failed to send Ether");
-        }
+        if (ethBalance > 0) Utils.safeTransferETH(msg.sender, ethBalance);
     }
 }

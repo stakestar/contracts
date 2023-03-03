@@ -5,13 +5,13 @@ import {
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY_1,
   RANDOM_PRIVATE_KEY_2,
-} from "../scripts/constants";
+} from "../../scripts/constants";
 import hre from "hardhat";
-import { currentNetwork, generateValidatorParams } from "../scripts/helpers";
-import { deployAll } from "../scripts/tasks/deployAll";
+import { currentNetwork, generateValidatorParams } from "../../scripts/helpers";
+import { deployAll } from "../../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Contract } from "ethers";
-import { grantAllManagerRoles } from "../scripts/tasks/grant-ManagerRole";
+import { grantAllManagerRoles } from "../../scripts/tasks/grant-ManagerRole";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,
@@ -24,11 +24,12 @@ export async function deployStakeStarFixture() {
     stakeStarRegistry,
     stakeStarTreasury,
     stakeStarETH,
-    stakeStarRewards,
-    stakeStarProvider,
-    chainlinkProvider,
     uniswapV3Provider,
-    twap,
+    withdrawalAddress,
+    feeRecipient,
+    mevRecipient,
+    stakeStarOracle,
+    uniswapHelper,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount] = await hre.ethers.getSigners();
@@ -37,13 +38,13 @@ export async function deployStakeStarFixture() {
   const stakeStarManager = stakeStarOwner.connect(manager);
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
   const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
-  const stakeStarProviderManager = stakeStarProvider.connect(manager);
+  const stakeStarOracleManager = stakeStarOracle.connect(manager);
 
   await grantAllManagerRoles(
     hre,
     stakeStar.address,
     stakeStarRegistry.address,
-    stakeStarProvider.address,
+    stakeStarOracle.address,
     manager.address
   );
 
@@ -63,7 +64,7 @@ export async function deployStakeStarFixture() {
     RANDOM_PRIVATE_KEY_1,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     OPERATOR_IDS[currentNetwork(hre)],
-    stakeStarRewards.address,
+    withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
 
@@ -71,7 +72,7 @@ export async function deployStakeStarFixture() {
     RANDOM_PRIVATE_KEY_2,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     OPERATOR_IDS[currentNetwork(hre)],
-    stakeStarRewards.address,
+    withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
 
@@ -85,19 +86,20 @@ export async function deployStakeStarFixture() {
     stakeStarRegistryManager,
     stakeStarTreasury,
     stakeStarETH,
-    stakeStarRewards,
-    stakeStarProvider,
-    stakeStarProviderManager,
-    chainlinkProvider,
+    stakeStarOracle,
+    stakeStarOracleManager,
     uniswapV3Provider,
     ssvToken,
     ssvNetwork,
-    twap,
+    uniswapHelper,
     validatorParams1,
     validatorParams2,
     owner,
     manager,
     otherAccount,
+    withdrawalAddress,
+    feeRecipient,
+    mevRecipient,
   };
 }
 

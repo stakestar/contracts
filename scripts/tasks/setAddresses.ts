@@ -27,16 +27,19 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    addresses.consensusDataProvider,
-    addresses.stakeStarRegistry,
+    addresses.oracleNetwork,
     addresses.stakeStarETH,
-    addresses.stakeStarRewards,
-    addresses.stakeStarTreasury
+    addresses.stakeStarRegistry,
+    addresses.stakeStarTreasury,
+    addresses.withdrawalAddress,
+    addresses.feeRecipient,
+    addresses.mevRecipient
   );
   console.log(`Addresses are set to StakeStar contract`);
 
   await stakeStarTreasury.setAddresses(
     addresses.stakeStar,
+    addresses.stakeStarETH,
     addresses.ssvNetwork,
     addresses.ssvToken,
     addresses.swapProvider
@@ -46,7 +49,7 @@ task("setAddresses", "Sets all addresses").setAction(async (args, hre) => {
   await uniswapV3Provider.setAddresses(
     addresses.swapRouter,
     addresses.quoter,
-    addresses.twap,
+    addresses.uniswapHelper,
     addresses.weth,
     addresses.ssvToken,
     addresses.pool

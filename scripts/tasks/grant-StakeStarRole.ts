@@ -1,14 +1,16 @@
 import { task } from "hardhat/config";
-import { ADDRESSES } from "../constants";
+import { ADDRESSES, ConstantsLib } from "../constants";
 import { currentNetwork } from "../helpers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export async function grantAllStakeStarRoles(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
-  stakeStarRegistryAddress: string,
   stakeStarETHAddress: string,
-  stakeStarRewardsAddress: string
+  stakeStarRegistryAddress: string,
+  withdrawalAddressAddress: string,
+  feeRecipientAddress: string,
+  mevRecipientAddress: string
 ) {
   const StakeStarRegistry = await hre.ethers.getContractFactory(
     "StakeStarRegistry"
@@ -20,32 +22,32 @@ export async function grantAllStakeStarRoles(
   const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
   const stakeStarETH = await StakeStarETH.attach(stakeStarETHAddress);
 
-  const StakeStarRewards = await hre.ethers.getContractFactory(
-    "StakeStarRewards"
-  );
-  const stakeStarRewards = await StakeStarRewards.attach(
-    stakeStarRewardsAddress
-  );
+  const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
+  const withdrawalAddress = await ETHReceiver.attach(withdrawalAddressAddress);
+  const feeRecipient = await ETHReceiver.attach(feeRecipientAddress);
+  const mevRecipient = await ETHReceiver.attach(mevRecipientAddress);
 
   await stakeStarRegistry.grantRole(
-    await stakeStarRegistry.STAKE_STAR_ROLE(),
+    ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
   console.log(
     `StakeStarRegistry.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
-  await stakeStarETH.grantRole(
-    await stakeStarETH.STAKE_STAR_ROLE(),
-    stakeStarAddress
-  );
+  await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
   console.log(`StakeStarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
-  await stakeStarRewards.grantRole(
-    await stakeStarRewards.STAKE_STAR_ROLE(),
+
+  await withdrawalAddress.grantRole(
+    ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
   console.log(
-    `StakeStarRewards.STAKE_STAR_ROLE is granted to StakeStar contract`
+    `WithdrawalAddress.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
+  await feeRecipient.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
+  await mevRecipient.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  console.log(`MevRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 }
 
 task(
@@ -58,8 +60,10 @@ task(
   await grantAllStakeStarRoles(
     hre,
     addresses.stakeStar,
-    addresses.stakeStarRegistry,
     addresses.stakeStarETH,
-    addresses.stakeStarRewards
+    addresses.stakeStarRegistry,
+    addresses.withdrawalAddress,
+    addresses.feeRecipient,
+    addresses.mevRecipient
   );
 });

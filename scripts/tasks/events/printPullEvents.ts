@@ -6,15 +6,13 @@ task("printPullEvents", "Prints Pull events").setAction(async (args, hre) => {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
 
-  const StakeStarRewards = await hre.ethers.getContractFactory(
-    "StakeStarRewards"
-  );
-  const stakeStarRewards = await StakeStarRewards.attach(
-    addresses.stakeStarRewards
+  const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
+  const withdrawalAddress = await ETHReceiver.attach(
+    addresses.withdrawalAddress
   );
 
-  const events = await stakeStarRewards.queryFilter(
-    stakeStarRewards.filters.Pull()
+  const events = await withdrawalAddress.queryFilter(
+    withdrawalAddress.filters.Pull()
   );
 
   for (const event of events) {
@@ -22,7 +20,7 @@ task("printPullEvents", "Prints Pull events").setAction(async (args, hre) => {
     console.log(
       timestamp,
       new Date(timestamp * 1000).toISOString(),
-      event.args.amount.toString()
+      event.args.value.toString()
     );
   }
 });

@@ -22,33 +22,23 @@ task("printContractVariables", "Prints contracts variables").setAction(
     console.log("localPoolSize", humanify(await stakeStar.localPoolSize()));
     console.log();
 
-    console.log("stakingSurplusA", humanify(await stakeStar.stakingSurplusA()));
-    const timestampA = (await stakeStar.timestampA()).toNumber();
-    console.log("timestampA", new Date(timestampA * 1000).toISOString());
-    console.log("stakingSurplusB", humanify(await stakeStar.stakingSurplusB()));
-    const timestampB = (await stakeStar.timestampB()).toNumber();
-    console.log("timestampB", new Date(timestampB * 1000).toISOString());
-    console.log();
-
+    const snapshot0 = await stakeStar.snapshots(0);
+    const snapshot1 = await stakeStar.snapshots(0);
+    console.log("snapshot0 total_ETH", humanify(snapshot0.total_ETH));
+    console.log("snapshot0 total_ssETH", humanify(snapshot0.total_ssETH));
     console.log(
-      "reservedTreasuryCommission",
-      humanify(await stakeStar.reservedTreasuryCommission())
+      "snapshot0 timestamp",
+      new Date(snapshot0.timestamp.toNumber() * 1000).toISOString()
     );
+    console.log("snapshot1 total_ETH", humanify(snapshot1.total_ETH));
+    console.log("snapshot1 total_ssETH", humanify(snapshot1.total_ssETH));
     console.log(
-      "currentApproximateRate",
-      humanify(await stakeStar.currentApproximateRate())
+      "snapshot1 timestamp",
+      new Date(snapshot1.timestamp.toNumber() * 1000).toISOString()
     );
     console.log();
 
-    const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
-    const stakeStarETH = await StakeStarETH.attach(addresses.stakeStarETH);
-
-    console.log("rate", humanify(await stakeStarETH.rate()));
-    console.log("totalSupply", humanify(await stakeStarETH.totalSupply()));
-    console.log(
-      "totalSupplyEth",
-      humanify(await stakeStarETH.totalSupplyEth())
-    );
+    console.log("rate", humanify(await stakeStar["rate(uint256)"](Date.now())));
     console.log();
 
     const StakeStarRegistry = await hre.ethers.getContractFactory(
@@ -106,43 +96,18 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     console.log();
 
-    const StakeStarProvider = await hre.ethers.getContractFactory(
-      "StakeStarProvider"
+    const StakeStarOracle = await hre.ethers.getContractFactory(
+      "StakeStarOracle"
     );
-    const stakeStarProvider = await StakeStarProvider.attach(
-      addresses.stakeStarProvider
+    const stakeStarOracle = await StakeStarOracle.attach(
+      addresses.oracleNetwork
     );
-    console.log(
-      "StakeStarProvider::avgValidatorBalanceLowerLimit",
-      humanify(await stakeStarProvider._avgValidatorBalanceLowerLimit()),
-      "ETH"
-    );
-    console.log(
-      "StakeStarProvider::avgValidatorBalanceUpperLimit",
-      humanify(await stakeStarProvider._avgValidatorBalanceUpperLimit()),
-      "ETH"
-    );
-    console.log(
-      "StakeStarProvider::epochGapLimit",
-      humanify(await stakeStarProvider._epochGapLimit(), 0, 0),
-      "seconds"
-    );
-    console.log(
-      "StakeStarProvider::aprLimit",
-      humanify(await stakeStarProvider._aprLimit()),
-      "ETH"
-    );
-    console.log(
-      "StakeStarProvider::validatorCountDiffLimit",
-      await stakeStarProvider._validatorCountDiffLimit()
-    );
-    console.log();
 
-    const latestStakingSurplus = await stakeStarProvider.latestStakingSurplus();
+    const latestTotalBalance = await stakeStarOracle.latestTotalBalance();
     console.log(
-      "StakeStarProvider::latestStakingSurplus",
-      humanify(latestStakingSurplus.stakingSurplus),
-      new Date(latestStakingSurplus.timestamp.toNumber() * 1000).toISOString()
+      "StakeStarOracle::latestStakingSurplus",
+      humanify(latestTotalBalance.totalBalance),
+      new Date(latestTotalBalance.timestamp.toNumber() * 1000).toISOString()
     );
     console.log();
   }

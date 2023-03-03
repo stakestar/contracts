@@ -11,16 +11,17 @@ task("printAddresses", "Prints addresses of the contracts").setAction(
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
     console.log("StakeStar", stakeStar.address);
-    console.log("StakeStarRegistry", await stakeStar.stakeStarRegistry());
     console.log("StakeStarETH", await stakeStar.stakeStarETH());
-    console.log("StakeStarRewards", await stakeStar.stakeStarRewards());
-    console.log(
-      "ConsensusDataProvider",
-      await stakeStar.consensusDataProvider()
-    );
+    console.log("StakeStarRegistry", await stakeStar.stakeStarRegistry());
+    console.log("StakeStarTreasury", await stakeStar.stakeStarTreasury());
+
+    console.log("WithdrawalAddress", await stakeStar.withdrawalAddress());
+    console.log("FeeRecipient", await stakeStar.feeRecipient());
+    console.log("MevRecipient", await stakeStar.mevRecipient());
 
     console.log("DepositContract", await stakeStar.depositContract());
     console.log("SSV Network", await stakeStar.ssvNetwork());
     console.log("SSV Token", await stakeStar.ssvToken());
+    console.log("OracleNetwork", await stakeStar.oracleNetwork());
   }
 );

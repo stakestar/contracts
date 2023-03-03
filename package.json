@@ -9,14 +9,14 @@
     "dist/index.*",
     "artifacts/contracts/**/*"
   ],
-  "version": "0.14.2",
+  "version": "0.15.0-beta.1",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
   "scripts": {
     "build": "hardhat clean && hardhat compile && rm -rf dist && tsc",
+    "test": "hardhat test",
     "bump": "bump --commit 'Release v' --tag",
-    "test": "hardhat clean && hardhat test",
     "solhint": "solhint contracts/**/*",
     "prettier": "prettier --write ."
   },

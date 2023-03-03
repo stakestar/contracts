@@ -13,13 +13,14 @@ export const ADDRESSES: Record<
     depositContract: string;
     ssvNetwork: string;
     ssvToken: string;
-    consensusDataProvider: string;
-    chainlinkProvider: string;
+    oracleNetwork: string;
     stakeStarProvider: string;
     stakeStarTreasury: string;
     stakeStarRegistry: string;
     stakeStarETH: string;
-    stakeStarRewards: string;
+    withdrawalAddress: string;
+    feeRecipient: string;
+    mevRecipient: string;
     stakeStar: string;
     stakeStarBot: string;
     weth: string;
@@ -28,19 +29,20 @@ export const ADDRESSES: Record<
     pool: string;
     swapProvider: string;
     uniswapV3Provider: string;
-    twap: string;
+    uniswapHelper: string;
   }
 > = {
   [Network.MAINNET]: {
     depositContract: "",
     ssvNetwork: "",
     ssvToken: "",
-    consensusDataProvider: "",
-    chainlinkProvider: "",
+    oracleNetwork: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
-    stakeStarRewards: "",
+    withdrawalAddress: "",
+    feeRecipient: "",
+    mevRecipient: "",
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",
@@ -50,18 +52,19 @@ export const ADDRESSES: Record<
     pool: "",
     swapProvider: "",
     uniswapV3Provider: "",
-    twap: "",
+    uniswapHelper: "",
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    consensusDataProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
-    chainlinkProvider: "",
+    oracleNetwork: "",
     stakeStarProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
     stakeStarTreasury: "0x52CEd95E80619F7FA269fDf6ea42aCb8212BDD24",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
-    stakeStarRewards: "0xaed21ba98900042bccAA8c2aAf250304D4Cb023D",
+    withdrawalAddress: "",
+    feeRecipient: "",
+    mevRecipient: "",
     stakeStarETH: "0x2BAd1B83595a8F5452C707f127ADD1C28D17D686",
     stakeStar: "0x30ee6090e416234430841e37Ffbc4E855fC133F0",
     stakeStarBot: "0xFfa618ed01B71eC7dc5e11a1766bECb318567002",
@@ -71,18 +74,19 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     swapProvider: "0xEd7c2BF9092fE13905281d9f8A7Fbe72d9c9d55F",
     uniswapV3Provider: "0xEd7c2BF9092fE13905281d9f8A7Fbe72d9c9d55F",
-    twap: "0x3CF623f6ece2E389263e479Dee23Fd94E3D9351a",
+    uniswapHelper: "0x3CF623f6ece2E389263e479Dee23Fd94E3D9351a",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    consensusDataProvider: "",
-    chainlinkProvider: "",
+    oracleNetwork: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
-    stakeStarRewards: "",
+    withdrawalAddress: "",
+    feeRecipient: "",
+    mevRecipient: "",
     stakeStarETH: "",
     stakeStar: "",
     stakeStarBot: "",
@@ -92,7 +96,7 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     swapProvider: "",
     uniswapV3Provider: "",
-    twap: "",
+    uniswapHelper: "",
   },
 };
 
@@ -134,3 +138,15 @@ export const RANDOM_PRIVATE_KEY_1 =
   "0x6da4f8d49b28f88ef7154dd4ff9d5ebd83d0c0f29d04718996f6f89a95308219";
 export const RANDOM_PRIVATE_KEY_2 =
   "0x59531fe4c859a0ac36fe230b3b6485629a9e57f8671f912de04284ff02eae3cf";
+
+export const ConstantsLib = {
+  DEFAULT_ADMIN_ROLE:
+    "0x0000000000000000000000000000000000000000000000000000000000000000",
+  STAKE_STAR_ROLE:
+    "0x1dcad631ef6db6a23956de30880da352bcf4b330a897bf8bbdf1d5e38dcce996",
+  MANAGER_ROLE:
+    "0x1dcad631ef6db6a23956de30880da352bcf4b330a897bf8bbdf1d5e38dcce996",
+  TREASURY_ROLE:
+    "0x6efca2866b731ee4984990bacad4cde10f1ef764fb54a5206bdfd291695b1a9b",
+  EPOCH_DURATION: 384,
+};
