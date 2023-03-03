@@ -201,15 +201,19 @@ describe("StakeStar", function () {
         const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
 
         expect(await stakeStarOwner.localPoolMaxSize()).to.equal(0);
-        expect(await stakeStarOwner.lpuLimit()).to.equal(0);
-        expect(await stakeStarOwner.lpuFrequencyLimit()).to.equal(0);
+        expect(await stakeStarOwner.localPoolUnstakeLimit()).to.equal(0);
+        expect(await stakeStarOwner.localPoolUnstakeFrequencyLimit()).to.equal(
+          0
+        );
 
         await expect(stakeStarOwner.setLocalPoolParameters(1, 2, 3))
           .to.emit(stakeStarOwner, "SetLocalPoolParameters")
           .withArgs(1, 2, 3);
         expect(await stakeStarOwner.localPoolMaxSize()).to.equal(1);
-        expect(await stakeStarOwner.lpuLimit()).to.equal(2);
-        expect(await stakeStarOwner.lpuFrequencyLimit()).to.equal(3);
+        expect(await stakeStarOwner.localPoolUnstakeLimit()).to.equal(2);
+        expect(await stakeStarOwner.localPoolUnstakeFrequencyLimit()).to.equal(
+          3
+        );
       });
     });
 
@@ -524,7 +528,7 @@ describe("StakeStar", function () {
       );
       await expect(
         stakeStarPublic.localPoolUnstake(ethers.utils.parseEther("1"))
-      ).to.be.revertedWith("lpuFrequencyLimit");
+      ).to.be.revertedWith("localPoolUnstakeFrequencyLimit");
 
       await stakeStarOwner.setLocalPoolParameters(
         ethers.utils.parseEther("2"),

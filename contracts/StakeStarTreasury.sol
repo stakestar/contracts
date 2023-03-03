@@ -23,8 +23,6 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event Claim(uint256 amount_ETH, uint256 amount_ssETH);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
-    uint24 public commission;
-
     IStakingPool public stakeStar;
     IERC20 public stakeStarETH;
 
@@ -32,6 +30,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     IERC20 public ssvToken;
     ISwapProvider public swapProvider;
 
+    uint24 public commission;
     uint256 public minRunway;
     uint256 public maxRunway;
 

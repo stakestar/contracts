@@ -50,8 +50,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event SetRateParameters(uint24 maxRateDeviation, bool rateDeviationCheck);
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
-        uint256 lpuLimit,
-        uint256 lpuFrequencyLimit
+        uint256 limit,
+        uint256 frequencyLimit
     );
     event SetQueueParameters(uint32 loopLimit);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
@@ -97,12 +97,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint24 public maxRateDeviation;
     bool public rateDeviationCheck;
 
-    // lpu - Local Pool Unstake
     uint256 public localPoolSize;
     uint256 public localPoolMaxSize;
-    uint256 public lpuLimit;
-    uint256 public lpuFrequencyLimit;
-    mapping(address => uint256) public lpuHistory;
+    uint256 public localPoolUnstakeLimit;
+    uint256 public localPoolUnstakeFrequencyLimit;
+    mapping(address => uint256) public localPoolUnstakeHistory;
 
     Snapshot[2] public snapshots;
 
@@ -176,17 +175,17 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setLocalPoolParameters(
         uint256 _localPoolMaxSize,
-        uint256 _lpuLimit,
-        uint256 _lpuFrequencyLimit
+        uint256 _localPoolUnstakeLimit,
+        uint256 _localPoolUnstakeFrequencyLimit
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         localPoolMaxSize = _localPoolMaxSize;
-        lpuLimit = _lpuLimit;
-        lpuFrequencyLimit = _lpuFrequencyLimit;
+        localPoolUnstakeLimit = _localPoolUnstakeLimit;
+        localPoolUnstakeFrequencyLimit = _localPoolUnstakeFrequencyLimit;
 
         emit SetLocalPoolParameters(
             _localPoolMaxSize,
-            _lpuLimit,
-            _lpuFrequencyLimit
+            _localPoolUnstakeLimit,
+            _localPoolUnstakeFrequencyLimit
         );
     }
 
@@ -265,16 +264,17 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function localPoolUnstake(uint256 ssETH) public {
         uint256 eth = ssETH_to_ETH(ssETH);
 
-        require(eth <= lpuLimit, "localPoolUnstakeLimit");
+        require(eth <= localPoolUnstakeLimit, "localPoolUnstakeLimit");
         require(eth <= localPoolSize, "localPoolSize");
         require(
-            block.number - lpuHistory[msg.sender] > lpuFrequencyLimit,
-            "lpuFrequencyLimit"
+            block.number - localPoolUnstakeHistory[msg.sender] >
+                localPoolUnstakeFrequencyLimit,
+            "localPoolUnstakeFrequencyLimit"
         );
 
         stakeStarETH.burn(msg.sender, ssETH);
         localPoolSize -= eth;
-        lpuHistory[msg.sender] = block.number;
+        localPoolUnstakeHistory[msg.sender] = block.number;
 
         Utils.safeTransferETH(msg.sender, eth);
 
