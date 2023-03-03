@@ -13,7 +13,7 @@ export const ADDRESSES: Record<
     depositContract: string;
     ssvNetwork: string;
     ssvToken: string;
-    oracleNetwork: string;
+    stakeStarOracle: string;
     stakeStarProvider: string;
     stakeStarTreasury: string;
     stakeStarRegistry: string;
@@ -27,7 +27,6 @@ export const ADDRESSES: Record<
     swapRouter: string;
     quoter: string;
     pool: string;
-    swapProvider: string;
     uniswapV3Provider: string;
     uniswapHelper: string;
   }
@@ -36,7 +35,7 @@ export const ADDRESSES: Record<
     depositContract: "",
     ssvNetwork: "",
     ssvToken: "",
-    oracleNetwork: "",
+    stakeStarOracle: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
@@ -50,7 +49,6 @@ export const ADDRESSES: Record<
     swapRouter: "",
     quoter: "",
     pool: "",
-    swapProvider: "",
     uniswapV3Provider: "",
     uniswapHelper: "",
   },
@@ -58,7 +56,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    oracleNetwork: "",
+    stakeStarOracle: "",
     stakeStarProvider: "0xD71b3059D7A233B130Cc5942c868Fe042822507F",
     stakeStarTreasury: "0x52CEd95E80619F7FA269fDf6ea42aCb8212BDD24",
     stakeStarRegistry: "0x9c1cF3C3a9C99065C1A53f6c9e6aB8fFe88bB1e5",
@@ -72,7 +70,6 @@ export const ADDRESSES: Record<
     swapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
     quoter: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
-    swapProvider: "0xEd7c2BF9092fE13905281d9f8A7Fbe72d9c9d55F",
     uniswapV3Provider: "0xEd7c2BF9092fE13905281d9f8A7Fbe72d9c9d55F",
     uniswapHelper: "0x3CF623f6ece2E389263e479Dee23Fd94E3D9351a",
   },
@@ -80,7 +77,7 @@ export const ADDRESSES: Record<
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
-    oracleNetwork: "",
+    stakeStarOracle: "",
     stakeStarProvider: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
@@ -94,7 +91,6 @@ export const ADDRESSES: Record<
     swapRouter: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
     quoter: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
-    swapProvider: "",
     uniswapV3Provider: "",
     uniswapHelper: "",
   },

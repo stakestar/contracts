@@ -17,7 +17,7 @@ import "./scripts/tasks/grant-TreasuryRole";
 import "./scripts/tasks/printAddresses";
 import "./scripts/tasks/printContractVariables";
 import "./scripts/tasks/reactivateAccount";
-import "./scripts/tasks/setAddresses";
+import "./scripts/tasks/setAllAddresses";
 import "./scripts/tasks/setSwapParameters";
 import "./scripts/tasks/setTreasuryCommission";
 import "./scripts/tasks/setTreasuryRunway";

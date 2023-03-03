@@ -1,13 +1,13 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { currentNetwork } from "../helpers";
-import { ADDRESSES, EPOCHS } from "../constants";
+import { EPOCHS } from "../constants";
 import { grantAllStakeStarRoles } from "./grant-StakeStarRole";
 import { grantAllTreasuryRoles } from "./grant-TreasuryRole";
+import { setAllAddresses } from "./setAllAddresses";
 
 export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const network = currentNetwork(hre);
-  const addresses = ADDRESSES[network];
   const zeroEpochTimestamp = EPOCHS[network];
 
   const StakeStarRegistry = await hre.ethers.getContractFactory(
@@ -85,34 +85,18 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await mevRecipient.deployed();
   console.log(`MevRecipient is deployed to ${mevRecipient.address}`);
 
-  await stakeStar.setAddresses(
-    addresses.depositContract,
-    addresses.ssvNetwork,
-    addresses.ssvToken,
-    stakeStarOracle.address,
+  await setAllAddresses(
+    hre,
+    stakeStar.address,
     stakeStarETH.address,
+    stakeStarOracle.address,
     stakeStarRegistry.address,
     stakeStarTreasury.address,
     withdrawalAddress.address,
     feeRecipient.address,
-    mevRecipient.address
-  );
-
-  await stakeStarTreasury.setAddresses(
-    stakeStar.address,
-    stakeStarETH.address,
-    addresses.ssvNetwork,
-    addresses.ssvToken,
-    uniswapV3Provider.address
-  );
-
-  await uniswapV3Provider.setAddresses(
-    addresses.swapRouter,
-    addresses.quoter,
-    uniswapHelper.address,
-    addresses.weth,
-    addresses.ssvToken,
-    addresses.pool
+    mevRecipient.address,
+    uniswapV3Provider.address,
+    uniswapHelper.address
   );
 
   await grantAllStakeStarRoles(

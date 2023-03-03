@@ -100,7 +100,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
       "StakeStarOracle"
     );
     const stakeStarOracle = await StakeStarOracle.attach(
-      addresses.oracleNetwork
+      addresses.stakeStarOracle
     );
 
     const latestTotalBalance = await stakeStarOracle.latestTotalBalance();
