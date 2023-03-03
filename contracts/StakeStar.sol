@@ -68,6 +68,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 timestamp,
         uint256 rate
     );
+    event RateDiff(uint256 rate, uint256 approxRate);
 
     StakeStarETH public stakeStarETH;
     StakeStarRegistry public stakeStarRegistry;
@@ -392,6 +393,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         require(total_ETH > 0 && total_ssETH > 0, "totals must be > 0");
 
+        uint256 currentApproxRate = rate();
         uint256 currentRate = MathUpgradeable.mulDiv(
             total_ETH,
             1 ether,
@@ -428,6 +430,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         withdrawalAddress.pull();
 
         emit CommitSnapshot(total_ETH, total_ssETH, timestamp, currentRate);
+        emit RateDiff(currentRate, currentApproxRate);
     }
 
     function validatorCreationAvailability() public view returns (bool) {

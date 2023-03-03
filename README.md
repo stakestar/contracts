@@ -18,7 +18,8 @@
     - rate deviation **DONE**
     - availability methods **DONE**
     - TreasuryPayback **DONE**
-    - CommitSnapshot validations
+    - CommitSnapshot validations **DONE**
+- add RateDiff event **DONE**
 - add commission logic
 - replace StakeStarETH with 2 receipt tokens
     - should be made in a separate branch
