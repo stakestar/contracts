@@ -236,9 +236,7 @@ describe("StakeStar", function () {
         deployStakeStarFixture
       );
 
-      await expect(stakeStarPublic.stake()).to.be.revertedWith(
-        "no eth transferred"
-      );
+      await expect(stakeStarPublic.stake()).to.be.revertedWith("zero value");
 
       const stakeAmountETH = BigNumber.from(1);
       const stakeAmountSS = await stakeStarPublic.ETH_to_ssETH(stakeAmountETH);
@@ -1883,8 +1881,8 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("TreasuryPayback", function () {
-    it("Should payback on stake if treasury has ssETH when equal amount", async function () {
+  describe("OptimizeCapitalEfficiency", function () {
+    it("Should optimize capital efficiency on stake if treasury has ssETH when equal amount", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,
@@ -1913,9 +1911,13 @@ describe("StakeStar", function () {
         ethers.utils.parseEther("1")
       );
 
-      await stakeStarPublic.stake({
-        value: ethers.utils.parseEther("1"),
-      });
+      await expect(
+        stakeStarPublic.stake({
+          value: ethers.utils.parseEther("1"),
+        })
+      )
+        .to.emit(stakeStarPublic, "OptimizeCapitalEfficiency")
+        .withArgs(ethers.utils.parseEther("1"), ethers.utils.parseEther("1"));
 
       expect(await stakeStarETH.balanceOf(stakeStarPublic.address)).to.equal(0);
       expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
@@ -1937,7 +1939,7 @@ describe("StakeStar", function () {
       );
     });
 
-    it("Should payback on stake if treasury has ssETH when stake is less", async function () {
+    it("Should optimize capital efficiency on stake if treasury has ssETH when stake is less", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,
@@ -1976,7 +1978,7 @@ describe("StakeStar", function () {
       );
     });
 
-    it("Should payback on stake if treasury has ssETH when stake is less", async function () {
+    it("Should optimize capital efficiency on stake if treasury has ssETH when stake is less", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,

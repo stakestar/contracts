@@ -69,6 +69,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 rate
     );
     event RateDiff(uint256 rate, uint256 approxRate);
+    event OptimizeCapitalEfficiency(uint256 ssETH, uint256 eth);
 
     StakeStarETH public stakeStarETH;
     StakeStarRegistry public stakeStarRegistry;
@@ -198,26 +199,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function stake() public payable {
-        require(msg.value > 0, "no eth transferred");
+        require(msg.value > 0, "zero value");
 
         uint256 ssETH = ETH_to_ssETH(msg.value);
         stakeStarETH.mint(msg.sender, ssETH);
 
-        uint256 treasury_ssETH = stakeStarETH.balanceOf(
-            address(stakeStarTreasury)
-        );
-        if (treasury_ssETH > 0) {
-            uint256 toBurn = treasury_ssETH > ssETH ? ssETH : treasury_ssETH;
-            uint256 toTransfer = ssETH_to_ETH(toBurn);
-            stakeStarETH.burn(address(stakeStarTreasury), toBurn);
-            Utils.safeTransferETH(address(stakeStarTreasury), toTransfer);
-
-            emit TreasuryPayback(toBurn, toTransfer);
-        }
-
-        localPoolSize = localPoolSize + msg.value > localPoolMaxSize
-            ? localPoolMaxSize
-            : localPoolSize + msg.value;
+        uint256 eth = optimizeCapitalEfficiency(ssETH);
+        topUpLocalPool(msg.value - eth);
 
         emit Stake(msg.sender, msg.value, ssETH);
     }
@@ -296,6 +284,32 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
 
         return 0;
+    }
+
+    function optimizeCapitalEfficiency(
+        uint256 ssETH
+    ) internal returns (uint256) {
+        uint256 toBurn = MathUpgradeable.min(
+            stakeStarETH.balanceOf(address(stakeStarTreasury)),
+            ssETH
+        );
+        uint256 toTransfer = ssETH_to_ETH(toBurn);
+
+        if (toBurn > 0) {
+            stakeStarETH.burn(address(stakeStarTreasury), toBurn);
+            Utils.safeTransferETH(address(stakeStarTreasury), toTransfer);
+        }
+
+        emit OptimizeCapitalEfficiency(toBurn, toTransfer);
+
+        return toTransfer;
+    }
+
+    function topUpLocalPool(uint256 value) internal {
+        localPoolSize = MathUpgradeable.min(
+            localPoolSize + value,
+            localPoolMaxSize
+        );
     }
 
     function reactivateAccount() public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
