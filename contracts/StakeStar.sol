@@ -515,10 +515,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
-        return MathUpgradeable.mulDiv(ssETH, rate(block.timestamp), 1 ether);
+        return MathUpgradeable.mulDiv(ssETH, rate(), 1 ether);
     }
 
     function ETH_to_ssETH(uint256 eth) public view returns (uint256) {
-        return MathUpgradeable.mulDiv(eth, 1 ether, rate(block.timestamp));
+        return MathUpgradeable.mulDiv(eth, 1 ether, rate());
     }
 }
