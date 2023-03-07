@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -208,21 +207,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function stake() public payable {
         require(msg.value > 0, "zero value");
 
-        console.log("rate1", rate());
-
         extractCommission();
-
-        console.log("rate2", rate());
 
         uint256 ssETH = ETH_to_ssETH(msg.value);
         stakeStarETH.mint(msg.sender, ssETH);
 
-        console.log("rate3", rate());
-
         uint256 eth = optimizeCapitalEfficiency(ssETH);
         topUpLocalPool(msg.value - eth);
-
-        console.log("rate4", rate());
 
         emit Stake(msg.sender, msg.value, ssETH);
     }
@@ -337,6 +328,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
             emit ExtractCommission(commission_ssETH);
         }
+
         recordedRate = currentRate;
     }
 

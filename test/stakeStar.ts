@@ -6,7 +6,7 @@ import { ConstantsLib, EPOCHS, ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture/fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
-import { currentNetwork } from "../scripts/helpers";
+import { currentNetwork, humanify } from "../scripts/helpers";
 import { BlockTag } from "@ethersproject/providers";
 
 describe("StakeStar", function () {
@@ -2142,6 +2142,161 @@ describe("StakeStar", function () {
       expect(
         await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
       ).to.be.closeTo(ethers.utils.parseEther("20.18"), 100);
+    });
+
+    it("Should extract commission when rate grows [two points]", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+      const network = currentNetwork(hre);
+      const provider = stakeStarPublic.provider;
+
+      const block0 = await hre.ethers.provider.getBlock("latest");
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0,
+        ethers.utils.parseEther("0.002")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.be.greaterThan(
+        ethers.utils.parseEther("0.99")
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.be.lessThan(
+        ethers.utils.parseEther("1")
+      );
+
+      const total_ssETH = await stakeStarETH.totalSupply();
+      const total_ETH = await stakeStarPublic.ssETH_to_ETH(total_ssETH);
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 1,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(epoch0 + 1)
+        )
+      ).to.equal(
+        total_ETH
+          .add(ethers.utils.parseEther("0.002"))
+          .mul(ethers.utils.parseEther("1"))
+          .div(total_ssETH)
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.extractCommission();
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.not.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 2,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+      await stakeStarPublic.extractCommission();
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 3,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+      await stakeStarPublic.extractCommission();
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      const snapshot0 = await stakeStarPublic.snapshots(0);
+      const snapshot1 = await stakeStarPublic.snapshots(1);
+
+      expect(
+        snapshot0.total_ETH
+          .mul(ethers.utils.parseEther("1"))
+          .div(snapshot0.total_ssETH)
+      ).to.equal(
+        snapshot1.total_ETH
+          .mul(ethers.utils.parseEther("1"))
+          .div(snapshot1.total_ssETH)
+      );
+
+      console.log(
+        "treasury eth",
+        humanify(await provider.getBalance(stakeStarTreasury.address))
+      );
+      console.log(
+        "user ssETH -> ETH",
+        humanify(
+          await stakeStarPublic.ssETH_to_ETH(
+            await stakeStarETH.balanceOf(otherAccount.address)
+          )
+        )
+      );
+      console.log(
+        "total ssETH -> ETH",
+        humanify(
+          await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+        )
+      );
+
+      const total_ETH2 = await stakeStarPublic.ssETH_to_ETH(
+        await stakeStarETH.totalSupply()
+      );
+      const treasuryRewards = await provider.getBalance(
+        stakeStarTreasury.address
+      );
+
+      expect(total_ETH2.add(treasuryRewards)).to.be.closeTo(
+        ethers.utils.parseEther("22.004"),
+        100
+      );
+      expect(
+        treasuryRewards.mul(100).div(ethers.utils.parseEther("0.004"))
+      ).to.equal(9); // final commission rate = 9% over all time, because we swapped it several times using different rates
     });
   });
 });
