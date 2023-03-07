@@ -2018,7 +2018,7 @@ describe("StakeStar", function () {
     });
   });
 
-  describe.only("ExtractCommission", function () {
+  describe("ExtractCommission", function () {
     it("Should extract commission when rate grows [single point]", async function () {
       const {
         stakeStarPublic,

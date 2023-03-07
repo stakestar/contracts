@@ -69,7 +69,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 timestamp,
         uint256 rate
     );
-    event RateDiff(uint256 rate, uint256 approxRate);
+    event RateDiff(uint256 realRate, uint256 calculatedRate);
     event ExtractCommission(uint256 ssETH);
     event OptimizeCapitalEfficiency(uint256 ssETH, uint256 eth);
 
@@ -461,8 +461,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         require(total_ETH > 0 && total_ssETH > 0, "totals must be > 0");
 
-        uint256 currentApproxRate = rate();
-        uint256 currentRate = MathUpgradeable.mulDiv(
+        uint256 currentRate = rate();
+        uint256 newRate = MathUpgradeable.mulDiv(
             total_ETH,
             1 ether,
             total_ssETH
@@ -475,8 +475,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
                 snapshots[1].total_ssETH
             );
 
-            uint256 maxRate = MathUpgradeable.max(currentRate, lastRate);
-            uint256 minRate = MathUpgradeable.min(currentRate, lastRate);
+            uint256 maxRate = MathUpgradeable.max(newRate, lastRate);
+            uint256 minRate = MathUpgradeable.min(newRate, lastRate);
 
             if (rateDeviationCheck) {
                 require(
@@ -499,8 +499,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         withdrawalAddress.pull();
 
-        emit CommitSnapshot(total_ETH, total_ssETH, timestamp, currentRate);
-        emit RateDiff(currentRate, currentApproxRate);
+        emit CommitSnapshot(total_ETH, total_ssETH, timestamp, newRate);
+        emit RateDiff(newRate, currentRate);
     }
 
     function validatorCreationAvailability() public view returns (bool) {
