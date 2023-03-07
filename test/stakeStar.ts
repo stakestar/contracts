@@ -2017,4 +2017,131 @@ describe("StakeStar", function () {
       );
     });
   });
+
+  describe.only("ExtractCommission", function () {
+    it("Should extract commission when rate grows [single point]", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await provider.getBalance(stakeStarPublic.address)).to.equal(
+        ethers.utils.parseEther("10")
+      );
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("10")
+      );
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarOracleManager.save(
+        139_001,
+        ethers.utils.parseEther("0.1")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1.01")
+      );
+
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarPublic["rate()"]()).to.be.closeTo(
+        ethers.utils.parseEther("1.009"),
+        100
+      );
+
+      expect(
+        await provider.getBalance(stakeStarTreasury.address)
+      ).to.be.closeTo(ethers.utils.parseEther("0.01"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(
+          await stakeStarETH.balanceOf(otherAccount.address)
+        )
+      ).to.be.closeTo(ethers.utils.parseEther("20.09"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("20.09"), 100);
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        0
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarPublic.address)).to.equal(0);
+    });
+
+    it("Should extract commission when rate grows [two points, same rate]", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      await stakeStarOracleManager.save(
+        139_001,
+        ethers.utils.parseEther("0.2")
+      );
+      await stakeStarPublic.commitSnapshot();
+      await stakeStarOracleManager.save(
+        139_002,
+        ethers.utils.parseEther("0.2")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarPublic["rate()"]()).to.be.closeTo(
+        ethers.utils.parseEther("1.018"),
+        100
+      );
+
+      expect(
+        await provider.getBalance(stakeStarTreasury.address)
+      ).to.be.closeTo(ethers.utils.parseEther("0.02"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(
+          await stakeStarETH.balanceOf(otherAccount.address)
+        )
+      ).to.be.closeTo(ethers.utils.parseEther("20.18"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("20.18"), 100);
+    });
+  });
 });
