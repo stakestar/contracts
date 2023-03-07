@@ -43,7 +43,7 @@ describe("StakeStar", function () {
       );
       expect(
         await stakeStarETH.hasRole(
-          ConstantsLib.MANAGER_ROLE,
+          ConstantsLib.STAKE_STAR_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(true);
