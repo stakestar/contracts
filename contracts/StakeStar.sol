@@ -329,7 +329,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             emit ExtractCommission(commission_ssETH);
         }
 
-        recordedRate = currentRate;
+        recordedRate = rate();
     }
 
     function optimizeCapitalEfficiency(
