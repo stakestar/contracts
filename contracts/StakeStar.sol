@@ -107,7 +107,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     Snapshot[2] public snapshots;
 
-    uint256 public recordedRate;
+    uint256 public rateEC;
     uint256 public rateCorrectionFactor;
 
     receive() external payable {}
@@ -116,9 +116,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         left = 1;
         right = 1;
         loopLimit = 25;
+
         maxRateDeviation = 500;
         rateDeviationCheck = true;
-        recordedRate = 1 ether;
+
+        rateEC = 1 ether;
         rateCorrectionFactor = 1 ether;
 
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
@@ -304,10 +306,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 totalSupply_ETH = ssETH_to_ETH(totalSupply_ssETH);
 
         uint256 currentRate = rate();
-        if (currentRate > recordedRate) {
+        if (currentRate > rateEC) {
             uint256 unrecordedRewards = MathUpgradeable.mulDiv(
                 stakeStarETH.totalSupply(),
-                currentRate - recordedRate,
+                currentRate - rateEC,
                 1 ether
             );
             uint256 commission_ETH = stakeStarTreasury.getCommission(
@@ -329,7 +331,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             emit ExtractCommission(commission_ssETH);
         }
 
-        recordedRate = rate();
+        rateEC = rate();
     }
 
     function optimizeCapitalEfficiency(
