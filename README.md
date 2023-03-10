@@ -58,7 +58,7 @@ yarn hardhat setSwapParameters --fee 3000 --slippage 98000 --twap-interval 3600 
     - TreasuryPayback **DONE**
     - CommitSnapshot validations **DONE**
 - add RateDiff event **DONE**
-- add commission logic
+- add commission logic **DONE**
 - replace StakeStarETH with 2 receipt tokens
     - should be made in a separate branch
 - introduce OracleNetwork with N out of M consensus
