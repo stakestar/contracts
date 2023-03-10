@@ -54,6 +54,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 frequencyLimit
     );
     event SetQueueParameters(uint32 loopLimit);
+    event SetValidatorWithdrawalThreshold(uint256 threshold);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
@@ -109,6 +110,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     uint256 public rateEC;
     uint256 public rateCorrectionFactor;
+    uint256 public validatorWithdrawalThreshold;
 
     receive() external payable {}
 
@@ -122,6 +124,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         rateEC = 1 ether;
         rateCorrectionFactor = 1 ether;
+
+        validatorWithdrawalThreshold = 16 ether;
 
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -206,6 +210,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         loopLimit = _loopLimit;
 
         emit SetQueueParameters(_loopLimit);
+    }
+
+    function setValidatorWithdrawalThreshold(
+        uint256 threshold
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        validatorWithdrawalThreshold = threshold;
+
+        emit SetValidatorWithdrawalThreshold(threshold);
     }
 
     function stake() public payable {
@@ -522,7 +534,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         return
             pendingUnstakeSum >=
-            uint256(16 ether) + freeETH + exitedETH + fees + exitingETH;
+            validatorWithdrawalThreshold +
+                freeETH +
+                exitedETH +
+                fees +
+                exitingETH;
     }
 
     function validatorToDestroy() public view returns (bytes memory) {

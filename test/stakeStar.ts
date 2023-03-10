@@ -87,6 +87,11 @@ describe("StakeStar", function () {
       await expect(stakeStarPublic.setQueueParameters(1)).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
+      await expect(
+        stakeStarPublic.setValidatorWithdrawalThreshold(1)
+      ).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
       await expect(stakeStarPublic.reactivateAccount()).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
@@ -233,6 +238,26 @@ describe("StakeStar", function () {
           .to.emit(stakeStarOwner, "SetQueueParameters")
           .withArgs(30);
         expect(await stakeStarOwner.loopLimit()).to.eql(30);
+      });
+    });
+
+    describe("setValidatorWithdrawalThreshold", function () {
+      it("Should setValidatorWithdrawalThreshold", async function () {
+        const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarOwner.validatorWithdrawalThreshold()).to.equal(
+          ethers.utils.parseEther("16")
+        );
+        await expect(
+          stakeStarOwner.setValidatorWithdrawalThreshold(
+            ethers.utils.parseEther("16.1")
+          )
+        )
+          .to.emit(stakeStarOwner, "SetValidatorWithdrawalThreshold")
+          .withArgs(ethers.utils.parseEther("16.1"));
+        expect(await stakeStarOwner.validatorWithdrawalThreshold()).to.eql(
+          ethers.utils.parseEther("16.1")
+        );
       });
     });
   });
