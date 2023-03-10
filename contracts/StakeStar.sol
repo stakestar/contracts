@@ -493,7 +493,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         rateCorrectionFactor = 1 ether;
 
-        withdrawalAddress.pull();
+        if (address(withdrawalAddress).balance > 0) withdrawalAddress.pull();
 
         emit CommitSnapshot(total_ETH, total_ssETH, timestamp, newRate);
         emit RateDiff(newRate, currentRate);
