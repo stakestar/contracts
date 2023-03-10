@@ -19,6 +19,7 @@ import "./scripts/tasks/printContractVariables";
 import "./scripts/tasks/reactivateAccount";
 import "./scripts/tasks/setAllAddresses";
 import "./scripts/tasks/setLocalPoolParameters";
+import "./scripts/tasks/setRateParameters";
 import "./scripts/tasks/setSwapParameters";
 import "./scripts/tasks/setTreasuryCommission";
 import "./scripts/tasks/setTreasuryRunway";
