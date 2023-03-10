@@ -191,6 +191,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         localPoolUnstakeLimit = _localPoolUnstakeLimit;
         localPoolUnstakeFrequencyLimit = _localPoolUnstakeFrequencyLimit;
 
+        localPoolSize = MathUpgradeable.min(localPoolSize, localPoolMaxSize);
+
         emit SetLocalPoolParameters(
             _localPoolMaxSize,
             _localPoolUnstakeLimit,

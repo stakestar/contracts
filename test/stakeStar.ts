@@ -214,6 +214,13 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.localPoolUnstakeFrequencyLimit()).to.equal(
           3
         );
+
+        await stakeStarOwner.setLocalPoolParameters(100, 2, 3);
+        expect(await stakeStarOwner.localPoolSize()).to.equal(0);
+        await stakeStarOwner.stake({ value: 100 });
+        expect(await stakeStarOwner.localPoolSize()).to.equal(100);
+        await stakeStarOwner.setLocalPoolParameters(50, 2, 3);
+        expect(await stakeStarOwner.localPoolSize()).to.equal(50);
       });
     });
 
