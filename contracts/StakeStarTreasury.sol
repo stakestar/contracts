@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 
 import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/ISwapProvider.sol";
@@ -120,7 +121,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
             balance < burnRate * maxRunway;
     }
 
-    function getCommission(int256 amount) public view returns (uint256) {
-        return amount > 0 ? (uint256(amount) * commission) / Utils.BASE : 0;
+    function getCommission(uint256 amount) public view returns (uint256) {
+        return MathUpgradeable.mulDiv(amount, commission, Utils.BASE);
     }
 }

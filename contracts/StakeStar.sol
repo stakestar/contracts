@@ -68,7 +68,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 timestamp,
         uint256 rate
     );
-    event RateDiff(uint256 rate, uint256 approxRate);
+    event RateDiff(uint256 realRate, uint256 calculatedRate);
+    event ExtractCommission(uint256 ssETH);
+    event OptimizeCapitalEfficiency(uint256 ssETH, uint256 eth);
 
     StakeStarETH public stakeStarETH;
     StakeStarRegistry public stakeStarRegistry;
@@ -105,14 +107,21 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     Snapshot[2] public snapshots;
 
+    uint256 public rateEC;
+    uint256 public rateCorrectionFactor;
+
     receive() external payable {}
 
     function initialize() public initializer {
         left = 1;
         right = 1;
         loopLimit = 25;
+
         maxRateDeviation = 500;
         rateDeviationCheck = true;
+
+        rateEC = 1 ether;
+        rateCorrectionFactor = 1 ether;
 
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -182,6 +191,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         localPoolUnstakeLimit = _localPoolUnstakeLimit;
         localPoolUnstakeFrequencyLimit = _localPoolUnstakeFrequencyLimit;
 
+        localPoolSize = MathUpgradeable.min(localPoolSize, localPoolMaxSize);
+
         emit SetLocalPoolParameters(
             _localPoolMaxSize,
             _localPoolUnstakeLimit,
@@ -198,32 +209,23 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function stake() public payable {
-        require(msg.value > 0, "no eth transferred");
+        require(msg.value > 0, "zero value");
+
+        extractCommission();
 
         uint256 ssETH = ETH_to_ssETH(msg.value);
         stakeStarETH.mint(msg.sender, ssETH);
 
-        uint256 treasury_ssETH = stakeStarETH.balanceOf(
-            address(stakeStarTreasury)
-        );
-        if (treasury_ssETH > 0) {
-            uint256 toBurn = treasury_ssETH > ssETH ? ssETH : treasury_ssETH;
-            uint256 toTransfer = ssETH_to_ETH(toBurn);
-            stakeStarETH.burn(address(stakeStarTreasury), toBurn);
-            Utils.safeTransferETH(address(stakeStarTreasury), toTransfer);
-
-            emit TreasuryPayback(toBurn, toTransfer);
-        }
-
-        localPoolSize = localPoolSize + msg.value > localPoolMaxSize
-            ? localPoolMaxSize
-            : localPoolSize + msg.value;
+        uint256 eth = optimizeCapitalEfficiency(ssETH);
+        topUpLocalPool(msg.value - eth);
 
         emit Stake(msg.sender, msg.value, ssETH);
     }
 
     function unstake(uint256 ssETH) public returns (uint256 eth) {
         require(pendingUnstake[msg.sender] == 0, "one unstake at a time only");
+
+        extractCommission();
 
         stakeStarETH.burn(msg.sender, ssETH);
         eth = ssETH_to_ETH(ssETH);
@@ -272,6 +274,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             "localPoolUnstakeFrequencyLimit"
         );
 
+        extractCommission();
+
         stakeStarETH.burn(msg.sender, ssETH);
         localPoolSize -= eth;
         localPoolUnstakeHistory[msg.sender] = block.number;
@@ -296,6 +300,66 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
 
         return 0;
+    }
+
+    function extractCommission() public {
+        uint256 totalSupply_ssETH = stakeStarETH.totalSupply();
+        if (totalSupply_ssETH == 0) return;
+        uint256 totalSupply_ETH = ssETH_to_ETH(totalSupply_ssETH);
+
+        uint256 currentRate = rate();
+        if (currentRate > rateEC) {
+            uint256 unrecordedRewards = MathUpgradeable.mulDiv(
+                stakeStarETH.totalSupply(),
+                currentRate - rateEC,
+                1 ether
+            );
+            uint256 commission_ETH = stakeStarTreasury.getCommission(
+                unrecordedRewards
+            );
+            uint256 commission_ssETH = MathUpgradeable.mulDiv(
+                commission_ETH,
+                totalSupply_ssETH,
+                totalSupply_ETH - commission_ETH
+            );
+
+            rateCorrectionFactor = MathUpgradeable.mulDiv(
+                rateCorrectionFactor,
+                totalSupply_ssETH,
+                totalSupply_ssETH + commission_ssETH
+            );
+            stakeStarETH.mint(address(stakeStarTreasury), commission_ssETH);
+
+            emit ExtractCommission(commission_ssETH);
+        }
+
+        rateEC = rate();
+    }
+
+    function optimizeCapitalEfficiency(
+        uint256 ssETH
+    ) internal returns (uint256) {
+        uint256 toBurn = MathUpgradeable.min(
+            stakeStarETH.balanceOf(address(stakeStarTreasury)),
+            ssETH
+        );
+        uint256 toTransfer = ssETH_to_ETH(toBurn);
+
+        if (toBurn > 0) {
+            stakeStarETH.burn(address(stakeStarTreasury), toBurn);
+            Utils.safeTransferETH(address(stakeStarTreasury), toTransfer);
+        }
+
+        emit OptimizeCapitalEfficiency(toBurn, toTransfer);
+
+        return toTransfer;
+    }
+
+    function topUpLocalPool(uint256 value) internal {
+        localPoolSize = MathUpgradeable.min(
+            localPoolSize + value,
+            localPoolMaxSize
+        );
     }
 
     function reactivateAccount() public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
@@ -393,8 +457,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         require(total_ETH > 0 && total_ssETH > 0, "totals must be > 0");
 
-        uint256 currentApproxRate = rate();
-        uint256 currentRate = MathUpgradeable.mulDiv(
+        uint256 currentRate = rate();
+        uint256 newRate = MathUpgradeable.mulDiv(
             total_ETH,
             1 ether,
             total_ssETH
@@ -407,8 +471,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
                 snapshots[1].total_ssETH
             );
 
-            uint256 maxRate = MathUpgradeable.max(currentRate, lastRate);
-            uint256 minRate = MathUpgradeable.min(currentRate, lastRate);
+            uint256 maxRate = MathUpgradeable.max(newRate, lastRate);
+            uint256 minRate = MathUpgradeable.min(newRate, lastRate);
 
             if (rateDeviationCheck) {
                 require(
@@ -427,10 +491,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         snapshots[0] = snapshots[1];
         snapshots[1] = Snapshot(total_ETH, total_ssETH, timestamp);
 
+        rateCorrectionFactor = 1 ether;
+
         withdrawalAddress.pull();
 
-        emit CommitSnapshot(total_ETH, total_ssETH, timestamp, currentRate);
-        emit RateDiff(currentRate, currentApproxRate);
+        emit CommitSnapshot(total_ETH, total_ssETH, timestamp, newRate);
+        emit RateDiff(newRate, currentRate);
     }
 
     function validatorCreationAvailability() public view returns (bool) {
@@ -468,7 +534,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             )[0];
     }
 
-    function rate(uint256 timestamp) public view returns (uint256) {
+    function rate(uint256 timestamp) public view returns (uint256 _rate) {
         require(timestamp >= snapshots[1].timestamp, "timestamp from the past");
 
         if (snapshots[0].timestamp == 0 && snapshots[1].timestamp == 0) {
@@ -482,32 +548,24 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
 
         if (snapshots[0].timestamp == 0) {
-            return rate1;
-        }
-
-        uint256 rate0 = MathUpgradeable.mulDiv(
-            snapshots[0].total_ETH,
-            1 ether,
-            snapshots[0].total_ssETH
-        );
-
-        if (rate1 > rate0) {
-            return
-                rate1 +
-                MathUpgradeable.mulDiv(
-                    rate1 - rate0,
-                    timestamp - snapshots[1].timestamp,
-                    snapshots[1].timestamp - snapshots[0].timestamp
-                );
+            _rate = rate1;
         } else {
-            return
-                rate1 -
-                MathUpgradeable.mulDiv(
-                    rate0 - rate1,
-                    timestamp - snapshots[1].timestamp,
-                    snapshots[1].timestamp - snapshots[0].timestamp
-                );
+            uint256 rate0 = MathUpgradeable.mulDiv(
+                snapshots[0].total_ETH,
+                1 ether,
+                snapshots[0].total_ssETH
+            );
+
+            // distance & snapshot distance
+            uint256 d = timestamp - snapshots[1].timestamp;
+            uint256 sd = snapshots[1].timestamp - snapshots[0].timestamp;
+
+            _rate = rate1 > rate0
+                ? rate1 + MathUpgradeable.mulDiv(rate1 - rate0, d, sd)
+                : rate1 - MathUpgradeable.mulDiv(rate0 - rate1, d, sd);
         }
+
+        _rate = MathUpgradeable.mulDiv(_rate, rateCorrectionFactor, 1 ether);
     }
 
     function rate() public view returns (uint256) {
@@ -515,10 +573,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function ssETH_to_ETH(uint256 ssETH) public view returns (uint256) {
-        return MathUpgradeable.mulDiv(ssETH, rate(block.timestamp), 1 ether);
+        return MathUpgradeable.mulDiv(ssETH, rate(), 1 ether);
     }
 
     function ETH_to_ssETH(uint256 eth) public view returns (uint256) {
-        return MathUpgradeable.mulDiv(eth, 1 ether, rate(block.timestamp));
+        return MathUpgradeable.mulDiv(eth, 1 ether, rate());
     }
 }

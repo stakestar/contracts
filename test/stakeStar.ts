@@ -6,7 +6,7 @@ import { ConstantsLib, EPOCHS, ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture/fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
-import { currentNetwork } from "../scripts/helpers";
+import { currentNetwork, humanify } from "../scripts/helpers";
 import { BlockTag } from "@ethersproject/providers";
 
 describe("StakeStar", function () {
@@ -43,7 +43,7 @@ describe("StakeStar", function () {
       );
       expect(
         await stakeStarETH.hasRole(
-          ConstantsLib.MANAGER_ROLE,
+          ConstantsLib.STAKE_STAR_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(true);
@@ -214,6 +214,13 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.localPoolUnstakeFrequencyLimit()).to.equal(
           3
         );
+
+        await stakeStarOwner.setLocalPoolParameters(100, 2, 3);
+        expect(await stakeStarOwner.localPoolSize()).to.equal(0);
+        await stakeStarOwner.stake({ value: 100 });
+        expect(await stakeStarOwner.localPoolSize()).to.equal(100);
+        await stakeStarOwner.setLocalPoolParameters(50, 2, 3);
+        expect(await stakeStarOwner.localPoolSize()).to.equal(50);
       });
     });
 
@@ -236,9 +243,7 @@ describe("StakeStar", function () {
         deployStakeStarFixture
       );
 
-      await expect(stakeStarPublic.stake()).to.be.revertedWith(
-        "no eth transferred"
-      );
+      await expect(stakeStarPublic.stake()).to.be.revertedWith("zero value");
 
       const stakeAmountETH = BigNumber.from(1);
       const stakeAmountSS = await stakeStarPublic.ETH_to_ssETH(stakeAmountETH);
@@ -1883,8 +1888,8 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("TreasuryPayback", function () {
-    it("Should payback on stake if treasury has ssETH when equal amount", async function () {
+  describe("OptimizeCapitalEfficiency", function () {
+    it("Should optimize capital efficiency on stake if treasury has ssETH when equal amount", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,
@@ -1913,9 +1918,13 @@ describe("StakeStar", function () {
         ethers.utils.parseEther("1")
       );
 
-      await stakeStarPublic.stake({
-        value: ethers.utils.parseEther("1"),
-      });
+      await expect(
+        stakeStarPublic.stake({
+          value: ethers.utils.parseEther("1"),
+        })
+      )
+        .to.emit(stakeStarPublic, "OptimizeCapitalEfficiency")
+        .withArgs(ethers.utils.parseEther("1"), ethers.utils.parseEther("1"));
 
       expect(await stakeStarETH.balanceOf(stakeStarPublic.address)).to.equal(0);
       expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
@@ -1937,7 +1946,7 @@ describe("StakeStar", function () {
       );
     });
 
-    it("Should payback on stake if treasury has ssETH when stake is less", async function () {
+    it("Should optimize capital efficiency on stake if treasury has ssETH when stake is less", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,
@@ -1976,7 +1985,7 @@ describe("StakeStar", function () {
       );
     });
 
-    it("Should payback on stake if treasury has ssETH when stake is less", async function () {
+    it("Should optimize capital efficiency on stake if treasury has ssETH when stake is less", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,
@@ -2013,6 +2022,1155 @@ describe("StakeStar", function () {
       expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
         ethers.utils.parseEther("1")
       );
+    });
+  });
+
+  describe("ExtractCommission", function () {
+    it("one point", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await provider.getBalance(stakeStarPublic.address)).to.equal(
+        ethers.utils.parseEther("10")
+      );
+      expect(await stakeStarETH.balanceOf(otherAccount.address)).to.equal(
+        ethers.utils.parseEther("10")
+      );
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarOracleManager.save(
+        139_001,
+        ethers.utils.parseEther("0.1")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1.01")
+      );
+
+      expect(await provider.getBalance(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        ethers.utils.parseEther("0")
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarPublic["rate()"]()).to.be.closeTo(
+        ethers.utils.parseEther("1.009"),
+        100
+      );
+
+      expect(
+        await provider.getBalance(stakeStarTreasury.address)
+      ).to.be.closeTo(ethers.utils.parseEther("0.01"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(
+          await stakeStarETH.balanceOf(otherAccount.address)
+        )
+      ).to.be.closeTo(ethers.utils.parseEther("20.09"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("20.09"), 100);
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        0
+      );
+      expect(await stakeStarETH.balanceOf(stakeStarPublic.address)).to.equal(0);
+    });
+
+    it("Should extract commission when rate grows [two points, same rate]", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+      } = await loadFixture(deployStakeStarFixture);
+      const provider = stakeStarPublic.provider;
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      await stakeStarOracleManager.save(
+        139_001,
+        ethers.utils.parseEther("0.2")
+      );
+      await stakeStarPublic.commitSnapshot();
+      await stakeStarOracleManager.save(
+        139_002,
+        ethers.utils.parseEther("0.2")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarPublic["rate()"]()).to.be.closeTo(
+        ethers.utils.parseEther("1.018"),
+        100
+      );
+
+      expect(
+        await provider.getBalance(stakeStarTreasury.address)
+      ).to.be.closeTo(ethers.utils.parseEther("0.02"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(
+          await stakeStarETH.balanceOf(otherAccount.address)
+        )
+      ).to.be.closeTo(ethers.utils.parseEther("20.18"), 100);
+      expect(
+        await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+      ).to.be.closeTo(ethers.utils.parseEther("20.18"), 100);
+    });
+
+    it("two points #1", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        otherAccount,
+        stakeStarETH,
+        stakeStarOracleManager,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+      const network = currentNetwork(hre);
+      const provider = stakeStarPublic.provider;
+
+      const block0 = await hre.ethers.provider.getBlock("latest");
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0,
+        ethers.utils.parseEther("0.002")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.be.greaterThan(
+        ethers.utils.parseEther("0.99")
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.be.lessThan(
+        ethers.utils.parseEther("1")
+      );
+
+      const total_ssETH = await stakeStarETH.totalSupply();
+      const total_ETH = await stakeStarPublic.ssETH_to_ETH(total_ssETH);
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 1,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      expect(
+        await stakeStarPublic["rate(uint256)"](
+          await stakeStarOracleManager.epochTimestamp(epoch0 + 1)
+        )
+      ).to.equal(
+        total_ETH
+          .add(ethers.utils.parseEther("0.002"))
+          .mul(ethers.utils.parseEther("1"))
+          .div(total_ssETH)
+      );
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.extractCommission();
+      expect(await stakeStarPublic.rateCorrectionFactor()).to.not.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 2,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+      await stakeStarPublic.extractCommission();
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 3,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+      await stakeStarPublic.extractCommission();
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+
+      const snapshot0 = await stakeStarPublic.snapshots(0);
+      const snapshot1 = await stakeStarPublic.snapshots(1);
+
+      expect(
+        snapshot0.total_ETH
+          .mul(ethers.utils.parseEther("1"))
+          .div(snapshot0.total_ssETH)
+      ).to.equal(
+        snapshot1.total_ETH
+          .mul(ethers.utils.parseEther("1"))
+          .div(snapshot1.total_ssETH)
+      );
+
+      console.log(
+        "treasury eth",
+        humanify(await provider.getBalance(stakeStarTreasury.address))
+      );
+      console.log(
+        "user ssETH -> ETH",
+        humanify(
+          await stakeStarPublic.ssETH_to_ETH(
+            await stakeStarETH.balanceOf(otherAccount.address)
+          )
+        )
+      );
+      console.log(
+        "total ssETH -> ETH",
+        humanify(
+          await stakeStarPublic.ssETH_to_ETH(await stakeStarETH.totalSupply())
+        )
+      );
+
+      const total_ETH2 = await stakeStarPublic.ssETH_to_ETH(
+        await stakeStarETH.totalSupply()
+      );
+      const treasuryRewards = await provider.getBalance(
+        stakeStarTreasury.address
+      );
+
+      expect(total_ETH2.add(treasuryRewards)).to.be.closeTo(
+        ethers.utils.parseEther("22.004"),
+        100
+      );
+      expect(
+        treasuryRewards.mul(100).div(ethers.utils.parseEther("0.004"))
+      ).to.equal(10);
+    });
+
+    it("two points #2", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        stakeStarETH,
+        stakeStarOracleManager,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+      const network = currentNetwork(hre);
+      const provider = stakeStarPublic.provider;
+
+      let totalSupply_ssETH,
+        totalSupply_ETH,
+        poolBalance,
+        treasuryBalance,
+        rate,
+        rewardsGiven,
+        totalStaked;
+
+      const block0 = await hre.ethers.provider.getBlock("latest");
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+
+      console.log("before any operations");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+      totalStaked = ethers.utils.parseEther("10");
+
+      console.log("stake 10 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0,
+        ethers.utils.parseEther("0.002")
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = ethers.utils.parseEther("0.002");
+
+      console.log("distribute 0.002 eth rewards");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.002"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.002"));
+
+      console.log("stake 0.002 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      expect(treasuryBalance).to.be.closeTo(rewardsGiven.mul(10).div(100), 1);
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 1,
+        rewardsGiven.add(ethers.utils.parseEther("0.004"))
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = rewardsGiven.add(ethers.utils.parseEther("0.004"));
+
+      console.log("distribute additional 0.004 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.004"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.004"));
+
+      console.log("stake 0.004 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 2,
+        rewardsGiven.add(ethers.utils.parseEther("0.006"))
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = rewardsGiven.add(ethers.utils.parseEther("0.006"));
+
+      console.log("distribute additional 0.006 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.006"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.006"));
+
+      console.log("stake 0.006 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        0
+      );
+
+      const expectedRewards = rewardsGiven.mul(10).div(100);
+      const diffR = expectedRewards.sub(treasuryBalance).abs();
+      console.log(diffR.mul(100_000).div(expectedRewards));
+      expect(diffR.mul(100).div(expectedRewards)).to.be.lessThan(1); // less than 1% difference
+
+      const expectedTotalSupply_ETH = totalStaked
+        .add(rewardsGiven)
+        .sub(treasuryBalance);
+      const diffT = expectedTotalSupply_ETH.sub(totalSupply_ETH).abs();
+      console.log(diffT.mul(100_000).div(expectedTotalSupply_ETH));
+      expect(diffT.mul(100_000).div(expectedTotalSupply_ETH)).to.be.lessThan(1);
+    });
+
+    it("two points #3", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        stakeStarETH,
+        stakeStarOracleManager,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+      const network = currentNetwork(hre);
+      const provider = stakeStarPublic.provider;
+
+      let totalSupply_ssETH,
+        totalSupply_ETH,
+        poolBalance,
+        treasuryBalance,
+        rate,
+        rewardsGiven,
+        totalStaked;
+
+      const block0 = await hre.ethers.provider.getBlock("latest");
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+
+      console.log("before any operations");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+      totalStaked = ethers.utils.parseEther("10");
+
+      console.log("stake 10 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0,
+        ethers.utils.parseEther("0.005")
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = ethers.utils.parseEther("0.005");
+
+      console.log("distribute 0.005 eth rewards");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.005"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.005"));
+
+      console.log("stake 0.005 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      expect(treasuryBalance).to.be.closeTo(rewardsGiven.mul(10).div(100), 1);
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 1,
+        rewardsGiven.add(ethers.utils.parseEther("0.002"))
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = rewardsGiven.add(ethers.utils.parseEther("0.002"));
+
+      console.log("distribute additional 0.002 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.002"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.002"));
+
+      console.log("stake 0.002 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(epoch0 + 2, 0);
+      await stakeStarPublic.commitSnapshot();
+
+      console.log("set all rewards to zero");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.006"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.006"));
+
+      console.log("stake 0.006 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      expect(await stakeStarETH.balanceOf(stakeStarTreasury.address)).to.equal(
+        0
+      );
+
+      const expectedRewards = rewardsGiven.mul(10).div(100);
+      const diffR = expectedRewards.sub(treasuryBalance).abs();
+      // console.log(diffR.mul(100_000).div(expectedRewards));
+      expect(diffR.mul(100).div(expectedRewards)).to.be.lessThan(1); // less than 1% difference
+
+      const expectedTotalSupply_ETH = totalStaked
+        .add(rewardsGiven)
+        .sub(treasuryBalance);
+      const diffT = expectedTotalSupply_ETH.sub(totalSupply_ETH).abs();
+      // console.log(diffT.mul(100_000).div(expectedTotalSupply_ETH));
+      expect(diffT.mul(100).div(expectedTotalSupply_ETH)).to.be.lessThan(1);
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 3,
+        ethers.utils.parseEther("0.002")
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = rewardsGiven.add(ethers.utils.parseEther("0.002"));
+
+      console.log("distribute 0.002 eth rewards again");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("0.002"),
+      });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("0.002"));
+
+      console.log("stake 0.002 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      const expectedRewards2 = rewardsGiven.mul(10).div(100);
+      const diffR2 = expectedRewards2.sub(treasuryBalance).abs();
+      // console.log(diffR.mul(100_000).div(expectedRewards));
+      expect(diffR2.mul(100).div(expectedRewards2)).to.be.lessThan(1); // less than 1% difference
+
+      const expectedTotalSupply_ETH2 = totalStaked
+        .add(rewardsGiven)
+        .sub(treasuryBalance);
+      const diffT2 = expectedTotalSupply_ETH2.sub(totalSupply_ETH).abs();
+      // console.log(diffT.mul(100_000).div(expectedTotalSupply_ETH));
+      expect(diffT2.mul(100).div(expectedTotalSupply_ETH2)).to.be.lessThan(1);
+    });
+
+    it("two points #4", async function () {
+      const {
+        stakeStarPublic,
+        stakeStarTreasury,
+        stakeStarETH,
+        stakeStarOracleManager,
+        hre,
+      } = await loadFixture(deployStakeStarFixture);
+      const network = currentNetwork(hre);
+      const provider = stakeStarPublic.provider;
+
+      let totalSupply_ssETH,
+        totalSupply_ETH,
+        poolBalance,
+        treasuryBalance,
+        rate,
+        rewardsGiven,
+        totalStaked;
+
+      const block0 = await hre.ethers.provider.getBlock("latest");
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+
+      console.log("before any operations");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("10"),
+      });
+      totalStaked = ethers.utils.parseEther("10");
+
+      console.log("stake 10 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0,
+        ethers.utils.parseEther("0.004")
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = ethers.utils.parseEther("0.004");
+
+      console.log("distribute 0.004 eth rewards");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+      ]);
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      await stakeStarOracleManager.save(
+        epoch0 + 1,
+        rewardsGiven.add(ethers.utils.parseEther("0.008"))
+      );
+      await stakeStarPublic.commitSnapshot();
+      rewardsGiven = rewardsGiven.add(ethers.utils.parseEther("0.008"));
+
+      console.log("distribute additional 0.008 eth");
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      console.log();
+      console.log(
+        "rate on epoch0 + 2 before stakes",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 2)
+          )
+        ),
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber()
+      );
+      console.log(
+        "rate on epoch0 + 3 before stakes",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 3)
+          )
+        ),
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber()
+      );
+      console.log(
+        "rate on epoch0 + 4 before stakes",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 4)
+          )
+        ),
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 4)).toNumber()
+      );
+      console.log();
+
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      console.log("stake 1 eth on epoch0 + 2");
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+      ]);
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+
+      totalStaked = totalStaked.add(ethers.utils.parseEther("1"));
+
+      console.log();
+      console.log(
+        "rate on epoch0 + 2 after first stake",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 2)
+          )
+        )
+      );
+      console.log(
+        "rate on epoch0 + 3 after first stake",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 3)
+          )
+        )
+      );
+      console.log(
+        "rate on epoch0 + 4 after first stake",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 4)
+          )
+        )
+      );
+      console.log();
+
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      console.log("stake 1 eth on epoch0 + 3");
+      await hre.network.provider.send("evm_setNextBlockTimestamp", [
+        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+      ]);
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+      await hre.network.provider.request({ method: "evm_mine", params: [] });
+      totalStaked = totalStaked.add(ethers.utils.parseEther("1"));
+
+      console.log();
+      console.log(
+        "rate on epoch0 + 2 after second stake",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 2)
+          )
+        )
+      );
+      console.log(
+        "rate on epoch0 + 3 after second stake",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 3)
+          )
+        )
+      );
+      console.log(
+        "rate on epoch0 + 4 after second stake",
+        humanify(
+          await stakeStarPublic["rate(uint256)"](
+            await stakeStarOracleManager.epochTimestamp(epoch0 + 4)
+          )
+        )
+      );
+      console.log();
+
+      poolBalance = await provider.getBalance(stakeStarPublic.address);
+      treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
+      totalSupply_ssETH = await stakeStarETH.totalSupply();
+      totalSupply_ETH = await stakeStarPublic.ssETH_to_ETH(totalSupply_ssETH);
+      rate = await stakeStarPublic["rate()"]();
+      console.log(
+        "ssETH",
+        humanify(totalSupply_ssETH),
+        "ETH",
+        humanify(totalSupply_ETH),
+        "pool",
+        humanify(poolBalance),
+        "treasury",
+        humanify(treasuryBalance, 18, 9),
+        "rate",
+        humanify(rate)
+      );
+
+      // for epoch0 + 2
+      rewardsGiven = rewardsGiven
+        .add(ethers.utils.parseEther("0.008"))
+        .add(ethers.utils.parseEther("0.008"));
+      const expectedRewards = rewardsGiven.mul(10).div(100);
+      const diffR = expectedRewards.sub(treasuryBalance).abs();
+      expect(diffR.mul(100).div(expectedRewards)).to.be.lessThan(3); // less than 3% difference
+
+      const expectedTotalSupply_ETH = totalStaked
+        .add(rewardsGiven)
+        .sub(treasuryBalance);
+      const diffT = expectedTotalSupply_ETH.sub(totalSupply_ETH).abs();
+      expect(diffT.mul(100_000).div(expectedTotalSupply_ETH)).to.be.lessThan(
+        10
+      ); // less than 0.01% difference
     });
   });
 });

@@ -137,7 +137,7 @@ export const ConstantsLib = {
   STAKE_STAR_ROLE:
     "0x1dcad631ef6db6a23956de30880da352bcf4b330a897bf8bbdf1d5e38dcce996",
   MANAGER_ROLE:
-    "0x1dcad631ef6db6a23956de30880da352bcf4b330a897bf8bbdf1d5e38dcce996",
+    "0x6d439300980e333f0256d64be2c9f67e86f4493ce25f82498d6db7f4be3d9e6f",
   TREASURY_ROLE:
     "0x6efca2866b731ee4984990bacad4cde10f1ef764fb54a5206bdfd291695b1a9b",
   EPOCH_DURATION: 384,
