@@ -23,7 +23,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
     console.log();
 
     const snapshot0 = await stakeStar.snapshots(0);
-    const snapshot1 = await stakeStar.snapshots(0);
+    const snapshot1 = await stakeStar.snapshots(1);
     console.log("snapshot0 total_ETH", humanify(snapshot0.total_ETH));
     console.log("snapshot0 total_ssETH", humanify(snapshot0.total_ssETH));
     console.log(
