@@ -2862,7 +2862,7 @@ describe("StakeStar", function () {
       expect(diffT2.mul(100).div(expectedTotalSupply_ETH2)).to.be.lessThan(1);
     });
 
-    it.only("two points #4", async function () {
+    it("two points #4", async function () {
       const {
         stakeStarPublic,
         stakeStarTreasury,
