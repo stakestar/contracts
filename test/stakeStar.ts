@@ -1375,6 +1375,32 @@ describe("StakeStar", function () {
       await stakeStarPublic.commitSnapshot();
       expect(await stakeStarPublic.rateDeviationCheck()).to.be.true;
     });
+
+    it("maxRateDeviation initial check", async function () {
+      const { stakeStarPublic, stakeStarOwner, stakeStarOracleManager } =
+        await loadFixture(deployStakeStarFixture);
+      await stakeStarOwner.setRateParameters(100, true); // 0.1%
+
+      await stakeStarPublic.stake({
+        value: ethers.utils.parseEther("1"),
+      });
+      expect(await stakeStarPublic["rate()"]()).to.equal(
+        ethers.utils.parseEther("1")
+      );
+
+      await stakeStarOracleManager.save(
+        139_001,
+        ethers.utils.parseEther("0.002")
+      );
+      await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
+        "rate deviation too big"
+      );
+      await stakeStarOracleManager.save(
+        139_002,
+        ethers.utils.parseEther("0.001")
+      );
+      await stakeStarPublic.commitSnapshot();
+    });
   });
 
   describe("Linear approximation by Sasha U. Kind of legacy test", function () {
@@ -2054,6 +2080,7 @@ describe("StakeStar", function () {
     it("one point", async function () {
       const {
         stakeStarPublic,
+        stakeStarOwner,
         stakeStarTreasury,
         otherAccount,
         stakeStarETH,
@@ -2065,6 +2092,7 @@ describe("StakeStar", function () {
       await stakeStarPublic.stake({
         value: ethers.utils.parseEther("10"),
       });
+      await stakeStarOwner.setRateParameters(1000, true);
 
       expect(await provider.getBalance(stakeStarPublic.address)).to.equal(
         ethers.utils.parseEther("10")
@@ -2131,6 +2159,7 @@ describe("StakeStar", function () {
     it("Should extract commission when rate grows [two points, same rate]", async function () {
       const {
         stakeStarPublic,
+        stakeStarOwner,
         stakeStarTreasury,
         otherAccount,
         stakeStarETH,
@@ -2142,6 +2171,7 @@ describe("StakeStar", function () {
       await stakeStarPublic.stake({
         value: ethers.utils.parseEther("10"),
       });
+      await stakeStarOwner.setRateParameters(2000, true);
 
       await stakeStarOracleManager.save(
         139_001,

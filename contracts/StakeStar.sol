@@ -476,28 +476,28 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             total_ssETH
         );
 
-        if (snapshots[1].timestamp > 0) {
-            uint256 lastRate = MathUpgradeable.mulDiv(
-                snapshots[1].total_ETH,
-                1 ether,
-                snapshots[1].total_ssETH
-            );
+        if (rateDeviationCheck) {
+            uint256 lastRate = snapshots[1].timestamp > 0
+                ? MathUpgradeable.mulDiv(
+                    snapshots[1].total_ETH,
+                    1 ether,
+                    snapshots[1].total_ssETH
+                )
+                : 1 ether;
 
             uint256 maxRate = MathUpgradeable.max(newRate, lastRate);
             uint256 minRate = MathUpgradeable.min(newRate, lastRate);
 
-            if (rateDeviationCheck) {
-                require(
-                    MathUpgradeable.mulDiv(
-                        maxRate - minRate,
-                        Utils.BASE,
-                        maxRate
-                    ) <= uint256(maxRateDeviation),
-                    "rate deviation too big"
-                );
-            } else {
-                rateDeviationCheck = true;
-            }
+            require(
+                MathUpgradeable.mulDiv(
+                    maxRate - minRate,
+                    Utils.BASE,
+                    maxRate
+                ) <= uint256(maxRateDeviation),
+                "rate deviation too big"
+            );
+        } else {
+            rateDeviationCheck = true;
         }
 
         snapshots[0] = snapshots[1];
