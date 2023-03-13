@@ -29,6 +29,9 @@ export const ADDRESSES: Record<
     pool: string;
     uniswapV3Provider: string;
     uniswapHelper: string;
+    oracle1: string;
+    oracle2: string;
+    oracle3: string;
   }
 > = {
   [Network.MAINNET]: {
@@ -51,6 +54,9 @@ export const ADDRESSES: Record<
     pool: "",
     uniswapV3Provider: "",
     uniswapHelper: "",
+    oracle1: "",
+    oracle2: "",
+    oracle3: "",
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -72,6 +78,9 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     uniswapV3Provider: "0x264BFD651a5405d705C09c3B6f98C794E22a20cE",
     uniswapHelper: "0xbc5463603944Df2381371B7beDD30e35D233Efeb",
+    oracle1: "",
+    oracle2: "",
+    oracle3: "",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
@@ -93,6 +102,9 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     uniswapV3Provider: "",
     uniswapHelper: "",
+    oracle1: "",
+    oracle2: "",
+    oracle3: "",
   },
 };
 

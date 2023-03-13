@@ -9,7 +9,7 @@ library Utils {
     bytes32 public constant MANAGER_ROLE = keccak256("Manager");
     bytes32 public constant TREASURY_ROLE = keccak256("Treasury");
 
-    uint256 public constant EPOCH_DURATION = 384;
+    uint32 public constant EPOCH_DURATION = 384;
 
     function safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));

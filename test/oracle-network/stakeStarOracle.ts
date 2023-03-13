@@ -6,7 +6,7 @@ import { ConstantsLib } from "../../scripts/constants";
 describe("StakeStarOracle", function () {
   describe("Deployment", function () {
     it("Should set the right roles", async function () {
-      const { stakeStarOracle, manager, owner } = await loadFixture(
+      const { stakeStarOracle, owner } = await loadFixture(
         deployStakeStarFixture
       );
 
@@ -16,60 +16,125 @@ describe("StakeStarOracle", function () {
           owner.address
         )
       ).to.equal(true);
-
-      expect(
-        await stakeStarOracle.hasRole(
-          ConstantsLib.MANAGER_ROLE,
-          manager.address
-        )
-      ).to.equal(true);
     });
   });
 
   describe("Save", function () {
     it("Should save consensus data", async function () {
-      const { stakeStarOracle, stakeStarOracleManager, owner } =
+      const { stakeStarOracle, stakeStarOracleAdmin, stakeStarOracle1, stakeStarOracle2, stakeStarOracle3 } =
         await loadFixture(deployStakeStarFixture);
 
-      expect(await stakeStarOracle._latestEpoch()).to.eq(0);
-
-      const initialLatestTotalBalance =
-        await stakeStarOracle.latestTotalBalance();
+      const initialLatestTotalBalance = await stakeStarOracle.latestTotalBalance();
 
       expect(initialLatestTotalBalance.totalBalance).to.eq(0);
-      expect(initialLatestTotalBalance.timestamp).to.be.eq(
-        await stakeStarOracle._zeroEpochTimestamp()
-      );
+      expect(initialLatestTotalBalance.timestamp).to.be.eq(await stakeStarOracle._zeroEpochTimestamp());
+
+      await stakeStarOracleAdmin.setStrictEpochMode(true);
 
       await expect(stakeStarOracle.save(1, 1)).to.be.revertedWith(
-        `AccessControl: account ${owner.address.toLowerCase()} is missing role ${
-          ConstantsLib.MANAGER_ROLE
-        }`
+        `oracle role required`
       );
 
-      await stakeStarOracleManager.save(10, 10);
+      await expect(stakeStarOracleAdmin.save(1, 1)).to.be.revertedWith(
+        `oracle role required`
+      );
 
-      await expect(stakeStarOracleManager.save(9, 11)).to.be.revertedWith(
-        "epoch too old"
+      const nextEpochToPublish = await stakeStarOracle.nextEpochToPublish();
+      console.log("nextEpochToPublish=", nextEpochToPublish)
+      expect(nextEpochToPublish).to.be.gt(0);
+
+      await expect(stakeStarOracle1.save(nextEpochToPublish - 1, 1000)).to.be.revertedWith(
+        "only nextEpochToPublish() allowed"
+      );
+
+      await expect(stakeStarOracle1.save(nextEpochToPublish, 1000))
+        .to.emit(stakeStarOracle1, "Proposed")
+        .withArgs(nextEpochToPublish, 1000, 1 << 24);
+
+      await expect(stakeStarOracle1.save(nextEpochToPublish, 1000)).to.be.revertedWith(
+        "oracle already submitted result"
+      );
+
+      await expect(stakeStarOracle2.save(nextEpochToPublish, 1001)).to.be.revertedWith(
+        "balance not equals"
+      );
+
+      await expect(stakeStarOracle2.save(nextEpochToPublish, 1000))
+        .to.emit(stakeStarOracle2, "Saved")
+        .withArgs(nextEpochToPublish, 1000);
+
+      expect((await stakeStarOracle.latestTotalBalance()).totalBalance).to.eq(1000);
+      expect((await stakeStarOracle.latestTotalBalance()).timestamp).to.be.eq(
+        await stakeStarOracle.epochToTimestamp(nextEpochToPublish)
+      );
+
+      await expect(stakeStarOracle3.save(nextEpochToPublish, 1001)).to.be.revertedWith(
+        "balance not equals"
+      );
+
+      // accepted, but ignored
+      await stakeStarOracle3.save(nextEpochToPublish, 1000);
+
+      expect((await stakeStarOracle.latestTotalBalance()).totalBalance).to.eq(1000);
+      expect((await stakeStarOracle.latestTotalBalance()).timestamp).to.be.eq(
+        await stakeStarOracle.epochToTimestamp(nextEpochToPublish)
       );
 
       await expect(
-        stakeStarOracleManager.save(999999999, 11)
+        stakeStarOracle1.save(nextEpochToPublish + 225, 11000)
       ).to.be.revertedWith("epoch from the future");
 
-      await expect(stakeStarOracleManager.save(12, 15))
-        .to.emit(stakeStarOracleManager, "Saved")
-        .withArgs(12, 15);
-
-      const finalLatestTotalBalance =
-        await stakeStarOracle.latestTotalBalance();
-
-      expect(finalLatestTotalBalance.totalBalance).to.eq(15);
-      expect(finalLatestTotalBalance.timestamp).to.be.eq(
-        await stakeStarOracle.epochTimestamp(12)
+      await stakeStarOracleAdmin.setStrictEpochMode(false);
+      await expect(stakeStarOracle1.save(nextEpochToPublish - 1, 9000)).to.be.revertedWith(
+        "epoch must increase"
       );
 
-      expect(await stakeStarOracle.epochTimestamp(777)).to.be.eq(
+
+      // next epoch
+      const nextEpoch = nextEpochToPublish + 20
+
+      await stakeStarOracle2.save(nextEpoch, 1200);
+
+      // nothing changes
+      expect((await stakeStarOracle.latestTotalBalance()).totalBalance).to.eq(1000);
+      expect((await stakeStarOracle.latestTotalBalance()).timestamp).to.be.eq(
+        await stakeStarOracle.epochToTimestamp(nextEpochToPublish)
+      );
+
+      await expect(stakeStarOracle3.save(nextEpoch, 1001)).to.be.revertedWith(
+        "balance not equals"
+      );
+
+      await expect(stakeStarOracle3.save(nextEpochToPublish, 1000)).to.be.revertedWith(
+        "epoch must increase"
+      );
+
+      // new consensus
+      await expect(stakeStarOracle3.save(nextEpoch, 1200))
+        .to.emit(stakeStarOracle3, "Saved")
+        .withArgs(nextEpoch, 1200);
+
+      // values updated
+      expect((await stakeStarOracle.latestTotalBalance()).totalBalance).to.eq(1200);
+      expect((await stakeStarOracle.latestTotalBalance()).timestamp).to.be.eq(
+        await stakeStarOracle.epochToTimestamp(nextEpoch)
+      );
+
+      // invalid balance
+      await expect(stakeStarOracle1.save(nextEpoch, 1001)).to.be.revertedWith(
+        "balance not equals"
+      );
+
+      // accepted, but ignored
+      await stakeStarOracle1.save(nextEpoch, 1200);
+
+      expect((await stakeStarOracle.latestTotalBalance()).totalBalance).to.eq(1200);
+      expect((await stakeStarOracle.latestTotalBalance()).timestamp).to.be.eq(
+        await stakeStarOracle.epochToTimestamp(nextEpoch)
+      );
+
+      // utility
+      expect(await stakeStarOracle.epochToTimestamp(777)).to.be.eq(
         (await stakeStarOracle._zeroEpochTimestamp()).add(777 * 384)
       );
     });
