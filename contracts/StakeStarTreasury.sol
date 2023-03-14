@@ -14,19 +14,16 @@ import "./helpers/Utils.sol";
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SetAddresses(
         address stakeStarAddress,
-        address stakeStarETHAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
         address swapProviderAddress
     );
     event SetCommission(uint24 value);
     event SetRunway(uint256 minRunway, uint256 maxRunway);
-    event Claim(uint256 amount_ETH, uint256 amount_ssETH);
+    event Claim(uint256 amount);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
     IStakingPool public stakeStar;
-    IERC20 public stakeStarETH;
-
     ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
     ISwapProvider public swapProvider;
@@ -43,20 +40,17 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function setAddresses(
         address stakeStarAddress,
-        address stakeStarETHAddress,
         address ssvNetworkAddress,
         address ssvTokenAddress,
         address swapProviderAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         stakeStar = IStakingPool(stakeStarAddress);
-        stakeStarETH = IERC20(stakeStarETHAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
         swapProvider = ISwapProvider(swapProviderAddress);
 
         emit SetAddresses(
             stakeStarAddress,
-            stakeStarETHAddress,
             ssvNetworkAddress,
             ssvTokenAddress,
             swapProviderAddress
@@ -83,13 +77,9 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit SetRunway(minRunwayPeriod, maxRunwayPeriod);
     }
 
-    function claim(
-        uint256 amount_ETH,
-        uint256 amount_ssETH
-    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        if (amount_ETH > 0) Utils.safeTransferETH(msg.sender, amount_ETH);
-        if (amount_ssETH > 0) stakeStarETH.transfer(msg.sender, amount_ssETH);
-        emit Claim(amount_ETH, amount_ssETH);
+    function claim(uint256 amount) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        if (amount > 0) Utils.safeTransferETH(msg.sender, amount);
+        emit Claim(amount);
     }
 
     function swapETHAndDepositSSV() public payable {
