@@ -62,11 +62,10 @@ contract StakeStarOracleStrict is
 
     function nextEpochToPublish() public view returns (uint32) {
         (, uint64 consensusTimestamp) = latestTotalBalance();
-        uint64 nextEpochTimestamp = ((uint64(block.timestamp) -
-            consensusTimestamp -
-            1) / EPOCH_UPDATE_PERIOD_IN_SECONDS) *
-            EPOCH_UPDATE_PERIOD_IN_SECONDS +
-            consensusTimestamp;
+        uint64 nextEpochTimestamp = (uint64(block.timestamp) - consensusTimestamp - 1)
+                                        / EPOCH_UPDATE_PERIOD_IN_SECONDS
+                                        * EPOCH_UPDATE_PERIOD_IN_SECONDS
+                                    + consensusTimestamp;
         return timestampToEpoch(nextEpochTimestamp);
     }
 

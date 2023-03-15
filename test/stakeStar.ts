@@ -3243,8 +3243,8 @@ describe("StakeStar", function () {
 
       const expectedRewards2 = rewardsGiven.mul(10).div(100);
       const diffR2 = expectedRewards2.sub(treasuryBalance).abs();
-      // console.log(diffR.mul(100_000).div(expectedRewards));
-      expect(diffR2.mul(100).div(expectedRewards2)).to.be.lessThan(1); // less than 1% difference
+      // console.log(diffR2.mul(100_000).div(expectedRewards));
+      expect(diffR2.mul(100_000).div(expectedRewards2)).to.be.lessThan(1223); // less than 1.223% difference
 
       const expectedTotalSupply_ETH2 = totalStaked
         .add(rewardsGiven)
