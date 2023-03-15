@@ -6,7 +6,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export async function setAllAddresses(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
-  stakeStarETHAddress: string,
+  sstarETHAddress: string,
+  starETHAddress: string,
   stakeStarOracleAddress: string,
   stakeStarRegistryAddress: string,
   stakeStarTreasuryAddress: string,
@@ -41,7 +42,8 @@ export async function setAllAddresses(
     addresses.ssvNetwork,
     addresses.ssvToken,
     stakeStarOracleAddress,
-    stakeStarETHAddress,
+    sstarETHAddress,
+    starETHAddress,
     stakeStarRegistryAddress,
     stakeStarTreasuryAddress,
     withdrawalAddress,
@@ -52,7 +54,6 @@ export async function setAllAddresses(
 
   await stakeStarTreasury.setAddresses(
     stakeStarAddress,
-    stakeStarETHAddress,
     addresses.ssvNetwork,
     addresses.ssvToken,
     uniswapV3ProviderAddress
@@ -77,7 +78,8 @@ task("setAllAddresses", "Sets all addresses").setAction(async (args, hre) => {
   await setAllAddresses(
     hre,
     addresses.stakeStar,
-    addresses.stakeStarETH,
+    addresses.sstarETH,
+    addresses.starETH,
     addresses.stakeStarOracle,
     addresses.stakeStarRegistry,
     addresses.stakeStarTreasury,

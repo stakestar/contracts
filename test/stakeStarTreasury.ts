@@ -46,7 +46,6 @@ describe("StakeStarTreasury", function () {
             stakeStarTreasury.address,
             stakeStarTreasury.address,
             stakeStarTreasury.address,
-            stakeStarTreasury.address,
             stakeStarTreasury.address
           )
       ).to.be.revertedWith(
@@ -62,7 +61,7 @@ describe("StakeStarTreasury", function () {
         }`
       );
       await expect(
-        stakeStarTreasury.connect(otherAccount).claim(1, 0)
+        stakeStarTreasury.connect(otherAccount).claim(1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
           ConstantsLib.DEFAULT_ADMIN_ROLE
@@ -92,7 +91,6 @@ describe("StakeStarTreasury", function () {
         const {
           stakeStarTreasury,
           stakeStarPublic,
-          stakeStarETH,
           uniswapV3Provider,
           addresses,
         } = await loadFixture(deployStakeStarFixture);
@@ -100,7 +98,6 @@ describe("StakeStarTreasury", function () {
         await expect(
           stakeStarTreasury.setAddresses(
             stakeStarPublic.address,
-            stakeStarETH.address,
             addresses.ssvNetwork,
             addresses.ssvToken,
             uniswapV3Provider.address
@@ -109,7 +106,6 @@ describe("StakeStarTreasury", function () {
           .to.emit(stakeStarTreasury, "SetAddresses")
           .withArgs(
             stakeStarPublic.address,
-            stakeStarETH.address,
             addresses.ssvNetwork,
             addresses.ssvToken,
             uniswapV3Provider.address
@@ -117,9 +113,6 @@ describe("StakeStarTreasury", function () {
 
         expect(await stakeStarTreasury.stakeStar()).to.eq(
           stakeStarPublic.address
-        );
-        expect(await stakeStarTreasury.stakeStarETH()).to.eq(
-          stakeStarETH.address
         );
         expect(await stakeStarTreasury.ssvNetwork()).to.eq(
           addresses.ssvNetwork
@@ -302,35 +295,29 @@ describe("StakeStarTreasury", function () {
 
   describe("Claim", function () {
     it("Should emit Pull event", async function () {
-      const { stakeStarTreasury, owner, otherAccount, stakeStarETH } =
-        await loadFixture(deployStakeStarFixture);
+      const { stakeStarTreasury, owner, otherAccount } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      await expect(stakeStarTreasury.claim(1)).to.be.revertedWith("STE");
 
       await otherAccount.sendTransaction({
         to: stakeStarTreasury.address,
         value: 5000,
       });
 
-      await expect(stakeStarTreasury.claim(5000, 0))
+      await expect(stakeStarTreasury.claim(5000))
         .to.emit(stakeStarTreasury, "Claim")
-        .withArgs(5000, 0);
+        .withArgs(5000);
 
       await otherAccount.sendTransaction({
         to: stakeStarTreasury.address,
         value: 6000,
       });
 
-      await expect(stakeStarTreasury.claim(6000, 0)).to.changeEtherBalances(
+      await expect(stakeStarTreasury.claim(6000)).to.changeEtherBalances(
         [owner, stakeStarTreasury],
         [6000, -6000]
-      );
-
-      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
-      await stakeStarETH.mint(stakeStarTreasury.address, 7000);
-
-      await expect(stakeStarTreasury.claim(0, 3000)).to.changeTokenBalances(
-        stakeStarETH,
-        [owner, stakeStarTreasury],
-        [3000, -3000]
       );
 
       await otherAccount.sendTransaction({
@@ -338,13 +325,7 @@ describe("StakeStarTreasury", function () {
         value: 1000,
       });
 
-      await expect(stakeStarTreasury.claim(500, 2000)).to.changeTokenBalances(
-        stakeStarETH,
-        [owner, stakeStarTreasury],
-        [2000, -2000]
-      );
-
-      await expect(stakeStarTreasury.claim(500, 2000)).to.changeEtherBalances(
+      await expect(stakeStarTreasury.claim(500)).to.changeEtherBalances(
         [owner, stakeStarTreasury],
         [500, -500]
       );

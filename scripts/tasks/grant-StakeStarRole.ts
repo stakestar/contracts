@@ -6,7 +6,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export async function grantAllStakeStarRoles(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
-  stakeStarETHAddress: string,
+  sstarETHAddress: string,
+  starETHAddress: string,
   stakeStarRegistryAddress: string,
   withdrawalAddressAddress: string,
   feeRecipientAddress: string,
@@ -19,8 +20,10 @@ export async function grantAllStakeStarRoles(
     stakeStarRegistryAddress
   );
 
-  const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
-  const stakeStarETH = await StakeStarETH.attach(stakeStarETHAddress);
+  const SStarETH = await hre.ethers.getContractFactory("SStarETH");
+  const sstarETH = await SStarETH.attach(sstarETHAddress);
+  const StarETH = await hre.ethers.getContractFactory("StarETH");
+  const starETH = await StarETH.attach(starETHAddress);
 
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
   const withdrawalAddress = await ETHReceiver.attach(withdrawalAddressAddress);
@@ -34,8 +37,10 @@ export async function grantAllStakeStarRoles(
   console.log(
     `StakeStarRegistry.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
-  await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
-  console.log(`StakeStarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
+  await sstarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  console.log(`sstarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
+  await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  console.log(`starETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
   await withdrawalAddress.grantRole(
     ConstantsLib.STAKE_STAR_ROLE,
@@ -60,7 +65,8 @@ task(
   await grantAllStakeStarRoles(
     hre,
     addresses.stakeStar,
-    addresses.stakeStarETH,
+    addresses.sstarETH,
+    addresses.starETH,
     addresses.stakeStarRegistry,
     addresses.withdrawalAddress,
     addresses.feeRecipient,

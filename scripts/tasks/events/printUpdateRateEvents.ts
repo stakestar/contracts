@@ -18,7 +18,7 @@ task("printUpdateRateEvents", "Prints UpdateRate events").setAction(
       console.log(
         new Date(event.args.timestamp.toNumber() * 1000).toISOString(),
         humanify(event.args.total_ETH),
-        humanify(event.args.total_ssETH),
+        humanify(event.args.total_sstarETH),
         humanify(event.args.rate)
       );
     }

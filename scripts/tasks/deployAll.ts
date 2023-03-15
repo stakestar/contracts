@@ -22,10 +22,15 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   );
   console.log(`StakeStarRegistry is deployed to ${stakeStarRegistry.address}`);
 
-  const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
-  const stakeStarETH = await StakeStarETH.deploy();
-  await stakeStarETH.deployed();
-  console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
+  const SStarETH = await hre.ethers.getContractFactory("SStarETH");
+  const sstarETH = await SStarETH.deploy();
+  await sstarETH.deployed();
+  console.log(`SStarETH is deployed to ${sstarETH.address}`);
+
+  const StarETH = await hre.ethers.getContractFactory("StarETH");
+  const starETH = await StarETH.deploy();
+  await starETH.deployed();
+  console.log(`StarETH is deployed to ${starETH.address}`);
 
   const StakeStarTreasury = await hre.ethers.getContractFactory(
     "StakeStarTreasury"
@@ -88,7 +93,8 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await setAllAddresses(
     hre,
     stakeStar.address,
-    stakeStarETH.address,
+    sstarETH.address,
+    starETH.address,
     stakeStarOracle.address,
     stakeStarRegistry.address,
     stakeStarTreasury.address,
@@ -102,7 +108,8 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await grantAllStakeStarRoles(
     hre,
     stakeStar.address,
-    stakeStarETH.address,
+    sstarETH.address,
+    starETH.address,
     stakeStarRegistry.address,
     withdrawalAddress.address,
     feeRecipient.address,
@@ -118,7 +125,8 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   return {
     stakeStar,
     stakeStarRegistry,
-    stakeStarETH,
+    sstarETH,
+    starETH,
     stakeStarTreasury,
     stakeStarOracle,
     withdrawalAddress,

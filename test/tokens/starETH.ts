@@ -1,51 +1,48 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { deployStakeStarFixture } from "./fixture/fixture";
-import { ConstantsLib } from "../scripts/constants";
+import { deployStakeStarFixture } from "../fixture/fixture";
+import { ConstantsLib } from "../../scripts/constants";
 
-describe("StakeStarETH", function () {
+describe("StarETH", function () {
   describe("Deployment", function () {
     it("Should set the right token name and symbol", async function () {
-      const { stakeStarETH } = await loadFixture(deployStakeStarFixture);
+      const { starETH } = await loadFixture(deployStakeStarFixture);
 
-      expect(await stakeStarETH.name()).to.equal("StakeStar ETH");
-      expect(await stakeStarETH.symbol()).to.equal("ssETH");
+      expect(await starETH.name()).to.equal("StarETH");
+      expect(await starETH.symbol()).to.equal("starETH");
     });
 
     it("Should set the right STAKE_STAR_ROLE", async function () {
-      const { stakeStarPublic, stakeStarETH, owner, otherAccount } =
+      const { stakeStarPublic, starETH, owner, otherAccount } =
         await loadFixture(deployStakeStarFixture);
 
       expect(
-        await stakeStarETH.hasRole(
+        await starETH.hasRole(
           ConstantsLib.STAKE_STAR_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(true);
       expect(
-        await stakeStarETH.hasRole(ConstantsLib.STAKE_STAR_ROLE, owner.address)
+        await starETH.hasRole(ConstantsLib.STAKE_STAR_ROLE, owner.address)
       ).to.equal(false);
       expect(
-        await stakeStarETH.hasRole(
+        await starETH.hasRole(
           ConstantsLib.STAKE_STAR_ROLE,
           otherAccount.address
         )
       ).to.equal(false);
 
       expect(
-        await stakeStarETH.hasRole(
+        await starETH.hasRole(
           ConstantsLib.DEFAULT_ADMIN_ROLE,
           stakeStarPublic.address
         )
       ).to.equal(false);
       expect(
-        await stakeStarETH.hasRole(
-          ConstantsLib.DEFAULT_ADMIN_ROLE,
-          owner.address
-        )
+        await starETH.hasRole(ConstantsLib.DEFAULT_ADMIN_ROLE, owner.address)
       ).to.equal(true);
       expect(
-        await stakeStarETH.hasRole(
+        await starETH.hasRole(
           ConstantsLib.DEFAULT_ADMIN_ROLE,
           otherAccount.address
         )
@@ -53,19 +50,19 @@ describe("StakeStarETH", function () {
     });
 
     it("Should not allow to call STAKE_STAR_ROLE method to anyone else", async function () {
-      const { stakeStarETH, otherAccount } = await loadFixture(
+      const { starETH, otherAccount } = await loadFixture(
         deployStakeStarFixture
       );
 
       const stakeStarRole = ConstantsLib.STAKE_STAR_ROLE;
 
       await expect(
-        stakeStarETH.connect(otherAccount).mint(otherAccount.address, 1)
+        starETH.connect(otherAccount).mint(otherAccount.address, 1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${stakeStarRole}`
       );
       await expect(
-        stakeStarETH.connect(otherAccount).burn(otherAccount.address, 1)
+        starETH.connect(otherAccount).burn(otherAccount.address, 1)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${stakeStarRole}`
       );
@@ -74,31 +71,31 @@ describe("StakeStarETH", function () {
 
   describe("Mint", function () {
     it("Should mint value of ssETH", async function () {
-      const { stakeStarETH, owner } = await loadFixture(deployStakeStarFixture);
+      const { starETH, owner } = await loadFixture(deployStakeStarFixture);
 
-      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
+      await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
-      await expect(stakeStarETH.mint(owner.address, 127))
-        .to.emit(stakeStarETH, "Mint")
+      await expect(starETH.mint(owner.address, 127))
+        .to.emit(starETH, "Mint")
         .withArgs(owner.address, 127);
 
-      expect(await stakeStarETH.balanceOf(owner.address)).to.equal(127);
+      expect(await starETH.balanceOf(owner.address)).to.equal(127);
     });
   });
 
   describe("Burn", function () {
     it("Should burn value of ssETH", async function () {
-      const { stakeStarETH, owner } = await loadFixture(deployStakeStarFixture);
+      const { starETH, owner } = await loadFixture(deployStakeStarFixture);
 
-      await stakeStarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
+      await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, owner.address);
 
-      await stakeStarETH.mint(owner.address, 127);
+      await starETH.mint(owner.address, 127);
 
-      await expect(stakeStarETH.burn(owner.address, 27))
-        .to.emit(stakeStarETH, "Burn")
+      await expect(starETH.burn(owner.address, 27))
+        .to.emit(starETH, "Burn")
         .withArgs(owner.address, 27);
 
-      expect(await stakeStarETH.balanceOf(owner.address)).to.equal(100);
+      expect(await starETH.balanceOf(owner.address)).to.equal(100);
     });
   });
 });
