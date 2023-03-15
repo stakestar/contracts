@@ -78,7 +78,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     }
 
     function claim(uint256 amount) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        if (amount > 0) Utils.safeTransferETH(msg.sender, amount);
+        Utils.safeTransferETH(msg.sender, amount);
         emit Claim(amount);
     }
 

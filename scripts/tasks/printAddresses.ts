@@ -11,7 +11,8 @@ task("printAddresses", "Prints addresses of the contracts").setAction(
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
     console.log("StakeStar", stakeStar.address);
-    console.log("StakeStarETH", await stakeStar.stakeStarETH());
+    console.log("sstarETH", await stakeStar.sstarETH());
+    console.log("starETH", await stakeStar.starETH());
     console.log("StakeStarRegistry", await stakeStar.stakeStarRegistry());
     console.log("StakeStarTreasury", await stakeStar.stakeStarTreasury());
 
