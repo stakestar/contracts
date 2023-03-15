@@ -86,12 +86,12 @@ contract StakeStarOracle is
 
     function epochToTimestamp(uint32 epoch) public view returns (uint64) {
         assert(_zeroEpochTimestamp > 0);
-        return _zeroEpochTimestamp + Utils.EPOCH_DURATION * uint64(epoch);
+        return _zeroEpochTimestamp + uint64(Utils.EPOCH_DURATION) * uint64(epoch);
     }
 
     function timestampToEpoch(uint64 timestamp) public view returns (uint32) {
         assert(_zeroEpochTimestamp > 0);
-        return uint32((timestamp - _zeroEpochTimestamp) / Utils.EPOCH_DURATION);
+        return uint32((timestamp - _zeroEpochTimestamp) / uint64(Utils.EPOCH_DURATION));
     }
 
     function nextEpochToPublish() public view returns (uint32) {
