@@ -6,7 +6,11 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "../interfaces/IOracleNetwork.sol";
 import "../helpers/Utils.sol";
 
-contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradeable {
+contract StakeStarOracle is
+    IOracleNetwork,
+    Initializable,
+    AccessControlUpgradeable
+{
     uint64 public _zeroEpochTimestamp;
 
     // variable pairs has meaning on of
@@ -25,21 +29,18 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
     uint8 constant ORACLES_COUNT_MIN = 2;
 
     uint32 constant ORACLES_COUNT_MASK = 0x0700_0000;
-    uint32 constant EPOCH_VALUE_MASK   = 0x00FF_FFFF;
+    uint32 constant EPOCH_VALUE_MASK = 0x00FF_FFFF;
 
-    uint32 constant EPOCH_UPDATE_PERIOD = 24 * 3600 / Utils.EPOCH_DURATION;
-    uint32 constant EPOCH_UPDATE_PERIOD_IN_SECONDS = EPOCH_UPDATE_PERIOD * Utils.EPOCH_DURATION;
+    uint32 constant EPOCH_UPDATE_PERIOD = (24 * 3600) / Utils.EPOCH_DURATION;
+    uint32 constant EPOCH_UPDATE_PERIOD_IN_SECONDS =
+        EPOCH_UPDATE_PERIOD * Utils.EPOCH_DURATION;
 
     // from address to oracle bit = (1 << oracle_no) << 24;
     mapping(address => uint32) private _oracles;
 
-    function initialize(
-        uint64 zeroEpochTimestamp,
-        bool strictEpochMode
-    ) public initializer {
+    function initialize(uint64 zeroEpochTimestamp) public initializer {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
-        _strictEpochMode = strictEpochMode;
     }
 
     event Saved(uint32 epoch, uint256 totalBalance);
@@ -83,7 +84,6 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
         }
     }
 
-
     function epochToTimestamp(uint32 epoch) public view returns (uint64) {
         assert(_zeroEpochTimestamp > 0);
         return _zeroEpochTimestamp + Utils.EPOCH_DURATION * uint64(epoch);
@@ -96,17 +96,15 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
 
     function nextEpochToPublish() public view returns (uint32) {
         (, uint64 consensusTimestamp) = latestTotalBalance();
-        uint64 nextEpochTimestamp = (uint64(block.timestamp) - consensusTimestamp - 1)
-                                        / EPOCH_UPDATE_PERIOD_IN_SECONDS
-                                        * EPOCH_UPDATE_PERIOD_IN_SECONDS
-                                    + consensusTimestamp;
+        uint64 nextEpochTimestamp = ((uint64(block.timestamp) -
+            consensusTimestamp -
+            1) / EPOCH_UPDATE_PERIOD_IN_SECONDS) *
+            EPOCH_UPDATE_PERIOD_IN_SECONDS +
+            consensusTimestamp;
         return timestampToEpoch(nextEpochTimestamp);
     }
 
-    function save(
-        uint32 epoch,
-        uint256 totalBalance
-    ) public {
+    function save(uint32 epoch, uint256 totalBalance) public {
         uint32 oracle_bit = _oracles[msg.sender];
         require(oracle_bit > 0, "oracle role required");
 
@@ -114,7 +112,10 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
         require(timestamp < uint64(block.timestamp), "epoch from the future");
 
         if (_strictEpochMode) {
-            require(epoch == nextEpochToPublish(), "only nextEpochToPublish() allowed");
+            require(
+                epoch == nextEpochToPublish(),
+                "only nextEpochToPublish() allowed"
+            );
         }
 
         uint32 epoch1 = _epoch1;
@@ -133,7 +134,10 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
             // 2 - new consensus in progress
             if (epoch == epoch2) {
                 // continue progress in (2)
-                require(_epoch2 & oracle_bit == 0, "oracle already submitted result");
+                require(
+                    _epoch2 & oracle_bit == 0,
+                    "oracle already submitted result"
+                );
                 require(totalBalance == _totalBalance2, "balance not equals");
                 _epoch2 |= oracle_bit;
 
@@ -153,12 +157,16 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
                     _totalBalance2 = totalBalance;
                 }
             }
-        } else { // epoch2 < epoch1
+        } else {
+            // epoch2 < epoch1
             // 2 - current
             // 1 - new consensus in progress
             if (epoch == epoch1) {
                 // continue progress in (1)
-                require(_epoch1 & oracle_bit == 0, "oracle already submitted result");
+                require(
+                    _epoch1 & oracle_bit == 0,
+                    "oracle already submitted result"
+                );
                 require(totalBalance == _totalBalance1, "balance not equals");
                 _epoch1 |= oracle_bit;
 
@@ -182,12 +190,17 @@ contract StakeStarOracle is IOracleNetwork, Initializable, AccessControlUpgradea
     }
 
     // oracle_no in [0..ORACLES_COUNT)
-    function setOracle(address oracle, uint8 oracle_no) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+    function setOracle(
+        address oracle,
+        uint8 oracle_no
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(oracle_no < ORACLES_COUNT_MAX, "Invalid Oracle Number");
         _oracles[oracle] = uint32((1 << oracle_no) << 24);
     }
 
-    function setStrictEpochMode(bool strictEpochMode) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+    function setStrictEpochMode(
+        bool strictEpochMode
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         _strictEpochMode = strictEpochMode;
     }
 }

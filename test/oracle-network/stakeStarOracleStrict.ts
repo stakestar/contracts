@@ -21,31 +21,38 @@ describe("StakeStarOracleStrict", function () {
 
   describe("Save", function () {
     it("Should save consensus data", async function () {
-      const { stakeStarOracleStrict, stakeStarOracleStrictAdmin, stakeStarOracleStrict1, stakeStarOracleStrict2, stakeStarOracleStrict3 } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        stakeStarOracleStrict,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
+        stakeStarOracleStrict3,
+      } = await loadFixture(deployStakeStarFixture);
 
-      const initialLatestTotalBalance = await stakeStarOracleStrict.latestTotalBalance();
+      const initialLatestTotalBalance =
+        await stakeStarOracleStrict.latestTotalBalance();
 
       expect(initialLatestTotalBalance.totalBalance).to.eq(0);
-      expect(initialLatestTotalBalance.timestamp).to.be.eq(await stakeStarOracleStrict._zeroEpochTimestamp());
+      expect(initialLatestTotalBalance.timestamp).to.be.eq(
+        await stakeStarOracleStrict._zeroEpochTimestamp()
+      );
 
-      await stakeStarOracleStrictAdmin.setStrictEpochMode(true);
+      await stakeStarOracleStrict.setStrictEpochMode(true);
 
       await expect(stakeStarOracleStrict.save(1, 1)).to.be.revertedWith(
         `oracle role required`
       );
 
-      await expect(stakeStarOracleStrictAdmin.save(1, 1)).to.be.revertedWith(
+      await expect(stakeStarOracleStrict.save(1, 1)).to.be.revertedWith(
         `oracle role required`
       );
 
       const nextEpoch1 = await stakeStarOracleStrict.nextEpochToPublish();
-      console.log("nextEpochToPublish=", nextEpoch1)
+      console.log("nextEpochToPublish=", nextEpoch1);
       expect(nextEpoch1).to.be.gt(0);
 
-      await expect(stakeStarOracleStrict1.save(nextEpoch1 - 1, 1000)).to.be.revertedWith(
-        "only nextEpochToPublish() allowed"
-      );
+      await expect(
+        stakeStarOracleStrict1.save(nextEpoch1 - 1, 1000)
+      ).to.be.revertedWith("only nextEpochToPublish() allowed");
 
       await expect(stakeStarOracleStrict1.save(nextEpoch1, 1000))
         .to.emit(stakeStarOracleStrict1, "Proposed")
@@ -62,55 +69,62 @@ describe("StakeStarOracleStrict", function () {
         .to.emit(stakeStarOracleStrict2, "Saved")
         .withArgs(nextEpoch1, 1000);
 
-      expect((await stakeStarOracleStrict.latestTotalBalance()).totalBalance).to.eq(1000);
-      expect((await stakeStarOracleStrict.latestTotalBalance()).timestamp).to.be.eq(
-        await stakeStarOracleStrict.epochToTimestamp(nextEpoch1)
-      );
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).totalBalance
+      ).to.eq(1000);
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).timestamp
+      ).to.be.eq(await stakeStarOracleStrict.epochToTimestamp(nextEpoch1));
 
-      await expect(stakeStarOracleStrict3.save(nextEpoch1, 1001)).to.be.revertedWith(
-        "balance not equals"
-      );
+      await expect(
+        stakeStarOracleStrict3.save(nextEpoch1, 1001)
+      ).to.be.revertedWith("balance not equals");
 
       // accepted, but ignored
       await stakeStarOracleStrict3.save(nextEpoch1, 1000);
 
-      expect((await stakeStarOracleStrict.latestTotalBalance()).totalBalance).to.eq(1000);
-      expect((await stakeStarOracleStrict.latestTotalBalance()).timestamp).to.be.eq(
-        await stakeStarOracleStrict.epochToTimestamp(nextEpoch1)
-      );
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).totalBalance
+      ).to.eq(1000);
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).timestamp
+      ).to.be.eq(await stakeStarOracleStrict.epochToTimestamp(nextEpoch1));
 
       await expect(
         stakeStarOracleStrict1.save(nextEpoch1 + 225, 11000)
       ).to.be.revertedWith("epoch from the future");
 
-      await stakeStarOracleStrictAdmin.setStrictEpochMode(false);
-      await expect(stakeStarOracleStrict1.save(nextEpoch1 - 1, 9000)).to.be.revertedWith(
-        "epoch must increase"
-      );
-
+      await stakeStarOracleStrict.setStrictEpochMode(false);
+      await expect(
+        stakeStarOracleStrict1.save(nextEpoch1 - 1, 9000)
+      ).to.be.revertedWith("epoch must increase");
 
       // next epoch
-      const nextEpoch2 = nextEpoch1 + 20
+      const nextEpoch2 = nextEpoch1 + 20;
 
       await stakeStarOracleStrict2.save(nextEpoch2, 1200);
 
       // nothing changes
-      expect((await stakeStarOracleStrict.latestTotalBalance()).totalBalance).to.eq(1000);
-      expect((await stakeStarOracleStrict.latestTotalBalance()).timestamp).to.be.eq(
-        await stakeStarOracleStrict.epochToTimestamp(nextEpoch1)
-      );
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).totalBalance
+      ).to.eq(1000);
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).timestamp
+      ).to.be.eq(await stakeStarOracleStrict.epochToTimestamp(nextEpoch1));
 
       // invalid balance => no consensus
       stakeStarOracleStrict3.save(nextEpoch2, 1201);
 
-      expect((await stakeStarOracleStrict.latestTotalBalance()).totalBalance).to.eq(1000);
-      expect((await stakeStarOracleStrict.latestTotalBalance()).timestamp).to.be.eq(
-        await stakeStarOracleStrict.epochToTimestamp(nextEpoch1)
-      );
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).totalBalance
+      ).to.eq(1000);
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).timestamp
+      ).to.be.eq(await stakeStarOracleStrict.epochToTimestamp(nextEpoch1));
 
-      await expect(stakeStarOracleStrict3.save(nextEpoch2 - 1, 1200)).to.be.revertedWith(
-        "epoch must increase"
-      );
+      await expect(
+        stakeStarOracleStrict3.save(nextEpoch2 - 1, 1200)
+      ).to.be.revertedWith("epoch must increase");
 
       // new consensus
       await expect(stakeStarOracleStrict3.save(nextEpoch2, 1200))
@@ -118,23 +132,27 @@ describe("StakeStarOracleStrict", function () {
         .withArgs(nextEpoch2, 1200);
 
       // values updated
-      expect((await stakeStarOracleStrict.latestTotalBalance()).totalBalance).to.eq(1200);
-      expect((await stakeStarOracleStrict.latestTotalBalance()).timestamp).to.be.eq(
-        await stakeStarOracleStrict.epochToTimestamp(nextEpoch2)
-      );
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).totalBalance
+      ).to.eq(1200);
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).timestamp
+      ).to.be.eq(await stakeStarOracleStrict.epochToTimestamp(nextEpoch2));
 
       // invalid balance
-      await expect(stakeStarOracleStrict1.save(nextEpoch2, 1001)).to.be.revertedWith(
-        "balance not equals"
-      );
+      await expect(
+        stakeStarOracleStrict1.save(nextEpoch2, 1001)
+      ).to.be.revertedWith("balance not equals");
 
       // accepted, but ignored
       await stakeStarOracleStrict1.save(nextEpoch2, 1200);
 
-      expect((await stakeStarOracleStrict.latestTotalBalance()).totalBalance).to.eq(1200);
-      expect((await stakeStarOracleStrict.latestTotalBalance()).timestamp).to.be.eq(
-        await stakeStarOracleStrict.epochToTimestamp(nextEpoch2)
-      );
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).totalBalance
+      ).to.eq(1200);
+      expect(
+        (await stakeStarOracleStrict.latestTotalBalance()).timestamp
+      ).to.be.eq(await stakeStarOracleStrict.epochToTimestamp(nextEpoch2));
 
       // utility
       expect(await stakeStarOracleStrict.epochToTimestamp(777)).to.be.eq(

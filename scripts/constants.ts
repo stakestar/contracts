@@ -14,6 +14,7 @@ export const ADDRESSES: Record<
     ssvNetwork: string;
     ssvToken: string;
     stakeStarOracle: string;
+    stakeStarOracleStrict: string;
     stakeStarTreasury: string;
     stakeStarRegistry: string;
     sstarETH: string;
@@ -39,6 +40,7 @@ export const ADDRESSES: Record<
     ssvNetwork: "",
     ssvToken: "",
     stakeStarOracle: "",
+    stakeStarOracleStrict: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
     withdrawalAddress: "",
@@ -63,6 +65,7 @@ export const ADDRESSES: Record<
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "0x278FB9edEcC2689177d76A6Ff418288F677AA82B",
+    stakeStarOracleStrict: "",
     stakeStarTreasury: "0xA4fb0D596b7242Ed710AbE0Bd8992448242Db2E2",
     stakeStarRegistry: "0xDF2c9fd8aC9e5958c39cE35F2c6e11651493F37F",
     withdrawalAddress: "0xA5c58ceAD0EF58491A05B5a2255E9496A86F8d1e",
@@ -87,6 +90,7 @@ export const ADDRESSES: Record<
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "",
+    stakeStarOracleStrict: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
     withdrawalAddress: "",

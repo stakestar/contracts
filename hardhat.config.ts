@@ -27,7 +27,6 @@ import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarOracle";
 import "./scripts/tasks/upgrade-StakeStarRegistry";
 import "./scripts/tasks/upgrade-StakeStarTreasury";
-import "hardhat-gas-reporter";
 
 const HARDHAT_NETWORK = "http://127.0.0.1:8545/";
 
@@ -69,9 +68,7 @@ const config: HardhatUserConfig = {
     ],
   },
   gasReporter: {
-    enabled: (process.env.GAS_REPORTER === "true"),
-    currency: 'USD',
-    gasPrice: 40
+    enabled: process.env.GAS_REPORTER === "true",
   },
 };
 

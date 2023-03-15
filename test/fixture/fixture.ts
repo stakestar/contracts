@@ -12,7 +12,7 @@ import { deployAll } from "../../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Contract } from "ethers";
 import { grantAllManagerRoles } from "../../scripts/tasks/grant-ManagerRole";
-import { grantOraclesRoles } from "../../scripts/tasks/grant-OraclesRole";
+import { grantOracleRoles } from "../../scripts/tasks/grant-OracleRole";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,
@@ -35,19 +35,18 @@ export async function deployStakeStarFixture() {
     uniswapHelper,
   } = await deployAll(hre);
   // Contracts are deployed using the first signer/account by default
-  const [owner, manager, otherAccount, oracle1, oracle2, oracle3] = await hre.ethers.getSigners();
+  const [owner, manager, otherAccount, oracle1, oracle2, oracle3] =
+    await hre.ethers.getSigners();
 
   const stakeStarOwner = stakeStar.connect(owner);
   const stakeStarManager = stakeStarOwner.connect(manager);
   const stakeStarPublic = stakeStarOwner.connect(otherAccount);
   const stakeStarRegistryManager = stakeStarRegistry.connect(manager);
 
-  const stakeStarOracleAdmin = stakeStarOracle.connect(owner);
   const stakeStarOracle1 = stakeStarOracle.connect(oracle1);
   const stakeStarOracle2 = stakeStarOracle.connect(oracle2);
   const stakeStarOracle3 = stakeStarOracle.connect(oracle3);
 
-  const stakeStarOracleStrictAdmin = stakeStarOracleStrict.connect(owner);
   const stakeStarOracleStrict1 = stakeStarOracleStrict.connect(oracle1);
   const stakeStarOracleStrict2 = stakeStarOracleStrict.connect(oracle2);
   const stakeStarOracleStrict3 = stakeStarOracleStrict.connect(oracle3);
@@ -59,20 +58,13 @@ export async function deployStakeStarFixture() {
     manager.address
   );
 
-  await grantOraclesRoles(
+  await grantOracleRoles(
     hre,
-    stakeStarOracleAdmin,
+    stakeStarOracle.address,
+    stakeStarOracleStrict.address,
     oracle1.address,
     oracle2.address,
-    oracle3.address,
-  );
-
-  await grantOraclesRoles(
-    hre,
-    stakeStarOracleStrictAdmin,
-    oracle1.address,
-    oracle2.address,
-    oracle3.address,
+    oracle3.address
   );
 
   const ERC20 = await hre.ethers.getContractFactory("ERC20");
@@ -117,13 +109,11 @@ export async function deployStakeStarFixture() {
     starETH,
 
     stakeStarOracle,
-    stakeStarOracleAdmin,
     stakeStarOracle1,
     stakeStarOracle2,
     stakeStarOracle3,
 
     stakeStarOracleStrict,
-    stakeStarOracleStrictAdmin,
     stakeStarOracleStrict1,
     stakeStarOracleStrict2,
     stakeStarOracleStrict3,

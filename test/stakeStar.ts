@@ -1210,14 +1210,8 @@ describe("StakeStar", function () {
       const { hre, stakeStarPublic, stakeStarOracle1, stakeStarOracle2 } =
         await loadFixture(deployStakeStarFixture);
 
-      await stakeStarOracle1.save(
-        1,
-        hre.ethers.utils.parseEther("0.001")
-      );
-      await stakeStarOracle2.save(
-        1,
-        hre.ethers.utils.parseEther("0.001")
-      );
+      await stakeStarOracle1.save(1, hre.ethers.utils.parseEther("0.001"));
+      await stakeStarOracle2.save(1, hre.ethers.utils.parseEther("0.001"));
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "totals must be > 0"
       );
@@ -1238,24 +1232,12 @@ describe("StakeStar", function () {
         "timestamps too close"
       );
 
-      await stakeStarOracle1.save(
-        2,
-        hre.ethers.utils.parseEther("0.002")
-      );
-      await stakeStarOracle2.save(
-        2,
-        hre.ethers.utils.parseEther("0.002")
-      );
+      await stakeStarOracle1.save(2, hre.ethers.utils.parseEther("0.002"));
+      await stakeStarOracle2.save(2, hre.ethers.utils.parseEther("0.002"));
       await stakeStarPublic.commitSnapshot();
 
-      await stakeStarOracle1.save(
-        3,
-        hre.ethers.utils.parseEther("0.003")
-      );
-      await stakeStarOracle2.save(
-        3,
-        hre.ethers.utils.parseEther("0.003")
-      );
+      await stakeStarOracle1.save(3, hre.ethers.utils.parseEther("0.003"));
+      await stakeStarOracle2.save(3, hre.ethers.utils.parseEther("0.003"));
       await stakeStarPublic.commitSnapshot();
 
       const snapshot0 = await stakeStarPublic.snapshots(0);
@@ -1286,7 +1268,6 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         otherAccount,
-        stakeStarOracle,
         feeRecipient,
         mevRecipient,
         stakeStarOracle1,
@@ -1306,14 +1287,8 @@ describe("StakeStar", function () {
         to: mevRecipient.address,
       });
 
-      await stakeStarOracle1.save(
-        1,
-        hre.ethers.utils.parseEther("0.00001")
-      );
-      await stakeStarOracle2.save(
-        1,
-        hre.ethers.utils.parseEther("0.00001")
-      );
+      await stakeStarOracle1.save(1, hre.ethers.utils.parseEther("0.00001"));
+      await stakeStarOracle2.save(1, hre.ethers.utils.parseEther("0.00001"));
 
       await expect(stakeStarPublic.commitSnapshot())
         .to.emit(stakeStarPublic, "CommitSnapshot")
@@ -1345,7 +1320,6 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         otherAccount,
-        stakeStarOracle,
         withdrawalAddress,
         stakeStarOracle1,
         stakeStarOracle2,
@@ -1360,14 +1334,8 @@ describe("StakeStar", function () {
         to: withdrawalAddress.address,
       });
 
-      await stakeStarOracle1.save(
-        1,
-        hre.ethers.utils.parseEther("0.0001")
-      );
-      await stakeStarOracle2.save(
-        1,
-        hre.ethers.utils.parseEther("0.0001")
-      );
+      await stakeStarOracle1.save(1, hre.ethers.utils.parseEther("0.0001"));
+      await stakeStarOracle2.save(1, hre.ethers.utils.parseEther("0.0001"));
 
       await expect(stakeStarPublic.commitSnapshot())
         .to.emit(stakeStarPublic, "CommitSnapshot")
@@ -1399,7 +1367,6 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracle,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
@@ -1432,14 +1399,8 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
 
-      await stakeStarOracle1.save(
-        139_001,
-        hre.ethers.utils.parseEther("32")
-      ); // base
-      await stakeStarOracle2.save(
-        139_001,
-        hre.ethers.utils.parseEther("32")
-      ); // base
+      await stakeStarOracle1.save(139_001, hre.ethers.utils.parseEther("32")); // base
+      await stakeStarOracle2.save(139_001, hre.ethers.utils.parseEther("32")); // base
       await stakeStarPublic.commitSnapshot();
 
       expect(await stakeStarPublic["rate()"]()).to.equal(
@@ -1480,7 +1441,12 @@ describe("StakeStar", function () {
       await stakeStarPublic.commitSnapshot();
       await stakeStarOracle1.save(
         139_005,
-        hre.ethers.utils.parseEther("32").mul(9990).div(10000).mul(10010).div(10000)
+        hre.ethers.utils
+          .parseEther("32")
+          .mul(9990)
+          .div(10000)
+          .mul(10010)
+          .div(10000)
       ); // 0.1% increase
       await stakeStarOracle2.save(
         139_005,
@@ -1493,14 +1459,8 @@ describe("StakeStar", function () {
       ); // 0.1% increase
       await stakeStarPublic.commitSnapshot();
 
-      await stakeStarOracle1.save(
-        139_006,
-        hre.ethers.utils.parseEther("100")
-      ); // massive increase
-      await stakeStarOracle2.save(
-        139_006,
-        hre.ethers.utils.parseEther("100")
-      ); // massive increase
+      await stakeStarOracle1.save(139_006, hre.ethers.utils.parseEther("100")); // massive increase
+      await stakeStarOracle2.save(139_006, hre.ethers.utils.parseEther("100")); // massive increase
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "rate deviation too big"
       );
@@ -1510,8 +1470,13 @@ describe("StakeStar", function () {
     });
 
     it("maxRateDeviation initial check", async function () {
-      const { hre, stakeStarPublic, stakeStarOwner, stakeStarOracle1, stakeStarOracle2 } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        hre,
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracle1,
+        stakeStarOracle2,
+      } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100, true); // 0.1%
 
       await stakeStarPublic.depositAndStake({
@@ -1989,7 +1954,6 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracle,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
@@ -2050,7 +2014,6 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracle,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
@@ -2301,14 +2264,8 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
 
-      await stakeStarOracle1.save(
-        139_001,
-        hre.ethers.utils.parseEther("0.1")
-      );
-      await stakeStarOracle2.save(
-        139_001,
-        hre.ethers.utils.parseEther("0.1")
-      );
+      await stakeStarOracle1.save(139_001, hre.ethers.utils.parseEther("0.1"));
+      await stakeStarOracle2.save(139_001, hre.ethers.utils.parseEther("0.1"));
       await stakeStarPublic.commitSnapshot();
 
       expect(await stakeStarPublic["rate()"]()).to.equal(
@@ -2373,23 +2330,11 @@ describe("StakeStar", function () {
       });
       await stakeStarOwner.setRateParameters(2000, true);
 
-      await stakeStarOracle1.save(
-        139_001,
-        hre.ethers.utils.parseEther("0.2")
-      );
-      await stakeStarOracle2.save(
-        139_001,
-        hre.ethers.utils.parseEther("0.2")
-      );
+      await stakeStarOracle1.save(139_001, hre.ethers.utils.parseEther("0.2"));
+      await stakeStarOracle2.save(139_001, hre.ethers.utils.parseEther("0.2"));
       await stakeStarPublic.commitSnapshot();
-      await stakeStarOracle1.save(
-        139_002,
-        hre.ethers.utils.parseEther("0.2")
-      );
-      await stakeStarOracle2.save(
-        139_002,
-        hre.ethers.utils.parseEther("0.2")
-      );
+      await stakeStarOracle1.save(139_002, hre.ethers.utils.parseEther("0.2"));
+      await stakeStarOracle2.save(139_002, hre.ethers.utils.parseEther("0.2"));
       await stakeStarPublic.commitSnapshot();
 
       await stakeStarPublic.depositAndStake({
@@ -2443,14 +2388,8 @@ describe("StakeStar", function () {
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracle1.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.002")
-      );
-      await stakeStarOracle2.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.002")
-      );
+      await stakeStarOracle1.save(epoch0, hre.ethers.utils.parseEther("0.002"));
+      await stakeStarOracle2.save(epoch0, hre.ethers.utils.parseEther("0.002"));
       await stakeStarPublic.commitSnapshot();
 
       await stakeStarPublic.depositAndStake({
@@ -2677,14 +2616,8 @@ describe("StakeStar", function () {
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracle1.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.002")
-      );
-      await stakeStarOracle2.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.002")
-      );
+      await stakeStarOracle1.save(epoch0, hre.ethers.utils.parseEther("0.002"));
+      await stakeStarOracle2.save(epoch0, hre.ethers.utils.parseEther("0.002"));
       await stakeStarPublic.commitSnapshot();
       rewardsGiven = hre.ethers.utils.parseEther("0.002");
 
@@ -2968,14 +2901,8 @@ describe("StakeStar", function () {
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracle1.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.005")
-      );
-      await stakeStarOracle2.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.005")
-      );
+      await stakeStarOracle1.save(epoch0, hre.ethers.utils.parseEther("0.005"));
+      await stakeStarOracle2.save(epoch0, hre.ethers.utils.parseEther("0.005"));
       await stakeStarPublic.commitSnapshot();
       rewardsGiven = hre.ethers.utils.parseEther("0.005");
 
@@ -3150,7 +3077,9 @@ describe("StakeStar", function () {
         humanify(rate)
       );
 
-      expect(await sstarETH.balanceOf(stakeStarTreasury.address)).to.be.lessThanOrEqual(1);
+      expect(
+        await sstarETH.balanceOf(stakeStarTreasury.address)
+      ).to.be.lessThanOrEqual(1);
 
       const expectedRewards = rewardsGiven.mul(10).div(100);
       const diffR = expectedRewards.sub(treasuryBalance).abs();
@@ -3322,14 +3251,8 @@ describe("StakeStar", function () {
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracle1.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.004")
-      );
-      await stakeStarOracle2.save(
-        epoch0,
-        hre.ethers.utils.parseEther("0.004")
-      );
+      await stakeStarOracle1.save(epoch0, hre.ethers.utils.parseEther("0.004"));
+      await stakeStarOracle2.save(epoch0, hre.ethers.utils.parseEther("0.004"));
       await stakeStarPublic.commitSnapshot();
       rewardsGiven = hre.ethers.utils.parseEther("0.004");
 

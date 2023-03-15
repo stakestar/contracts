@@ -19,9 +19,6 @@ export async function grantAllManagerRoles(
     stakeStarRegistryAddress
   );
 
-  const StakeStarOracle = await hre.ethers.getContractFactory(
-    "StakeStarOracle"
-  );
   await stakeStar.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
   console.log(`StakeStar::MANAGER_ROLE is granted to ${managerAddress}`);
 
