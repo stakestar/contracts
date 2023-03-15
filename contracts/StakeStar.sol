@@ -313,8 +313,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function localPoolWithdraw(uint256 starETHAmount) public {
-        extractCommission();
-
         require(
             starETHAmount <= localPoolWithdrawalLimit,
             "localPoolWithdrawalLimit"
