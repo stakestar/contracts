@@ -110,7 +110,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStar.address,
     sstarETH.address,
     starETH.address,
-    stakeStarOracle.address,
+    stakeStarOracleStrict.address,
     stakeStarRegistry.address,
     stakeStarTreasury.address,
     withdrawalAddress.address,
