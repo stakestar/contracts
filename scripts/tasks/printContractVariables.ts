@@ -16,8 +16,8 @@ task("printContractVariables", "Prints contracts variables").setAction(
       humanify(await hre.ethers.provider.getBalance(stakeStar.address))
     );
     console.log(
-      "pendingUnstakeSum",
-      humanify(await stakeStar.pendingUnstakeSum())
+      "pendingWithdrawalSum",
+      humanify(await stakeStar.pendingWithdrawalSum())
     );
     console.log("localPoolSize", humanify(await stakeStar.localPoolSize()));
     console.log();

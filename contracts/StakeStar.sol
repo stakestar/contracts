@@ -90,12 +90,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IERC20 public ssvToken;
     IOracleNetwork public oracleNetwork;
 
-    mapping(address => uint256) public pendingUnstake;
-    mapping(uint32 => address) public pendingUnstakeQueue;
+    mapping(address => uint256) public pendingWithdrawal;
+    mapping(uint32 => address) public pendingWithdrawalQueue;
     mapping(uint32 => uint32) public previous;
     mapping(uint32 => uint32) public next;
 
-    uint256 public pendingUnstakeSum;
+    uint256 public pendingWithdrawalSum;
 
     uint32 public left;
     uint32 public right;
@@ -106,9 +106,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     uint256 public localPoolSize;
     uint256 public localPoolMaxSize;
-    uint256 public localPoolUnstakeLimit;
-    uint256 public localPoolUnstakeFrequencyLimit;
-    mapping(address => uint256) public localPoolUnstakeHistory;
+    uint256 public localPoolWithdrawalLimit;
+    uint256 public localPoolWithdrawalFrequencyLimit;
+    mapping(address => uint256) public localPoolWithdrawalHistory;
 
     Snapshot[2] public snapshots;
 
@@ -195,19 +195,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function setLocalPoolParameters(
         uint256 _localPoolMaxSize,
-        uint256 _localPoolUnstakeLimit,
-        uint256 _localPoolUnstakeFrequencyLimit
+        uint256 _localPoolWithdrawalLimit,
+        uint256 _localPoolWithdrawalFrequencyLimit
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         localPoolMaxSize = _localPoolMaxSize;
-        localPoolUnstakeLimit = _localPoolUnstakeLimit;
-        localPoolUnstakeFrequencyLimit = _localPoolUnstakeFrequencyLimit;
+        localPoolWithdrawalLimit = _localPoolWithdrawalLimit;
+        localPoolWithdrawalFrequencyLimit = _localPoolWithdrawalFrequencyLimit;
 
         localPoolSize = MathUpgradeable.min(localPoolSize, localPoolMaxSize);
 
         emit SetLocalPoolParameters(
             _localPoolMaxSize,
-            _localPoolUnstakeLimit,
-            _localPoolUnstakeFrequencyLimit
+            _localPoolWithdrawalLimit,
+            _localPoolWithdrawalFrequencyLimit
         );
     }
 
@@ -268,14 +268,15 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function withdraw(uint256 starETHAmount) public {
-        extractCommission();
+        require(
+            pendingWithdrawal[msg.sender] == 0,
+            "one withdrawal at a time only"
+        );
+        starETH.burn(msg.sender, starETHAmount);
 
-        require(pendingUnstake[msg.sender] == 0, "one unstake at a time only");
-        sstarETH.burn(msg.sender, starETHAmount);
-
-        pendingUnstake[msg.sender] = starETHAmount;
-        pendingUnstakeSum += starETHAmount;
-        pendingUnstakeQueue[right] = msg.sender;
+        pendingWithdrawal[msg.sender] = starETHAmount;
+        pendingWithdrawalSum += starETHAmount;
+        pendingWithdrawalQueue[right] = msg.sender;
         previous[right + 1] = right;
         next[right] = right + 1;
         right++;
@@ -289,20 +290,20 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function claim() public {
-        require(pendingUnstake[msg.sender] > 0, "no pending unstake");
+        require(pendingWithdrawal[msg.sender] > 0, "no pending withdrawal");
 
         uint32 index = queueIndex(msg.sender);
         require(index > 0, "lack of eth / queue length");
 
-        uint256 eth = pendingUnstake[msg.sender];
-        pendingUnstakeSum -= eth;
+        uint256 eth = pendingWithdrawal[msg.sender];
+        pendingWithdrawalSum -= eth;
         previous[next[index]] = previous[index];
         next[previous[index]] = next[index];
 
         if (left == index) left = next[left];
 
-        delete pendingUnstake[msg.sender];
-        delete pendingUnstakeQueue[index];
+        delete pendingWithdrawal[msg.sender];
+        delete pendingWithdrawalQueue[index];
         delete previous[index];
         delete next[index];
 
@@ -315,19 +316,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         extractCommission();
 
         require(
-            starETHAmount <= localPoolUnstakeLimit,
-            "localPoolUnstakeLimit"
+            starETHAmount <= localPoolWithdrawalLimit,
+            "localPoolWithdrawalLimit"
         );
         require(starETHAmount <= localPoolSize, "localPoolSize");
         require(
-            block.number - localPoolUnstakeHistory[msg.sender] >
-                localPoolUnstakeFrequencyLimit,
-            "localPoolUnstakeFrequencyLimit"
+            block.number - localPoolWithdrawalHistory[msg.sender] >
+                localPoolWithdrawalFrequencyLimit,
+            "localPoolWithdrawalFrequencyLimit"
         );
 
         starETH.burn(msg.sender, starETHAmount);
         localPoolSize -= starETHAmount;
-        localPoolUnstakeHistory[msg.sender] = block.number;
+        localPoolWithdrawalHistory[msg.sender] = block.number;
 
         Utils.safeTransferETH(msg.sender, starETHAmount);
 
@@ -343,12 +344,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint32 index = left;
         uint32 loopCounter = 0;
         uint256 availableETH = address(this).balance - localPoolSize;
-        uint256 unstakeSum = 0;
+        uint256 withdrawalSum = 0;
 
         while (index < right && loopCounter < loopLimit) {
-            unstakeSum += pendingUnstake[pendingUnstakeQueue[index]];
-            if (unstakeSum > availableETH) break;
-            if (msgSender == pendingUnstakeQueue[index]) return index;
+            withdrawalSum += pendingWithdrawal[pendingWithdrawalQueue[index]];
+            if (withdrawalSum > availableETH) break;
+            if (msgSender == pendingWithdrawalQueue[index]) return index;
             index = next[index];
             loopCounter++;
         }
@@ -505,7 +506,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         uint256 total_ETH = totalBalance +
             address(this).balance -
-            pendingUnstakeSum;
+            pendingWithdrawalSum -
+            starETH.totalSupply();
         uint256 total_sstarETH = sstarETH.totalSupply();
 
         require(total_ETH > 0 && total_sstarETH > 0, "totals must be > 0");
@@ -555,7 +557,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function validatorCreationAvailability() public view returns (bool) {
         return
             address(this).balance >=
-            (uint256(32 ether) + pendingUnstakeSum + localPoolSize);
+            (uint256(32 ether) + pendingWithdrawalSum + localPoolSize);
     }
 
     function validatorDestructionAvailability() public view returns (bool) {
@@ -574,7 +576,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 exitingETH = exitingValidators * uint256(32 ether);
 
         return
-            pendingUnstakeSum >=
+            pendingWithdrawalSum >=
             validatorWithdrawalThreshold +
                 freeETH +
                 exitedETH +
