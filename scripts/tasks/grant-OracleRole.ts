@@ -38,7 +38,7 @@ export async function grantOracleRoles(
   console.log(`StakeStarOracleStrict::setOracle 2 is granted to ${oracle3}`);
 }
 
-task("grant-OracleRole", "Set Oracles Roles").setAction(async (args, hre) => {
+task("grant-OracleRole", "Set Oracle Roles").setAction(async (args, hre) => {
   const network = currentNetwork(hre);
   const addresses = ADDRESSES[network];
 
