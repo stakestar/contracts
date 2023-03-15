@@ -38,7 +38,12 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     console.log();
 
-    console.log("rate", humanify(await stakeStar["rate(uint256)"](Date.now())));
+    console.log("rate", humanify(await stakeStar["rate()"]()));
+    console.log("rateEC", humanify(await stakeStar.rateEC()));
+    console.log(
+      "rateCorrectionFactor",
+      humanify(await stakeStar.rateCorrectionFactor())
+    );
     console.log();
 
     const StakeStarRegistry = await hre.ethers.getContractFactory(
