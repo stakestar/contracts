@@ -112,9 +112,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     Snapshot[2] public snapshots;
 
+    uint256 public validatorWithdrawalThreshold;
+
     uint256 public rateEC;
     uint256 public rateCorrectionFactor;
-    uint256 public validatorWithdrawalThreshold;
 
     receive() external payable {}
 
@@ -313,8 +314,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     function localPoolWithdraw(uint256 starETHAmount) public {
-        extractCommission();
-
         require(
             starETHAmount <= localPoolWithdrawalLimit,
             "localPoolWithdrawalLimit"
