@@ -15,10 +15,11 @@ export async function grantAllTreasuryRoles(
     uniswapV3ProviderAddress
   );
 
-  await uniswapV3Provider.grantRole(
+  const tx = await uniswapV3Provider.grantRole(
     ConstantsLib.TREASURY_ROLE,
     stakeStarTreasuryAddress
   );
+  console.log(tx.hash);
   console.log(
     `StakeStarTreasury.TREASURY_ROLE is granted to UniswapV3Provider contract`
   );

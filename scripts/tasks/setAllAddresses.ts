@@ -37,7 +37,9 @@ export async function setAllAddresses(
     uniswapV3ProviderAddress
   );
 
-  await stakeStar.setAddresses(
+  let tx;
+
+  tx = await stakeStar.setAddresses(
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
@@ -50,17 +52,19 @@ export async function setAllAddresses(
     feeRecipientAddress,
     mevRecipientAddress
   );
+  console.log(tx.hash);
   console.log(`Addresses are set to StakeStar contract`);
 
-  await stakeStarTreasury.setAddresses(
+  tx = await stakeStarTreasury.setAddresses(
     stakeStarAddress,
     addresses.ssvNetwork,
     addresses.ssvToken,
     uniswapV3ProviderAddress
   );
+  console.log(tx.hash);
   console.log(`Addresses are set to StakeStarTreasury contract`);
 
-  await uniswapV3Provider.setAddresses(
+  tx = await uniswapV3Provider.setAddresses(
     addresses.swapRouter,
     addresses.quoter,
     uniswapHelperAddress,
@@ -68,6 +72,7 @@ export async function setAllAddresses(
     addresses.ssvToken,
     addresses.pool
   );
+  console.log(tx.hash);
   console.log(`Addresses are set to UniswapV3Provider contract`);
 }
 

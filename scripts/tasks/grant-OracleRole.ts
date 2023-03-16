@@ -23,18 +23,26 @@ export async function grantOracleRoles(
     stakeStarOracleStrictAddress
   );
 
-  await stakeStarOracle.setOracle(oracle1, 0);
+  let tx;
+
+  tx = await stakeStarOracle.setOracle(oracle1, 0);
+  console.log(tx.hash);
   console.log(`StakeStarOracle::setOracle 0 is granted to ${oracle1}`);
-  await stakeStarOracle.setOracle(oracle2, 1);
+  tx = await stakeStarOracle.setOracle(oracle2, 1);
+  console.log(tx.hash);
   console.log(`StakeStarOracle::setOracle 1 is granted to ${oracle2}`);
-  await stakeStarOracle.setOracle(oracle3, 2);
+  tx = await stakeStarOracle.setOracle(oracle3, 2);
+  console.log(tx.hash);
   console.log(`StakeStarOracle::setOracle 2 is granted to ${oracle3}`);
 
-  await stakeStarOracleStrict.setOracle(oracle1, 0);
+  tx = await stakeStarOracleStrict.setOracle(oracle1, 0);
+  console.log(tx.hash);
   console.log(`StakeStarOracleStrict::setOracle 0 is granted to ${oracle1}`);
-  await stakeStarOracleStrict.setOracle(oracle2, 1);
+  tx = await stakeStarOracleStrict.setOracle(oracle2, 1);
+  console.log(tx.hash);
   console.log(`StakeStarOracleStrict::setOracle 1 is granted to ${oracle2}`);
-  await stakeStarOracleStrict.setOracle(oracle3, 2);
+  tx = await stakeStarOracleStrict.setOracle(oracle3, 2);
+  console.log(tx.hash);
   console.log(`StakeStarOracleStrict::setOracle 2 is granted to ${oracle3}`);
 }
 

@@ -18,11 +18,13 @@ task("setSwapParameters", "Sets swap parameters to UniswapV3Provider")
       addresses.uniswapV3Provider
     );
 
-    await uniswapV3Provider.setParameters(
+    const tx = await uniswapV3Provider.setParameters(
       args.fee,
       args.slippage,
       args.twapInterval,
       args.minLiquidity
     );
+    await tx.wait(3);
+    console.log(tx.hash);
     console.log(`Parameters are set to UniswapV3Provider contract`);
   });
