@@ -14,6 +14,7 @@ import "./scripts/tasks/allowListOperators";
 import "./scripts/tasks/commitSnapshot";
 import "./scripts/tasks/deployAll";
 import "./scripts/tasks/grant-ManagerRole";
+import "./scripts/tasks/grant-OracleRole";
 import "./scripts/tasks/grant-StakeStarRole";
 import "./scripts/tasks/grant-TreasuryRole";
 import "./scripts/tasks/printAddresses";

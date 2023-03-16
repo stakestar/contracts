@@ -81,9 +81,9 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     uniswapV3Provider: "0xcde1e15a03fdF286ff5C76019f302c1D5ff8e0C5",
     uniswapHelper: "0x53730FC0d30d6D85cB696e35c89864b5e4958Fa8",
-    oracle1: "",
-    oracle2: "",
-    oracle3: "",
+    oracle1: "0x984333b719ff2e886F3d1c6cC605Ac7B99c24426",
+    oracle2: "0x8c08a6Eff6B78D6c34ba54ac931d3af2eF42622b",
+    oracle3: "0xe187820c0d57F93eCA3AE5678fED4e8470cc1867",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",

@@ -8,7 +8,7 @@
 
 ## Deploy & Setup
 
-1. deploy all contracts, grant StakeStar/Treasury/Manager roles, set addresses
+1. deploy all contracts, grant Admin/StakeStar/Treasury roles, set addresses
 
 ```shell
 yarn hardhat deployAll --network goerli
@@ -42,6 +42,18 @@ yarn hardhat setTreasuryRunway --min-runway 432000 --max-runway 1296000 --networ
 
 ```shell
 yarn hardhat setSwapParameters --fee 3000 --slippage 98000 --twap-interval 3600 --min-liquidity 100000000000000000 --network goerli
+```
+
+7. grant Manager roles
+
+```shell
+yarn hardhat grant-ManagerRole --network goerli
+```
+
+8. grant Oracle roles
+
+```shell
+yarn hardhat grant-OracleRole --network goerli
 ```
 
 ## To do
