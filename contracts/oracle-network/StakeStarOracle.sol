@@ -31,9 +31,7 @@ contract StakeStarOracle is
     uint32 constant ORACLES_COUNT_MASK = 0x0700_0000;
     uint32 constant EPOCH_VALUE_MASK = 0x00FF_FFFF;
 
-    uint32 constant EPOCH_UPDATE_PERIOD = (24 * 3600) / Utils.EPOCH_DURATION;
-    uint32 constant EPOCH_UPDATE_PERIOD_IN_SECONDS =
-        EPOCH_UPDATE_PERIOD * Utils.EPOCH_DURATION;
+    uint32 _epochUpdateTimePeriodInSeconds;
 
     // from address to oracle bit = (1 << oracle_no) << 24;
     mapping(address => uint32) private _oracles;
@@ -41,6 +39,7 @@ contract StakeStarOracle is
     function initialize(uint64 zeroEpochTimestamp) public initializer {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
+        _epochUpdateTimePeriodInSeconds = (24 * 3600) / Utils.EPOCH_DURATION * Utils.EPOCH_DURATION;
     }
 
     event Saved(uint32 epoch, uint256 totalBalance);
@@ -96,11 +95,10 @@ contract StakeStarOracle is
 
     function nextEpochToPublish() public view returns (uint32) {
         (, uint64 consensusTimestamp) = latestTotalBalance();
-        uint64 nextEpochTimestamp = ((uint64(block.timestamp) -
-            consensusTimestamp -
-            1) / EPOCH_UPDATE_PERIOD_IN_SECONDS) *
-            EPOCH_UPDATE_PERIOD_IN_SECONDS +
-            consensusTimestamp;
+        uint64 nextEpochTimestamp = (uint64(block.timestamp) - consensusTimestamp - 1)
+                                        / _epochUpdateTimePeriodInSeconds
+                                        * _epochUpdateTimePeriodInSeconds
+                                    + consensusTimestamp;
         return timestampToEpoch(nextEpochTimestamp);
     }
 
@@ -194,7 +192,7 @@ contract StakeStarOracle is
         address oracle,
         uint8 oracle_no
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(oracle_no < ORACLES_COUNT_MAX, "Invalid Oracle Number");
+        require(oracle_no < ORACLES_COUNT_MAX, "invalid Oracle Number");
         _oracles[oracle] = uint32((1 << oracle_no) << 24);
     }
 
@@ -202,5 +200,12 @@ contract StakeStarOracle is
         bool strictEpochMode
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         _strictEpochMode = strictEpochMode;
+    }
+
+    function setEpochUpdatePeriod(
+        uint32 period_in_epochs
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        require(period_in_epochs >= 1, "invalid period");
+        _epochUpdateTimePeriodInSeconds = period_in_epochs * Utils.EPOCH_DURATION;
     }
 }

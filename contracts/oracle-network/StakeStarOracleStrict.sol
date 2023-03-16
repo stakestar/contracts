@@ -21,9 +21,7 @@ contract StakeStarOracleStrict is
     uint8 constant ORACLES_COUNT_MAX = 3;
     uint8 constant ORACLES_COUNT_MIN = 2;
 
-    uint32 constant EPOCH_UPDATE_PERIOD = (24 * 3600) / Utils.EPOCH_DURATION;
-    uint32 constant EPOCH_UPDATE_PERIOD_IN_SECONDS =
-        EPOCH_UPDATE_PERIOD * Utils.EPOCH_DURATION;
+    uint32 _epochUpdateTimePeriodInSeconds;
 
     struct OracleData {
         uint32 next_epoch;
@@ -36,6 +34,7 @@ contract StakeStarOracleStrict is
     function initialize(uint64 zeroEpochTimestamp) public initializer {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
+        _epochUpdateTimePeriodInSeconds = (24 * 3600) / Utils.EPOCH_DURATION * Utils.EPOCH_DURATION;
     }
 
     event Saved(uint32 epoch, uint256 totalBalance);
@@ -63,8 +62,8 @@ contract StakeStarOracleStrict is
     function nextEpochToPublish() public view returns (uint32) {
         (, uint64 consensusTimestamp) = latestTotalBalance();
         uint64 nextEpochTimestamp = (uint64(block.timestamp) - consensusTimestamp - 1)
-                                        / EPOCH_UPDATE_PERIOD_IN_SECONDS
-                                        * EPOCH_UPDATE_PERIOD_IN_SECONDS
+                                        / _epochUpdateTimePeriodInSeconds
+                                        * _epochUpdateTimePeriodInSeconds
                                     + consensusTimestamp;
         return timestampToEpoch(nextEpochTimestamp);
     }
@@ -130,7 +129,7 @@ contract StakeStarOracleStrict is
         address oracle,
         uint8 oracle_no
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(oracle_no < ORACLES_COUNT_MAX, "Invalid Oracle Number");
+        require(oracle_no < ORACLES_COUNT_MAX, "invalid Oracle Number");
         _oracleNo[oracle] = oracle_no + 1;
     }
 
@@ -138,5 +137,12 @@ contract StakeStarOracleStrict is
         bool strictEpochMode
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         _strictEpochMode = strictEpochMode;
+    }
+
+    function setEpochUpdatePeriod(
+        uint32 period_in_epochs
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        require(period_in_epochs >= 1, "invalid period");
+        _epochUpdateTimePeriodInSeconds = period_in_epochs * Utils.EPOCH_DURATION;
     }
 }
