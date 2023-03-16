@@ -38,7 +38,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     console.log();
 
-    console.log("rate", humanify(await stakeStar["rate(uint256)"](Date.now())));
+    console.log("rate", humanify(await stakeStar["rate()"]()));
     console.log();
 
     const StakeStarRegistry = await hre.ethers.getContractFactory(
@@ -105,7 +105,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
 
     const latestTotalBalance = await stakeStarOracle.latestTotalBalance();
     console.log(
-      "StakeStarOracle::latestStakingSurplus",
+      "StakeStarOracle::latestTotalBalance",
       humanify(latestTotalBalance.totalBalance),
       new Date(latestTotalBalance.timestamp.toNumber() * 1000).toISOString()
     );
