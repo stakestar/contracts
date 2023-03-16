@@ -36,19 +36,16 @@ export async function grantAllStakeStarRoles(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(
     `StakeStarRegistry.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
 
   tx = await sstarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`sstarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
   tx = await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`starETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
@@ -56,7 +53,6 @@ export async function grantAllStakeStarRoles(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(
     `WithdrawalAddress.STAKE_STAR_ROLE is granted to StakeStar contract`
@@ -66,7 +62,6 @@ export async function grantAllStakeStarRoles(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
@@ -74,7 +69,6 @@ export async function grantAllStakeStarRoles(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`MevRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 }

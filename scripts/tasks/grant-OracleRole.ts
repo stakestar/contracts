@@ -26,28 +26,22 @@ export async function grantOracleRoles(
   let tx;
 
   tx = await stakeStarOracle.setOracle(oracle1, 0);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStarOracle::setOracle 0 is granted to ${oracle1}`);
   tx = await stakeStarOracle.setOracle(oracle2, 1);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStarOracle::setOracle 1 is granted to ${oracle2}`);
   tx = await stakeStarOracle.setOracle(oracle3, 2);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStarOracle::setOracle 2 is granted to ${oracle3}`);
 
   tx = await stakeStarOracleStrict.setOracle(oracle1, 0);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStarOracleStrict::setOracle 0 is granted to ${oracle1}`);
   tx = await stakeStarOracleStrict.setOracle(oracle2, 1);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStarOracleStrict::setOracle 1 is granted to ${oracle2}`);
   tx = await stakeStarOracleStrict.setOracle(oracle3, 2);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStarOracleStrict::setOracle 2 is granted to ${oracle3}`);
 }

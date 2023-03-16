@@ -22,7 +22,6 @@ export async function grantAllManagerRoles(
   let tx;
 
   tx = await stakeStar.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`StakeStar::MANAGER_ROLE is granted to ${managerAddress}`);
 
@@ -30,7 +29,6 @@ export async function grantAllManagerRoles(
     ConstantsLib.MANAGER_ROLE,
     managerAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(
     `StakeStarRegistry::MANAGER_ROLE is granted to ${managerAddress}`

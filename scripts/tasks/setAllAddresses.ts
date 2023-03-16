@@ -52,7 +52,6 @@ export async function setAllAddresses(
     feeRecipientAddress,
     mevRecipientAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`Addresses are set to StakeStar contract`);
 
@@ -62,7 +61,6 @@ export async function setAllAddresses(
     addresses.ssvToken,
     uniswapV3ProviderAddress
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`Addresses are set to StakeStarTreasury contract`);
 
@@ -74,7 +72,6 @@ export async function setAllAddresses(
     addresses.ssvToken,
     addresses.pool
   );
-  await tx.wait(3);
   console.log(tx.hash);
   console.log(`Addresses are set to UniswapV3Provider contract`);
 }
