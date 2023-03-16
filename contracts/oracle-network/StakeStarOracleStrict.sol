@@ -34,7 +34,7 @@ contract StakeStarOracleStrict is
     function initialize(uint64 zeroEpochTimestamp) public initializer {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
-        _epochUpdateTimePeriodInSeconds = (24 * 3600) / Utils.EPOCH_DURATION * Utils.EPOCH_DURATION;
+        setEpochUpdatePeriod(uint32(24 * 3600) / Utils.EPOCH_DURATION);
     }
 
     event Saved(uint32 epoch, uint256 totalBalance);
