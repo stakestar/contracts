@@ -15,9 +15,11 @@ task("setRateParameters", "Sets rate parameters to StakeStar")
     const StakeStar = await hre.ethers.getContractFactory("StakeStar");
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
-    await stakeStar.setRateParameters(
+    const tx = await stakeStar.setRateParameters(
       args.maxRateDeviation,
       args.rateDeviationCheck == "true"
     );
+    await tx.wait(3);
+    console.log(tx.hash);
     console.log(`Rate Parameters are set to StakeStar contract`);
   });

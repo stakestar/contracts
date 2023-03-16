@@ -20,6 +20,7 @@ task("allowListOperators", "AllowLists operators in Registry").setAction(
       const tx = await stakeStarRegistry.addOperatorToAllowList(operator);
       await tx.wait(3);
 
+      console.log(tx.hash);
       console.log(`Operator ${operator} is allowListed`);
     }
   }

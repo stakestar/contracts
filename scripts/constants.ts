@@ -14,6 +14,7 @@ export const ADDRESSES: Record<
     ssvNetwork: string;
     ssvToken: string;
     stakeStarOracle: string;
+    stakeStarOracleStrict: string;
     stakeStarTreasury: string;
     stakeStarRegistry: string;
     sstarETH: string;
@@ -29,6 +30,9 @@ export const ADDRESSES: Record<
     pool: string;
     uniswapV3Provider: string;
     uniswapHelper: string;
+    oracle1: string;
+    oracle2: string;
+    oracle3: string;
   }
 > = {
   [Network.MAINNET]: {
@@ -36,6 +40,7 @@ export const ADDRESSES: Record<
     ssvNetwork: "",
     ssvToken: "",
     stakeStarOracle: "",
+    stakeStarOracleStrict: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
     withdrawalAddress: "",
@@ -51,12 +56,16 @@ export const ADDRESSES: Record<
     pool: "",
     uniswapV3Provider: "",
     uniswapHelper: "",
+    oracle1: "",
+    oracle2: "",
+    oracle3: "",
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "0x278FB9edEcC2689177d76A6Ff418288F677AA82B",
+    stakeStarOracleStrict: "",
     stakeStarTreasury: "0xA4fb0D596b7242Ed710AbE0Bd8992448242Db2E2",
     stakeStarRegistry: "0xDF2c9fd8aC9e5958c39cE35F2c6e11651493F37F",
     withdrawalAddress: "0xA5c58ceAD0EF58491A05B5a2255E9496A86F8d1e",
@@ -72,12 +81,16 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     uniswapV3Provider: "0x264BFD651a5405d705C09c3B6f98C794E22a20cE",
     uniswapHelper: "0xbc5463603944Df2381371B7beDD30e35D233Efeb",
+    oracle1: "",
+    oracle2: "",
+    oracle3: "",
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
     ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "",
+    stakeStarOracleStrict: "",
     stakeStarTreasury: "",
     stakeStarRegistry: "",
     withdrawalAddress: "",
@@ -93,6 +106,9 @@ export const ADDRESSES: Record<
     pool: "0xa36230b9e599B9Cad2f11361c1534495D6d5d57A",
     uniswapV3Provider: "",
     uniswapHelper: "",
+    oracle1: "",
+    oracle2: "",
+    oracle3: "",
   },
 };
 

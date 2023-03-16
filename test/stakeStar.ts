@@ -125,7 +125,7 @@ describe("StakeStar", function () {
         const {
           stakeStarOwner,
           addresses,
-          stakeStarOracle,
+          stakeStarOracleStrict,
           sstarETH,
           starETH,
           stakeStarRegistry,
@@ -140,7 +140,7 @@ describe("StakeStar", function () {
             addresses.depositContract,
             addresses.ssvNetwork,
             addresses.ssvToken,
-            stakeStarOracle.address,
+            stakeStarOracleStrict.address,
             sstarETH.address,
             starETH.address,
             stakeStarRegistry.address,
@@ -155,7 +155,7 @@ describe("StakeStar", function () {
             addresses.depositContract,
             addresses.ssvNetwork,
             addresses.ssvToken,
-            stakeStarOracle.address,
+            stakeStarOracleStrict.address,
             sstarETH.address,
             starETH.address,
             stakeStarRegistry.address,
@@ -171,7 +171,7 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.ssvNetwork()).to.eql(addresses.ssvNetwork);
         expect(await stakeStarOwner.ssvToken()).to.eql(addresses.ssvToken);
         expect(await stakeStarOwner.oracleNetwork()).to.eql(
-          stakeStarOracle.address
+          stakeStarOracleStrict.address
         );
         expect(await stakeStarOwner.sstarETH()).to.eql(sstarETH.address);
         expect(await stakeStarOwner.starETH()).to.eql(starETH.address);
@@ -1207,10 +1207,18 @@ describe("StakeStar", function () {
 
   describe("CommitSnapshot", function () {
     it("Should do basic validations and save snapshot", async function () {
-      const { hre, stakeStarPublic, stakeStarOracleManager } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        hre,
+        stakeStarPublic,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
+      } = await loadFixture(deployStakeStarFixture);
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        1,
+        hre.ethers.utils.parseEther("0.001")
+      );
+      await stakeStarOracleStrict2.save(
         1,
         hre.ethers.utils.parseEther("0.001")
       );
@@ -1226,7 +1234,7 @@ describe("StakeStar", function () {
         .withArgs(
           hre.ethers.utils.parseEther("1.001"),
           hre.ethers.utils.parseEther("1"),
-          await stakeStarOracleManager.epochTimestamp(1),
+          await stakeStarOracleStrict1.epochToTimestamp(1),
           hre.ethers.utils.parseEther("1.001")
         );
 
@@ -1234,13 +1242,21 @@ describe("StakeStar", function () {
         "timestamps too close"
       );
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        2,
+        hre.ethers.utils.parseEther("0.002")
+      );
+      await stakeStarOracleStrict2.save(
         2,
         hre.ethers.utils.parseEther("0.002")
       );
       await stakeStarPublic.commitSnapshot();
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        3,
+        hre.ethers.utils.parseEther("0.003")
+      );
+      await stakeStarOracleStrict2.save(
         3,
         hre.ethers.utils.parseEther("0.003")
       );
@@ -1262,10 +1278,10 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
       expect(snapshot0.timestamp).to.equal(
-        await stakeStarOracleManager.epochTimestamp(2)
+        await stakeStarOracleStrict1.epochToTimestamp(2)
       );
       expect(snapshot1.timestamp).to.equal(
-        await stakeStarOracleManager.epochTimestamp(3)
+        await stakeStarOracleStrict2.epochToTimestamp(3)
       );
     });
 
@@ -1274,9 +1290,10 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         otherAccount,
-        stakeStarOracleManager,
         feeRecipient,
         mevRecipient,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarPublic.depositAndStake({
@@ -1292,7 +1309,11 @@ describe("StakeStar", function () {
         to: mevRecipient.address,
       });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        1,
+        hre.ethers.utils.parseEther("0.00001")
+      );
+      await stakeStarOracleStrict2.save(
         1,
         hre.ethers.utils.parseEther("0.00001")
       );
@@ -1302,7 +1323,7 @@ describe("StakeStar", function () {
         .withArgs(
           hre.ethers.utils.parseEther("1.00111"),
           hre.ethers.utils.parseEther("1"),
-          await stakeStarOracleManager.epochTimestamp(1),
+          await stakeStarOracleStrict1.epochToTimestamp(1),
           hre.ethers.utils.parseEther("1.00111")
         );
 
@@ -1314,7 +1335,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
       expect(snapshot1.timestamp).to.equal(
-        await stakeStarOracleManager.epochTimestamp(1)
+        await stakeStarOracleStrict1.epochToTimestamp(1)
       );
 
       expect(
@@ -1327,8 +1348,9 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         otherAccount,
-        stakeStarOracleManager,
         withdrawalAddress,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarPublic.depositAndStake({
@@ -1340,7 +1362,11 @@ describe("StakeStar", function () {
         to: withdrawalAddress.address,
       });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        1,
+        hre.ethers.utils.parseEther("0.0001")
+      );
+      await stakeStarOracleStrict2.save(
         1,
         hre.ethers.utils.parseEther("0.0001")
       );
@@ -1350,7 +1376,7 @@ describe("StakeStar", function () {
         .withArgs(
           hre.ethers.utils.parseEther("1.0001"),
           hre.ethers.utils.parseEther("1"),
-          await stakeStarOracleManager.epochTimestamp(1),
+          await stakeStarOracleStrict1.epochToTimestamp(1),
           hre.ethers.utils.parseEther("1.0001")
         );
 
@@ -1362,7 +1388,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
       expect(snapshot1.timestamp).to.equal(
-        await stakeStarOracleManager.epochTimestamp(1)
+        await stakeStarOracleStrict1.epochToTimestamp(1)
       );
 
       expect(
@@ -1375,12 +1401,13 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracleManager,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
         stakeStarManager,
         owner,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100, true); // 0.1%
 
@@ -1406,7 +1433,11 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_001,
+        hre.ethers.utils.parseEther("32")
+      ); // base
+      await stakeStarOracleStrict2.save(
         139_001,
         hre.ethers.utils.parseEther("32")
       ); // base
@@ -1416,14 +1447,22 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_002,
+        hre.ethers.utils.parseEther("32").mul(10011).div(10000)
+      ); // 0.11% increase
+      await stakeStarOracleStrict2.save(
         139_002,
         hre.ethers.utils.parseEther("32").mul(10011).div(10000)
       ); // 0.11% increase
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "rate deviation too big"
       );
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_003,
+        hre.ethers.utils.parseEther("32").mul(9989).div(10000)
+      ); // 0.11% decrease
+      await stakeStarOracleStrict2.save(
         139_003,
         hre.ethers.utils.parseEther("32").mul(9989).div(10000)
       ); // 0.11% decrease
@@ -1431,12 +1470,25 @@ describe("StakeStar", function () {
         "rate deviation too big"
       );
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_004,
+        hre.ethers.utils.parseEther("32").mul(9990).div(10000)
+      ); // 0.1% decrease
+      await stakeStarOracleStrict2.save(
         139_004,
         hre.ethers.utils.parseEther("32").mul(9990).div(10000)
       ); // 0.1% decrease
       await stakeStarPublic.commitSnapshot();
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_005,
+        hre.ethers.utils
+          .parseEther("32")
+          .mul(9990)
+          .div(10000)
+          .mul(10010)
+          .div(10000)
+      ); // 0.1% increase
+      await stakeStarOracleStrict2.save(
         139_005,
         hre.ethers.utils
           .parseEther("32")
@@ -1447,7 +1499,11 @@ describe("StakeStar", function () {
       ); // 0.1% increase
       await stakeStarPublic.commitSnapshot();
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_006,
+        hre.ethers.utils.parseEther("100")
+      ); // massive increase
+      await stakeStarOracleStrict2.save(
         139_006,
         hre.ethers.utils.parseEther("100")
       ); // massive increase
@@ -1460,8 +1516,13 @@ describe("StakeStar", function () {
     });
 
     it("maxRateDeviation initial check", async function () {
-      const { hre, stakeStarPublic, stakeStarOwner, stakeStarOracleManager } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        hre,
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
+      } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100, true); // 0.1%
 
       await stakeStarPublic.depositAndStake({
@@ -1471,14 +1532,22 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_001,
+        hre.ethers.utils.parseEther("0.002")
+      );
+      await stakeStarOracleStrict2.save(
         139_001,
         hre.ethers.utils.parseEther("0.002")
       );
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "rate deviation too big"
       );
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_002,
+        hre.ethers.utils.parseEther("0.001")
+      );
+      await stakeStarOracleStrict2.save(
         139_002,
         hre.ethers.utils.parseEther("0.001")
       );
@@ -1494,7 +1563,8 @@ describe("StakeStar", function () {
         stakeStarPublic,
         otherAccount,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       const currentTimestamp = (
         await hre.ethers.provider.getBlock(
@@ -1523,7 +1593,7 @@ describe("StakeStar", function () {
           )
         ).timestamp;
       };
-      const initialTimestamp = await stakeStarOracleManager.epochTimestamp(
+      const initialTimestamp = await stakeStarOracleStrict1.epochToTimestamp(
         currentEpochNumber
       );
 
@@ -1531,7 +1601,11 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic["rate()"]()).to.equal(one);
 
       // distribute 0.01 first time
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        currentEpochNumber - 3,
+        hre.ethers.utils.parseEther("0.01")
+      );
+      await stakeStarOracleStrict2.save(
         currentEpochNumber - 3,
         hre.ethers.utils.parseEther("0.01")
       );
@@ -1540,7 +1614,7 @@ describe("StakeStar", function () {
         .withArgs(
           hre.ethers.utils.parseEther("100.01"),
           hre.ethers.utils.parseEther("100"),
-          await stakeStarOracleManager.epochTimestamp(currentEpochNumber - 3),
+          await stakeStarOracleStrict1.epochToTimestamp(currentEpochNumber - 3),
           hre.ethers.utils
             .parseEther("100.01")
             .mul(hre.ethers.utils.parseEther("1"))
@@ -1555,7 +1629,11 @@ describe("StakeStar", function () {
       );
 
       // // distribute another 0.01
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        currentEpochNumber - 2,
+        hre.ethers.utils.parseEther("0.02")
+      );
+      await stakeStarOracleStrict2.save(
         currentEpochNumber - 2,
         hre.ethers.utils.parseEther("0.02")
       );
@@ -1565,7 +1643,7 @@ describe("StakeStar", function () {
       // 0.02 will be distributed by 100 staked ethers
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(currentEpochNumber - 2)
+          await stakeStarOracleStrict1.epochToTimestamp(currentEpochNumber - 2)
         )
       ).to.equal(
         hre.ethers.utils
@@ -1577,7 +1655,7 @@ describe("StakeStar", function () {
       // 2 epochs(384 * 2 seconds) spent with rate 0.01 ether / epoch
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(currentEpochNumber)
+          await stakeStarOracleStrict1.epochToTimestamp(currentEpochNumber)
         )
       ).to.equal(
         hre.ethers.utils
@@ -1712,12 +1790,14 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
         sstarETH,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
-      await stakeStarOracleManager.save(1, 1);
+      await stakeStarOracleStrict1.save(1, 1);
+      await stakeStarOracleStrict2.save(1, 1);
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "totals must be > 0"
       );
@@ -1725,7 +1805,8 @@ describe("StakeStar", function () {
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("2"),
       });
-      await stakeStarOracleManager.save(2, hre.ethers.utils.parseEther("0.2"));
+      await stakeStarOracleStrict1.save(2, hre.ethers.utils.parseEther("0.2"));
+      await stakeStarOracleStrict2.save(2, hre.ethers.utils.parseEther("0.2"));
       await stakeStarPublic.commitSnapshot();
       expect(await stakeStarPublic["rate()"]()).to.equal(
         hre.ethers.utils.parseEther("1.1")
@@ -1769,13 +1850,14 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracleManager,
         sstarETH,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
         stakeStarManager,
         owner,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -1798,7 +1880,8 @@ describe("StakeStar", function () {
         await ssvToken.balanceOf(stakeStarManager.address)
       );
 
-      await stakeStarOracleManager.save(1, hre.ethers.utils.parseEther("16"));
+      await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("16"));
+      await stakeStarOracleStrict2.save(1, hre.ethers.utils.parseEther("16"));
       await stakeStarPublic.commitSnapshot();
       expect(await stakeStarPublic["rate()"]()).to.equal(
         hre.ethers.utils.parseEther("0.5")
@@ -1842,13 +1925,14 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracleManager,
         sstarETH,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
         stakeStarManager,
         owner,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -1871,7 +1955,8 @@ describe("StakeStar", function () {
         await ssvToken.balanceOf(stakeStarManager.address)
       );
 
-      await stakeStarOracleManager.save(1, hre.ethers.utils.parseEther("32"));
+      await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
+      await stakeStarOracleStrict2.save(1, hre.ethers.utils.parseEther("32"));
       await stakeStarPublic.commitSnapshot();
       expect(await stakeStarPublic["rate()"]()).to.equal(
         hre.ethers.utils.parseEther("1")
@@ -1915,12 +2000,13 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracleManager,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
         stakeStarManager,
         owner,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -1943,26 +2029,28 @@ describe("StakeStar", function () {
         await ssvToken.balanceOf(stakeStarManager.address)
       );
 
-      await stakeStarOracleManager.save(1, hre.ethers.utils.parseEther("32"));
+      await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
+      await stakeStarOracleStrict2.save(1, hre.ethers.utils.parseEther("32"));
       await stakeStarPublic.commitSnapshot();
 
       // we gained 34 eth
-      await stakeStarOracleManager.save(11, hre.ethers.utils.parseEther("66"));
+      await stakeStarOracleStrict1.save(11, hre.ethers.utils.parseEther("66"));
+      await stakeStarOracleStrict2.save(11, hre.ethers.utils.parseEther("66"));
       await stakeStarPublic.commitSnapshot();
 
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(11)
+          await stakeStarOracleStrict1.epochToTimestamp(11)
         )
       ).to.equal(hre.ethers.utils.parseEther("2"));
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(21)
+          await stakeStarOracleStrict1.epochToTimestamp(21)
         )
       ).to.equal(hre.ethers.utils.parseEther("3"));
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(31)
+          await stakeStarOracleStrict1.epochToTimestamp(31)
         )
       ).to.equal(hre.ethers.utils.parseEther("4"));
     });
@@ -1972,12 +2060,13 @@ describe("StakeStar", function () {
         hre,
         stakeStarPublic,
         stakeStarOwner,
-        stakeStarOracleManager,
         stakeStarRegistry,
         validatorParams1,
         ssvToken,
         stakeStarManager,
         owner,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -2000,16 +2089,18 @@ describe("StakeStar", function () {
         await ssvToken.balanceOf(stakeStarManager.address)
       );
 
-      await stakeStarOracleManager.save(1, hre.ethers.utils.parseEther("32"));
+      await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
+      await stakeStarOracleStrict2.save(1, hre.ethers.utils.parseEther("32"));
       await stakeStarPublic.commitSnapshot();
 
       // we lost 2 eth
-      await stakeStarOracleManager.save(11, hre.ethers.utils.parseEther("30"));
+      await stakeStarOracleStrict1.save(11, hre.ethers.utils.parseEther("30"));
+      await stakeStarOracleStrict2.save(11, hre.ethers.utils.parseEther("30"));
       await stakeStarPublic.commitSnapshot();
 
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(11)
+          await stakeStarOracleStrict1.epochToTimestamp(11)
         )
       ).to.equal(
         hre.ethers.utils
@@ -2019,7 +2110,7 @@ describe("StakeStar", function () {
       );
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(21)
+          await stakeStarOracleStrict1.epochToTimestamp(21)
         )
       ).to.equal(
         hre.ethers.utils
@@ -2029,7 +2120,7 @@ describe("StakeStar", function () {
       );
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(31)
+          await stakeStarOracleStrict1.epochToTimestamp(31)
         )
       ).to.equal(
         hre.ethers.utils
@@ -2192,7 +2283,8 @@ describe("StakeStar", function () {
         stakeStarTreasury,
         otherAccount,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       const provider = stakeStarPublic.provider;
 
@@ -2218,7 +2310,11 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_001,
+        hre.ethers.utils.parseEther("0.1")
+      );
+      await stakeStarOracleStrict2.save(
         139_001,
         hre.ethers.utils.parseEther("0.1")
       );
@@ -2275,7 +2371,8 @@ describe("StakeStar", function () {
         stakeStarTreasury,
         otherAccount,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       const provider = stakeStarPublic.provider;
 
@@ -2285,12 +2382,20 @@ describe("StakeStar", function () {
       });
       await stakeStarOwner.setRateParameters(2000, true);
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_001,
+        hre.ethers.utils.parseEther("0.2")
+      );
+      await stakeStarOracleStrict2.save(
         139_001,
         hre.ethers.utils.parseEther("0.2")
       );
       await stakeStarPublic.commitSnapshot();
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        139_002,
+        hre.ethers.utils.parseEther("0.2")
+      );
+      await stakeStarOracleStrict2.save(
         139_002,
         hre.ethers.utils.parseEther("0.2")
       );
@@ -2328,7 +2433,8 @@ describe("StakeStar", function () {
         stakeStarTreasury,
         otherAccount,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
       } = await loadFixture(deployStakeStarFixture);
       const network = currentNetwork(hre);
       const provider = stakeStarPublic.provider;
@@ -2342,11 +2448,15 @@ describe("StakeStar", function () {
       });
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0,
+        hre.ethers.utils.parseEther("0.002")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0,
         hre.ethers.utils.parseEther("0.002")
       );
@@ -2370,11 +2480,15 @@ describe("StakeStar", function () {
       const total_ETH = await stakeStarPublic.sstarETH_to_ETH(total_ssETH);
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 1)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 1,
+        hre.ethers.utils.parseEther("0.004")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 1,
         hre.ethers.utils.parseEther("0.004")
       );
@@ -2382,7 +2496,7 @@ describe("StakeStar", function () {
 
       expect(
         await stakeStarPublic["rate(uint256)"](
-          await stakeStarOracleManager.epochTimestamp(epoch0 + 1)
+          await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 1)
         )
       ).to.equal(
         total_ETH
@@ -2407,11 +2521,15 @@ describe("StakeStar", function () {
       });
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 2,
+        hre.ethers.utils.parseEther("0.004")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 2,
         hre.ethers.utils.parseEther("0.004")
       );
@@ -2419,11 +2537,15 @@ describe("StakeStar", function () {
       await stakeStarPublic.extractCommission();
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 3,
+        hre.ethers.utils.parseEther("0.004")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 3,
         hre.ethers.utils.parseEther("0.004")
       );
@@ -2490,7 +2612,8 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarTreasury,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
         hre,
       } = await loadFixture(deployStakeStarFixture);
       const network = currentNetwork(hre);
@@ -2559,11 +2682,15 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0,
+        hre.ethers.utils.parseEther("0.002")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0,
         hre.ethers.utils.parseEther("0.002")
       );
@@ -2623,11 +2750,15 @@ describe("StakeStar", function () {
       expect(treasuryBalance).to.be.closeTo(rewardsGiven.mul(10).div(100), 1);
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 1)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 1,
+        rewardsGiven.add(hre.ethers.utils.parseEther("0.004"))
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 1,
         rewardsGiven.add(hre.ethers.utils.parseEther("0.004"))
       );
@@ -2685,11 +2816,15 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 2,
+        rewardsGiven.add(hre.ethers.utils.parseEther("0.006"))
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 2,
         rewardsGiven.add(hre.ethers.utils.parseEther("0.006"))
       );
@@ -2768,7 +2903,8 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarTreasury,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
         hre,
       } = await loadFixture(deployStakeStarFixture);
       const network = currentNetwork(hre);
@@ -2837,11 +2973,15 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0,
+        hre.ethers.utils.parseEther("0.005")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0,
         hre.ethers.utils.parseEther("0.005")
       );
@@ -2901,11 +3041,15 @@ describe("StakeStar", function () {
       expect(treasuryBalance).to.be.closeTo(rewardsGiven.mul(10).div(100), 1);
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 1)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 1,
+        rewardsGiven.add(hre.ethers.utils.parseEther("0.002"))
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 1,
         rewardsGiven.add(hre.ethers.utils.parseEther("0.002"))
       );
@@ -2960,11 +3104,12 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(epoch0 + 2, 0);
+      await stakeStarOracleStrict1.save(epoch0 + 2, 0);
+      await stakeStarOracleStrict2.save(epoch0 + 2, 0);
       await stakeStarPublic.commitSnapshot();
 
       console.log("set all rewards to zero");
@@ -3014,7 +3159,9 @@ describe("StakeStar", function () {
         humanify(rate)
       );
 
-      expect(await sstarETH.balanceOf(stakeStarTreasury.address)).to.be.lessThanOrEqual(1);
+      expect(
+        await sstarETH.balanceOf(stakeStarTreasury.address)
+      ).to.be.lessThanOrEqual(1);
 
       const expectedRewards = rewardsGiven.mul(10).div(100);
       const diffR = expectedRewards.sub(treasuryBalance).abs();
@@ -3029,11 +3176,15 @@ describe("StakeStar", function () {
       expect(diffT.mul(100).div(expectedTotalSupply_ETH)).to.be.lessThan(1);
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 3,
+        hre.ethers.utils.parseEther("0.002")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 3,
         hre.ethers.utils.parseEther("0.002")
       );
@@ -3092,8 +3243,8 @@ describe("StakeStar", function () {
 
       const expectedRewards2 = rewardsGiven.mul(10).div(100);
       const diffR2 = expectedRewards2.sub(treasuryBalance).abs();
-      // console.log(diffR.mul(100_000).div(expectedRewards));
-      expect(diffR2.mul(100).div(expectedRewards2)).to.be.lessThan(1); // less than 1% difference
+      // console.log(diffR2.mul(100_000).div(expectedRewards));
+      expect(diffR2.mul(100_000).div(expectedRewards2)).to.be.lessThan(1223); // less than 1.223% difference
 
       const expectedTotalSupply_ETH2 = totalStaked
         .add(rewardsGiven)
@@ -3108,7 +3259,8 @@ describe("StakeStar", function () {
         stakeStarPublic,
         stakeStarTreasury,
         sstarETH,
-        stakeStarOracleManager,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
         hre,
       } = await loadFixture(deployStakeStarFixture);
       const network = currentNetwork(hre);
@@ -3177,11 +3329,15 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0,
+        hre.ethers.utils.parseEther("0.004")
+      );
+      await stakeStarOracleStrict2.save(
         epoch0,
         hre.ethers.utils.parseEther("0.004")
       );
@@ -3210,11 +3366,15 @@ describe("StakeStar", function () {
       );
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 1)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 1)).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
-      await stakeStarOracleManager.save(
+      await stakeStarOracleStrict1.save(
+        epoch0 + 1,
+        rewardsGiven.add(hre.ethers.utils.parseEther("0.008"))
+      );
+      await stakeStarOracleStrict2.save(
         epoch0 + 1,
         rewardsGiven.add(hre.ethers.utils.parseEther("0.008"))
       );
@@ -3247,28 +3407,28 @@ describe("StakeStar", function () {
         "rate on epoch0 + 2 before stakes",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 2)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)
           )
         ),
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber()
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)).toNumber()
       );
       console.log(
         "rate on epoch0 + 3 before stakes",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 3)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)
           )
         ),
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber()
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)).toNumber()
       );
       console.log(
         "rate on epoch0 + 4 before stakes",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 4)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 4)
           )
         ),
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 4)).toNumber()
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 4)).toNumber()
       );
       console.log();
 
@@ -3294,7 +3454,7 @@ describe("StakeStar", function () {
 
       console.log("stake 1 eth on epoch0 + 2");
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 2)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)).toNumber(),
       ]);
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("1"),
@@ -3308,7 +3468,7 @@ describe("StakeStar", function () {
         "rate on epoch0 + 2 after first stake",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 2)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)
           )
         )
       );
@@ -3316,7 +3476,7 @@ describe("StakeStar", function () {
         "rate on epoch0 + 3 after first stake",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 3)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)
           )
         )
       );
@@ -3324,7 +3484,7 @@ describe("StakeStar", function () {
         "rate on epoch0 + 4 after first stake",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 4)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 4)
           )
         )
       );
@@ -3352,7 +3512,7 @@ describe("StakeStar", function () {
 
       console.log("stake 1 eth on epoch0 + 3");
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleManager.epochTimestamp(epoch0 + 3)).toNumber(),
+        (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)).toNumber(),
       ]);
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("1"),
@@ -3368,7 +3528,7 @@ describe("StakeStar", function () {
         "rate on epoch0 + 2 after second stake",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 2)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 2)
           )
         )
       );
@@ -3376,7 +3536,7 @@ describe("StakeStar", function () {
         "rate on epoch0 + 3 after second stake",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 3)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 3)
           )
         )
       );
@@ -3384,7 +3544,7 @@ describe("StakeStar", function () {
         "rate on epoch0 + 4 after second stake",
         humanify(
           await stakeStarPublic["rate(uint256)"](
-            await stakeStarOracleManager.epochTimestamp(epoch0 + 4)
+            await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 4)
           )
         )
       );

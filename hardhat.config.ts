@@ -8,8 +8,10 @@ import { Network } from "./scripts/types";
 
 import "./scripts/tasks/events/printCreateValidatorEvents";
 import "./scripts/tasks/events/printPullEvents";
+import "./scripts/tasks/events/printSavedEvents";
 import "./scripts/tasks/events/printUpdateRateEvents";
 import "./scripts/tasks/allowListOperators";
+import "./scripts/tasks/commitSnapshot";
 import "./scripts/tasks/deployAll";
 import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/grant-StakeStarRole";
@@ -66,6 +68,9 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+  },
+  gasReporter: {
+    enabled: process.env.GAS_REPORTER === "true",
   },
 };
 

@@ -110,7 +110,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
 
     const latestTotalBalance = await stakeStarOracle.latestTotalBalance();
     console.log(
-      "StakeStarOracle::latestStakingSurplus",
+      "StakeStarOracle::latestTotalBalance",
       humanify(latestTotalBalance.totalBalance),
       new Date(latestTotalBalance.timestamp.toNumber() * 1000).toISOString()
     );

@@ -30,28 +30,46 @@ export async function grantAllStakeStarRoles(
   const feeRecipient = await ETHReceiver.attach(feeRecipientAddress);
   const mevRecipient = await ETHReceiver.attach(mevRecipientAddress);
 
-  await stakeStarRegistry.grantRole(
+  let tx;
+
+  tx = await stakeStarRegistry.grantRole(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
+  console.log(tx.hash);
   console.log(
     `StakeStarRegistry.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
-  await sstarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+
+  tx = await sstarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  console.log(tx.hash);
   console.log(`sstarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
-  await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+
+  tx = await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  console.log(tx.hash);
   console.log(`starETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
-  await withdrawalAddress.grantRole(
+  tx = await withdrawalAddress.grantRole(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
+  console.log(tx.hash);
   console.log(
     `WithdrawalAddress.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
-  await feeRecipient.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+
+  tx = await feeRecipient.grantRole(
+    ConstantsLib.STAKE_STAR_ROLE,
+    stakeStarAddress
+  );
+  console.log(tx.hash);
   console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
-  await mevRecipient.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+
+  tx = await mevRecipient.grantRole(
+    ConstantsLib.STAKE_STAR_ROLE,
+    stakeStarAddress
+  );
+  console.log(tx.hash);
   console.log(`MevRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 }
 

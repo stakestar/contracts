@@ -79,6 +79,21 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   );
   console.log(`StakeStarOracle is deployed to ${stakeStarOracle.address}`);
 
+  const StakeStarOracleStrict = await hre.ethers.getContractFactory(
+    "StakeStarOracleStrict"
+  );
+  const stakeStarOracleStrictProxy = await hre.upgrades.deployProxy(
+    StakeStarOracleStrict,
+    [zeroEpochTimestamp]
+  );
+  await stakeStarOracleStrictProxy.deployed();
+  const stakeStarOracleStrict = await StakeStarOracleStrict.attach(
+    stakeStarOracleStrictProxy.address
+  );
+  console.log(
+    `StakeStarOracleStrict is deployed to ${stakeStarOracleStrict.address}`
+  );
+
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
   const withdrawalAddress = await ETHReceiver.deploy();
   await withdrawalAddress.deployed();
@@ -95,7 +110,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     stakeStar.address,
     sstarETH.address,
     starETH.address,
-    stakeStarOracle.address,
+    stakeStarOracleStrict.address,
     stakeStarRegistry.address,
     stakeStarTreasury.address,
     withdrawalAddress.address,
@@ -129,6 +144,7 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
     starETH,
     stakeStarTreasury,
     stakeStarOracle,
+    stakeStarOracleStrict,
     withdrawalAddress,
     feeRecipient,
     mevRecipient,
