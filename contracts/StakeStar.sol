@@ -73,6 +73,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 rate
     );
     event RateDiff(uint256 realRate, uint256 calculatedRate);
+    event RateEC(uint256 rateEC);
     event ExtractCommission(uint256 ssETH);
     event OptimizeCapitalEfficiency(uint256 ssETH, uint256 eth);
 
@@ -388,6 +389,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
 
         rateEC = rate();
+        emit RateEC(rateEC);
     }
 
     function optimizeCapitalEfficiency(uint256 eth) internal returns (uint256) {
