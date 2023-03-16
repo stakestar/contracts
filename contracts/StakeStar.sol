@@ -112,9 +112,10 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     Snapshot[2] public snapshots;
 
+    uint256 public validatorWithdrawalThreshold;
+
     uint256 public rateEC;
     uint256 public rateCorrectionFactor;
-    uint256 public validatorWithdrawalThreshold;
 
     receive() external payable {}
 
