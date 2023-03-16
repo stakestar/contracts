@@ -20,7 +20,6 @@ task("setRateParameters", "Sets rate parameters to StakeStar")
       args.rateDeviationCheck == "true"
     );
     await tx.wait(3);
-
     console.log(tx.hash);
     console.log(`Rate Parameters are set to StakeStar contract`);
   });

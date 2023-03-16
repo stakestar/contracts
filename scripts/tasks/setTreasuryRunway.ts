@@ -21,7 +21,6 @@ task("setTreasuryRunway", "Sets StakeStarTreasury runway")
       args.maxRunway
     );
     await tx.wait(3);
-
     console.log(tx.hash);
     console.log("Runway is set to", args.minRunway, "/", args.maxRunway);
   });

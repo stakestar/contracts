@@ -6,8 +6,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export async function setAllAddresses(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
-  stakeStarETHAddress: string,
-  stakeStarOracleAddress: string,
+  sstarETHAddress: string,
+  starETHAddress: string,
+  IOracleNetworkAddress: string,
   stakeStarRegistryAddress: string,
   stakeStarTreasuryAddress: string,
   withdrawalAddress: string,
@@ -42,8 +43,9 @@ export async function setAllAddresses(
     addresses.depositContract,
     addresses.ssvNetwork,
     addresses.ssvToken,
-    stakeStarOracleAddress,
-    stakeStarETHAddress,
+    IOracleNetworkAddress,
+    sstarETHAddress,
+    starETHAddress,
     stakeStarRegistryAddress,
     stakeStarTreasuryAddress,
     withdrawalAddress,
@@ -51,19 +53,16 @@ export async function setAllAddresses(
     mevRecipientAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(`Addresses are set to StakeStar contract`);
 
   tx = await stakeStarTreasury.setAddresses(
     stakeStarAddress,
-    stakeStarETHAddress,
     addresses.ssvNetwork,
     addresses.ssvToken,
     uniswapV3ProviderAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(`Addresses are set to StakeStarTreasury contract`);
 
@@ -76,7 +75,6 @@ export async function setAllAddresses(
     addresses.pool
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(`Addresses are set to UniswapV3Provider contract`);
 }
@@ -88,8 +86,9 @@ task("setAllAddresses", "Sets all addresses").setAction(async (args, hre) => {
   await setAllAddresses(
     hre,
     addresses.stakeStar,
-    addresses.stakeStarETH,
-    addresses.stakeStarOracle,
+    addresses.sstarETH,
+    addresses.starETH,
+    addresses.stakeStarOracleStrict,
     addresses.stakeStarRegistry,
     addresses.stakeStarTreasury,
     addresses.withdrawalAddress,

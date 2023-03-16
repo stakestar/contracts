@@ -12,7 +12,6 @@ task("reactivateAccount", "Reactivates account in SSV network").setAction(
 
     const tx = await stakeStar.reactivateAccount();
     await tx.wait(3);
-
     console.log(tx.hash);
     console.log("Account has been reactivated");
   }

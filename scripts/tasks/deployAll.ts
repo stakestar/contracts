@@ -22,10 +22,15 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   );
   console.log(`StakeStarRegistry is deployed to ${stakeStarRegistry.address}`);
 
-  const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
-  const stakeStarETH = await StakeStarETH.deploy();
-  await stakeStarETH.deployed();
-  console.log(`StakeStarETH is deployed to ${stakeStarETH.address}`);
+  const SStarETH = await hre.ethers.getContractFactory("SStarETH");
+  const sstarETH = await SStarETH.deploy();
+  await sstarETH.deployed();
+  console.log(`SStarETH is deployed to ${sstarETH.address}`);
+
+  const StarETH = await hre.ethers.getContractFactory("StarETH");
+  const starETH = await StarETH.deploy();
+  await starETH.deployed();
+  console.log(`StarETH is deployed to ${starETH.address}`);
 
   const StakeStarTreasury = await hre.ethers.getContractFactory(
     "StakeStarTreasury"
@@ -74,6 +79,21 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   );
   console.log(`StakeStarOracle is deployed to ${stakeStarOracle.address}`);
 
+  const StakeStarOracleStrict = await hre.ethers.getContractFactory(
+    "StakeStarOracleStrict"
+  );
+  const stakeStarOracleStrictProxy = await hre.upgrades.deployProxy(
+    StakeStarOracleStrict,
+    [zeroEpochTimestamp]
+  );
+  await stakeStarOracleStrictProxy.deployed();
+  const stakeStarOracleStrict = await StakeStarOracleStrict.attach(
+    stakeStarOracleStrictProxy.address
+  );
+  console.log(
+    `StakeStarOracleStrict is deployed to ${stakeStarOracleStrict.address}`
+  );
+
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
   const withdrawalAddress = await ETHReceiver.deploy();
   await withdrawalAddress.deployed();
@@ -88,8 +108,9 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await setAllAddresses(
     hre,
     stakeStar.address,
-    stakeStarETH.address,
-    stakeStarOracle.address,
+    sstarETH.address,
+    starETH.address,
+    stakeStarOracleStrict.address,
     stakeStarRegistry.address,
     stakeStarTreasury.address,
     withdrawalAddress.address,
@@ -102,7 +123,8 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   await grantAllStakeStarRoles(
     hre,
     stakeStar.address,
-    stakeStarETH.address,
+    sstarETH.address,
+    starETH.address,
     stakeStarRegistry.address,
     withdrawalAddress.address,
     feeRecipient.address,
@@ -118,9 +140,11 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   return {
     stakeStar,
     stakeStarRegistry,
-    stakeStarETH,
+    sstarETH,
+    starETH,
     stakeStarTreasury,
     stakeStarOracle,
+    stakeStarOracleStrict,
     withdrawalAddress,
     feeRecipient,
     mevRecipient,

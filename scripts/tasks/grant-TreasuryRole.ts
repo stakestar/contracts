@@ -20,7 +20,6 @@ export async function grantAllTreasuryRoles(
     stakeStarTreasuryAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(
     `StakeStarTreasury.TREASURY_ROLE is granted to UniswapV3Provider contract`

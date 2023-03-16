@@ -17,7 +17,6 @@ task("setTreasuryCommission", "Sets StakeStarTreasury commission")
 
     const tx = await stakeStarTreasury.setCommission(args.value);
     await tx.wait(3);
-
     console.log(tx.hash);
     console.log("Commission is set to", args.value);
   });

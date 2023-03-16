@@ -6,7 +6,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 export async function grantAllStakeStarRoles(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
-  stakeStarETHAddress: string,
+  sstarETHAddress: string,
+  starETHAddress: string,
   stakeStarRegistryAddress: string,
   withdrawalAddressAddress: string,
   feeRecipientAddress: string,
@@ -19,8 +20,10 @@ export async function grantAllStakeStarRoles(
     stakeStarRegistryAddress
   );
 
-  const StakeStarETH = await hre.ethers.getContractFactory("StakeStarETH");
-  const stakeStarETH = await StakeStarETH.attach(stakeStarETHAddress);
+  const SStarETH = await hre.ethers.getContractFactory("SStarETH");
+  const sstarETH = await SStarETH.attach(sstarETHAddress);
+  const StarETH = await hre.ethers.getContractFactory("StarETH");
+  const starETH = await StarETH.attach(starETHAddress);
 
   const ETHReceiver = await hre.ethers.getContractFactory("ETHReceiver");
   const withdrawalAddress = await ETHReceiver.attach(withdrawalAddressAddress);
@@ -34,27 +37,26 @@ export async function grantAllStakeStarRoles(
     stakeStarAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(
     `StakeStarRegistry.STAKE_STAR_ROLE is granted to StakeStar contract`
   );
 
-  tx = await stakeStarETH.grantRole(
-    ConstantsLib.STAKE_STAR_ROLE,
-    stakeStarAddress
-  );
+  tx = await sstarETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
   await tx.wait(3);
-
   console.log(tx.hash);
-  console.log(`StakeStarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
+  console.log(`sstarETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
+
+  tx = await starETH.grantRole(ConstantsLib.STAKE_STAR_ROLE, stakeStarAddress);
+  await tx.wait(3);
+  console.log(tx.hash);
+  console.log(`starETH.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
   tx = await withdrawalAddress.grantRole(
     ConstantsLib.STAKE_STAR_ROLE,
     stakeStarAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(
     `WithdrawalAddress.STAKE_STAR_ROLE is granted to StakeStar contract`
@@ -65,7 +67,6 @@ export async function grantAllStakeStarRoles(
     stakeStarAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(`FeeRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 
@@ -74,7 +75,6 @@ export async function grantAllStakeStarRoles(
     stakeStarAddress
   );
   await tx.wait(3);
-
   console.log(tx.hash);
   console.log(`MevRecipient.STAKE_STAR_ROLE is granted to StakeStar contract`);
 }
@@ -89,7 +89,8 @@ task(
   await grantAllStakeStarRoles(
     hre,
     addresses.stakeStar,
-    addresses.stakeStarETH,
+    addresses.sstarETH,
+    addresses.starETH,
     addresses.stakeStarRegistry,
     addresses.withdrawalAddress,
     addresses.feeRecipient,

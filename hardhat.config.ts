@@ -69,6 +69,9 @@ const config: HardhatUserConfig = {
       },
     ],
   },
+  gasReporter: {
+    enabled: process.env.GAS_REPORTER === "true",
+  },
 };
 
 export default config;

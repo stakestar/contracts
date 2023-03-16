@@ -3,13 +3,13 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./helpers/Utils.sol";
+import "./../helpers/Utils.sol";
 
-contract StakeStarETH is ERC20, AccessControl {
+contract StarETH is ERC20, AccessControl {
     event Mint(address indexed to, uint256 value);
     event Burn(address indexed from, uint256 value);
 
-    constructor() ERC20("StakeStar ETH", "ssETH") {
+    constructor() ERC20("StarETH", "starETH") {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
     }
 

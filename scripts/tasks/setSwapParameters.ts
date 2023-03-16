@@ -25,7 +25,6 @@ task("setSwapParameters", "Sets swap parameters to UniswapV3Provider")
       args.minLiquidity
     );
     await tx.wait(3);
-
     console.log(tx.hash);
     console.log(`Parameters are set to UniswapV3Provider contract`);
   });
