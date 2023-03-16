@@ -5,5 +5,5 @@ interface IOracleNetwork {
     function latestTotalBalance()
         external
         view
-        returns (uint256 totalBalance, uint256 timestamp);
+        returns (uint256 totalBalance, uint64 timestamp);
 }
