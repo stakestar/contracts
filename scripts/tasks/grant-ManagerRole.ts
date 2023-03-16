@@ -25,15 +25,26 @@ export async function grantAllManagerRoles(
   );
   const stakeStarOracle = await StakeStarOracle.attach(stakeStarOracleAddress);
 
-  await stakeStar.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
+  let tx;
+
+  tx = await stakeStar.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
+  await tx.wait(3);
+
+  console.log(tx.hash);
   console.log(`StakeStar::MANAGER_ROLE is granted to ${managerAddress}`);
 
-  await stakeStarRegistry.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
+  tx = await stakeStarRegistry.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
+  await tx.wait(3);
+
+  console.log(tx.hash);
   console.log(
     `StakeStarRegistry::MANAGER_ROLE is granted to ${managerAddress}`
   );
 
-  await stakeStarOracle.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
+  tx = await stakeStarOracle.grantRole(ConstantsLib.MANAGER_ROLE, managerAddress);
+  await tx.wait(3);
+
+  console.log(tx.hash);
   console.log(`StakeStarOracle::MANAGER_ROLE is granted to ${managerAddress}`);
 }
 

@@ -12,5 +12,6 @@ task("commitSnapshot", "Commits snapshot").setAction(async (args, hre) => {
   const tx = await stakeStar.commitSnapshot();
   await tx.wait(3);
 
-  console.log(`Snapshot committed`, tx.hash);
+  console.log(tx.hash);
+  console.log(`Snapshot committed`);
 });
