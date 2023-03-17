@@ -9,24 +9,42 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
   const StakeStar = await hre.ethers.getContractFactory("StakeStar");
   const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
-  console.log("ExtractCommission [timestamp, ssETH]");
-  const events1 = await stakeStar.queryFilter(
-    stakeStar.filters.ExtractCommission()
+  const StakeStarOracleStrict = await hre.ethers.getContractFactory(
+    "StakeStarOracleStrict"
   );
-  for (const event of events1) {
+  const stakeStarOracleStrict = await StakeStarOracleStrict.attach(
+    addresses.stakeStarOracleStrict
+  );
+
+  let events;
+
+  console.log("ExtractCommission [timestamp, ssETH]");
+  events = await stakeStar.queryFilter(stakeStar.filters.ExtractCommission());
+  for (const event of events) {
     console.log(
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
-      humanify(event.args.ssETH)
+      humanify(event.args.ssETH, 18, 10)
     );
   }
   console.log();
 
-  console.log("CommitSnapshot [timestamp, total_ETH, total_sstarETH, rate]");
-  const events2 = await stakeStar.queryFilter(
-    stakeStar.filters.CommitSnapshot()
-  );
-  for (const event of events2) {
+  console.log("RateEC [timestamp, rateEC]");
+  events = await stakeStar.queryFilter(stakeStar.filters.RateEC());
+  for (const event of events) {
     console.log(
+      new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
+      humanify(event.args.rateEC, 18, 10)
+    );
+  }
+  console.log();
+
+  console.log(
+    "CommitSnapshot [block timestamp, timestamp, total_ETH, total_sstarETH, rate]"
+  );
+  events = await stakeStar.queryFilter(stakeStar.filters.CommitSnapshot());
+  for (const event of events) {
+    console.log(
+      new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
       new Date(event.args.timestamp.toNumber() * 1000).toUTCString(),
       humanify(event.args.total_ETH),
       humanify(event.args.total_sstarETH),
@@ -35,9 +53,35 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
   }
   console.log();
 
+  console.log("Proposed [timestamp, epoch, balance]");
+  events = await stakeStarOracleStrict.queryFilter(
+    stakeStarOracleStrict.filters.Proposed()
+  );
+  for (const event of events) {
+    console.log(
+      new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
+      event.args.epoch,
+      humanify(event.args.totalBalance)
+    );
+  }
+  console.log();
+
+  console.log("Saved [timestamp, epoch, balance]");
+  events = await stakeStarOracleStrict.queryFilter(
+    stakeStarOracleStrict.filters.Saved()
+  );
+  for (const event of events) {
+    console.log(
+      new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
+      event.args.epoch,
+      humanify(event.args.totalBalance)
+    );
+  }
+  console.log();
+
   console.log("Stake [timestamp, starETH, sstarETH]");
-  const events3 = await stakeStar.queryFilter(stakeStar.filters.Stake());
-  for (const event of events3) {
+  events = await stakeStar.queryFilter(stakeStar.filters.Stake());
+  for (const event of events) {
     console.log(
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
       humanify(event.args.starETH),
@@ -47,8 +91,8 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
   console.log();
 
   console.log("Unstake [timestamp, sstarETH, starETH]");
-  const events4 = await stakeStar.queryFilter(stakeStar.filters.Unstake());
-  for (const event of events4) {
+  events = await stakeStar.queryFilter(stakeStar.filters.Unstake());
+  for (const event of events) {
     console.log(
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
       humanify(event.args.sstarETH),
@@ -58,8 +102,8 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
   console.log();
 
   console.log("RateDiff [timestamp, realRate, calculatedRate]");
-  const events5 = await stakeStar.queryFilter(stakeStar.filters.RateDiff());
-  for (const event of events5) {
+  events = await stakeStar.queryFilter(stakeStar.filters.RateDiff());
+  for (const event of events) {
     console.log(
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
       humanify(event.args.realRate),
