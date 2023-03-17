@@ -145,4 +145,15 @@ contract StakeStarOracleStrict is
         require(period_in_epochs >= 1, "invalid period");
         _epochUpdateTimePeriodInSeconds = period_in_epochs * Utils.EPOCH_DURATION;
     }
+
+    function getCurrentProposal(
+        address oracle
+    ) public view returns (uint32 proposed_epoch, uint256 proposed_balance) {
+        uint32 oracleNo = _oracleNo[oracle];
+        require(oracleNo > 0, "invalid_oracle");
+
+        OracleData storage info = _oracleProposal[oracleNo];
+        proposed_epoch = info.next_epoch;
+        proposed_balance = info.next_balance;
+    }
 }
