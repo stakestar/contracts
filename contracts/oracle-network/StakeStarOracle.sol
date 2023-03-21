@@ -192,7 +192,7 @@ contract StakeStarOracle is
         address oracle,
         uint8 oracle_no
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(oracle_no < ORACLES_COUNT_MAX, "invalid Oracle Number");
+        require(oracle_no < ORACLES_COUNT_MAX, "invalid oracle number");
         _oracles[oracle] = uint32((1 << oracle_no) << 24);
     }
 

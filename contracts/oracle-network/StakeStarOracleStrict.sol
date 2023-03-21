@@ -45,6 +45,7 @@ contract StakeStarOracleStrict is
         view
         returns (uint256 totalBalance, uint64 timestamp)
     {
+        require(_currentEpoch > 0, "not initialized");
         totalBalance = _currentBalance;
         timestamp = epochToTimestamp(_currentEpoch);
     }
@@ -60,7 +61,7 @@ contract StakeStarOracleStrict is
     }
 
     function nextEpochToPublish() public view returns (uint32) {
-        (, uint64 consensusTimestamp) = latestTotalBalance();
+        uint64 consensusTimestamp = epochToTimestamp(_currentEpoch);
         uint64 nextEpochTimestamp = (uint64(block.timestamp) - consensusTimestamp - 1)
                                         / _epochUpdateTimePeriodInSeconds
                                         * _epochUpdateTimePeriodInSeconds
@@ -87,6 +88,11 @@ contract StakeStarOracleStrict is
         if (epoch == _currentEpoch) {
             if (totalBalance == _currentBalance) {
                 // already in consensus, just ignore the same data
+                emit Proposed(
+                    epoch,
+                    totalBalance,
+                    uint32(1) << (uint32(23) + oracleNo)
+                );
                 return;
             } else {
                 revert("balance not equals");
@@ -129,7 +135,7 @@ contract StakeStarOracleStrict is
         address oracle,
         uint8 oracle_no
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(oracle_no < ORACLES_COUNT_MAX, "invalid Oracle Number");
+        require(oracle_no < ORACLES_COUNT_MAX, "invalid oracle number");
         _oracleNo[oracle] = oracle_no + 1;
     }
 
@@ -150,7 +156,7 @@ contract StakeStarOracleStrict is
         address oracle
     ) public view returns (uint32 proposed_epoch, uint256 proposed_balance) {
         uint32 oracleNo = _oracleNo[oracle];
-        require(oracleNo > 0, "invalid_oracle");
+        require(oracleNo > 0, "invalid oracle");
 
         OracleData storage info = _oracleProposal[oracleNo];
         proposed_epoch = info.next_epoch;
