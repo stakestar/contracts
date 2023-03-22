@@ -58,6 +58,4 @@ yarn hardhat grant-OracleRole --network goerli
 
 ## To do
 
-- fix commission
-- add tests for OracleNetwork
 - add tests for 2 tokens
