@@ -10,6 +10,7 @@ import "./scripts/tasks/events/printCreateValidatorEvents";
 import "./scripts/tasks/events/printPullEvents";
 import "./scripts/tasks/events/printRateEvents";
 import "./scripts/tasks/events/printSavedEvents";
+import "./scripts/tasks/events/printValidatorEvents";
 import "./scripts/tasks/allowListOperators";
 import "./scripts/tasks/commitSnapshot";
 import "./scripts/tasks/deployAll";

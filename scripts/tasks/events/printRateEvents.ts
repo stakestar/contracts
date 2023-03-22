@@ -53,27 +53,35 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
   }
   console.log();
 
-  console.log("Proposed [timestamp, epoch, balance]");
+  console.log("Proposed [block timestamp, epoch timestamp, balance]");
   events = await stakeStarOracleStrict.queryFilter(
     stakeStarOracleStrict.filters.Proposed()
   );
   for (const event of events) {
     console.log(
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
-      event.args.epoch,
+      new Date(
+        (
+          await stakeStarOracleStrict.epochToTimestamp(event.args.epoch)
+        ).toNumber() * 1000
+      ).toUTCString(),
       humanify(event.args.totalBalance)
     );
   }
   console.log();
 
-  console.log("Saved [timestamp, epoch, balance]");
+  console.log("Saved [block timestamp, epoch timestamp, balance]");
   events = await stakeStarOracleStrict.queryFilter(
     stakeStarOracleStrict.filters.Saved()
   );
   for (const event of events) {
     console.log(
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
-      event.args.epoch,
+      new Date(
+        (
+          await stakeStarOracleStrict.epochToTimestamp(event.args.epoch)
+        ).toNumber() * 1000
+      ).toUTCString(),
       humanify(event.args.totalBalance)
     );
   }

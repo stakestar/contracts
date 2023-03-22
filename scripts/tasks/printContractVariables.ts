@@ -11,15 +11,44 @@ task("printContractVariables", "Prints contracts variables").setAction(
     const StakeStar = await hre.ethers.getContractFactory("StakeStar");
     const stakeStar = await StakeStar.attach(addresses.stakeStar);
 
+    const SStarETH = await hre.ethers.getContractFactory("SStarETH");
+    const sstarETH = await SStarETH.attach(addresses.sstarETH);
+
+    const StarETH = await hre.ethers.getContractFactory("StarETH");
+    const starETH = await StarETH.attach(addresses.starETH);
+
     console.log(
       "StakeStar ETH Balance",
       humanify(await hre.ethers.provider.getBalance(stakeStar.address))
     );
     console.log(
+      "StakeStarTreasury ETH Balance",
+      humanify(await hre.ethers.provider.getBalance(addresses.stakeStarTreasury))
+    );
+    console.log(
+      "WithdrawalAddress ETH Balance",
+      humanify(await hre.ethers.provider.getBalance(addresses.withdrawalAddress))
+    );
+    console.log(
+      "FeeRecipient ETH Balance",
+      humanify(await hre.ethers.provider.getBalance(addresses.withdrawalAddress))
+    );
+    console.log(
+      "SStarETH TotalSupply",
+      humanify(await sstarETH.totalSupply())
+    );
+    console.log(
+      "StarETH TotalSupply",
+      humanify(await starETH.totalSupply())
+    );
+    console.log();
+
+    console.log(
       "pendingWithdrawalSum",
       humanify(await stakeStar.pendingWithdrawalSum())
     );
     console.log("localPoolSize", humanify(await stakeStar.localPoolSize()));
+    console.log("maxRateDeviation", await stakeStar.maxRateDeviation());
     console.log();
 
     const snapshot0 = await stakeStar.snapshots(0);
@@ -101,16 +130,16 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     console.log();
 
-    const StakeStarOracle = await hre.ethers.getContractFactory(
-      "StakeStarOracle"
+    const StakeStarOracleStrict = await hre.ethers.getContractFactory(
+      "StakeStarOracleStrict"
     );
-    const stakeStarOracle = await StakeStarOracle.attach(
-      addresses.stakeStarOracle
+    const stakeStarOracleStrict = await StakeStarOracleStrict.attach(
+      addresses.stakeStarOracleStrict
     );
 
-    const latestTotalBalance = await stakeStarOracle.latestTotalBalance();
+    const latestTotalBalance = await stakeStarOracleStrict.latestTotalBalance();
     console.log(
-      "StakeStarOracle::latestTotalBalance",
+      "StakeStarOracleStrict::latestTotalBalance",
       humanify(latestTotalBalance.totalBalance),
       new Date(latestTotalBalance.timestamp.toNumber() * 1000).toISOString()
     );
