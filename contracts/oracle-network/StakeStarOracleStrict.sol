@@ -13,7 +13,7 @@ contract StakeStarOracleStrict is
 {
     uint64 public _zeroEpochTimestamp;
 
-    uint32 public _currentEpoch;
+    uint32 private _currentEpoch;
     uint256 private _currentBalance;
 
     bool public _strictEpochMode;
