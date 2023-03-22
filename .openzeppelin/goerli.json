@@ -2087,6 +2087,210 @@
           }
         }
       }
+    },
+    "7b91ef8093e96e13aa2b4d756f023d4e37c8a6caf5df7eb84dd9d00507a0e64a": {
+      "address": "0xAeC20963E5ACEf15CA5315FD51943e66f46a88Cc",
+      "txHash": "0x6d448c9fcba4d1028b4eceb0b7fc60995c47d839efaaeae2f9cd9e687dfe077c",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC165Upgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)101_storage)",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
+          },
+          {
+            "label": "_zeroEpochTimestamp",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_uint64",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:14"
+          },
+          {
+            "label": "_currentEpoch",
+            "offset": 8,
+            "slot": "151",
+            "type": "t_uint32",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:16"
+          },
+          {
+            "label": "_currentBalance",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_uint256",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:17"
+          },
+          {
+            "label": "_strictEpochMode",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_bool",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:19"
+          },
+          {
+            "label": "_epochUpdateTimePeriodInSeconds",
+            "offset": 1,
+            "slot": "153",
+            "type": "t_uint32",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:24"
+          },
+          {
+            "label": "_oracleNo",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_mapping(t_address,t_uint32)",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:31"
+          },
+          {
+            "label": "_oracleProposal",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_mapping(t_uint32,t_struct(OracleData)9437_storage)",
+            "contract": "StakeStarOracleStrict",
+            "src": "contracts/oracle-network/StakeStarOracleStrict.sol:32"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint32)": {
+            "label": "mapping(address => uint32)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)101_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint32,t_struct(OracleData)9437_storage)": {
+            "label": "mapping(uint32 => struct StakeStarOracleStrict.OracleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(OracleData)9437_storage": {
+            "label": "struct StakeStarOracleStrict.OracleData",
+            "members": [
+              {
+                "label": "next_epoch",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "next_balance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(RoleData)101_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
     }
   }
 }
