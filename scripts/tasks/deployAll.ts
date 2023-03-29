@@ -70,26 +70,18 @@ export async function deployAll(hre: HardhatRuntimeEnvironment) {
   const StakeStarOracle = await hre.ethers.getContractFactory(
     "StakeStarOracle"
   );
-  const stakeStarOracleProxy = await hre.upgrades.deployProxy(StakeStarOracle, [
-    zeroEpochTimestamp,
-  ]);
-  await stakeStarOracleProxy.deployed();
-  const stakeStarOracle = await StakeStarOracle.attach(
-    stakeStarOracleProxy.address
-  );
+  const stakeStarOracle = await StakeStarOracle.deploy(zeroEpochTimestamp);
+  await stakeStarOracle.deployed();
+
   console.log(`StakeStarOracle is deployed to ${stakeStarOracle.address}`);
 
   const StakeStarOracleStrict = await hre.ethers.getContractFactory(
     "StakeStarOracleStrict"
   );
-  const stakeStarOracleStrictProxy = await hre.upgrades.deployProxy(
-    StakeStarOracleStrict,
-    [zeroEpochTimestamp]
-  );
-  await stakeStarOracleStrictProxy.deployed();
-  const stakeStarOracleStrict = await StakeStarOracleStrict.attach(
-    stakeStarOracleStrictProxy.address
-  );
+
+  const stakeStarOracleStrict = await StakeStarOracleStrict.deploy(zeroEpochTimestamp);
+  await stakeStarOracleStrict.deployed();
+
   console.log(
     `StakeStarOracleStrict is deployed to ${stakeStarOracleStrict.address}`
   );

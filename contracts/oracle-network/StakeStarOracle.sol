@@ -2,14 +2,13 @@
 pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOracleNetwork.sol";
 import "../helpers/Utils.sol";
 
 contract StakeStarOracle is
     IOracleNetwork,
-    Initializable,
-    AccessControlUpgradeable
+    AccessControl
 {
     // variable pairs has meaning on of
     // 1) current known epoch-balance consensus of the oracles
@@ -34,7 +33,7 @@ contract StakeStarOracle is
     // from address to oracle bit = (1 << oracle_no) << 24;
     mapping(address => uint32) private _oracles;
 
-    function initialize(uint64 zeroEpochTimestamp) public initializer {
+    constructor (uint64 zeroEpochTimestamp) {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
         setEpochUpdatePeriod(uint32(24 * 3600) / Utils.EPOCH_DURATION);

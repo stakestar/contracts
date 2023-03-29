@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOracleNetwork.sol";
 import "../helpers/Utils.sol";
 
 contract StakeStarOracleStrict is
     IOracleNetwork,
-    Initializable,
-    AccessControlUpgradeable
+    AccessControl
 {
     uint32 private _currentEpoch;
     uint96 private _currentBalance;
@@ -29,7 +27,7 @@ contract StakeStarOracleStrict is
     mapping(address => uint32) private _oracleNo;
     mapping(uint32 => OracleData) private _oracleProposal;
 
-    function initialize(uint64 zeroEpochTimestamp) public initializer {
+    constructor (uint64 zeroEpochTimestamp) {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
         setEpochUpdatePeriod(uint32(24 * 3600) / Utils.EPOCH_DURATION);
