@@ -22,6 +22,7 @@ import "./scripts/tasks/printAddresses";
 import "./scripts/tasks/printContractVariables";
 import "./scripts/tasks/reactivateAccount";
 import "./scripts/tasks/setAllAddresses";
+import "./scripts/tasks/setEpochUpdatePeriod";
 import "./scripts/tasks/setLocalPoolParameters";
 import "./scripts/tasks/setRateParameters";
 import "./scripts/tasks/setSwapParameters";

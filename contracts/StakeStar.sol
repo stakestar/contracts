@@ -401,7 +401,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 toTransfer = MathUpgradeable.min(eth, ethBalance);
         uint256 toBurn = ETH_to_sstarETH(toTransfer);
 
-        if (toTransfer > 0) {
+        if (toTransfer > 0 && toBurn > 0) {
             sstarETH.burn(address(stakeStarTreasury), toBurn);
             Utils.safeTransferETH(address(stakeStarTreasury), toTransfer);
             emit OptimizeCapitalEfficiency(toBurn, toTransfer);
