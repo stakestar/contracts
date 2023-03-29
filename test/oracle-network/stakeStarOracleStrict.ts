@@ -362,43 +362,46 @@ describe("StakeStarOracleStrict", function () {
           let nextBalance = currentBalance + getRandomInt(-100, 1000);
 
           let repeats = gasMeasureMode ? 1 : 2;
-          let oracles_succeeded : { [key:number]: boolean; } = {};
+          let oraclesSucceeded : { [key:number]: boolean; } = {};
           let has_consensus = false;
 
           const already_in_consensus = (await stakeStarOracleStrict.timestampToEpoch(
               (await stakeStarOracleStrict.latestTotalBalance()).timestamp)) === nextEpoch;
 
+          let incorrectEpochs : number[] = []
+          let incorrectBalances : number[] = []
+
           while (repeats--) {
             let oracles_order = [...Array(ORACLES_COUNT).keys()]
             shuffleArray(oracles_order);
 
-            for (let oracle_no of oracles_order) {
+            for (let oracleNo of oracles_order) {
               const action_id = gasMeasureMode ? SAVE_CORRECT_ALL : getRandomInt(MIN_ACTION, MAX_ACTION);
               switch (action_id) {
                 case NO_ACTION: {
-                  vlog("ORACLE", oracle_no, "NO ACTION");
+                  vlog("ORACLE", oracleNo, "NO ACTION");
                   break;
                 }
                 case SAVE_CORRECT_ALL: {
-                  vlog("ORACLE", oracle_no, "SAVE CORRECT ALL", nextEpoch, nextBalance);
+                  vlog("ORACLE", oracleNo, "SAVE CORRECT ALL", nextEpoch, nextBalance);
 
                   let confirmations = 0;
                   for (let i = 0; i < ORACLES_COUNT; ++i) {
-                    if (i !== oracle_no && oracles_succeeded[i]) {
+                    if (i !== oracleNo && oraclesSucceeded[i]) {
                       ++confirmations;
                     }
                   }
 
                   if (already_in_consensus) {
                     await expect(
-                      oracles[oracle_no].save(nextEpoch, nextBalance)
+                      oracles[oracleNo].save(nextEpoch, nextBalance)
                     ).to.be.revertedWith("balance not equals");
                   } else {
                     if (!has_consensus && confirmations == MIN_CONSENSUS_COUNT - 1) {
-                      await expect(oracles[oracle_no].save(nextEpoch, nextBalance))
-                        .to.emit(oracles[oracle_no], "Proposed")
-                        .withArgs(nextEpoch, nextBalance, 1 << (24 + oracle_no))
-                        .and.emit(oracles[oracle_no], "Saved")
+                      await expect(oracles[oracleNo].save(nextEpoch, nextBalance))
+                        .to.emit(oracles[oracleNo], "Proposed")
+                        .withArgs(nextEpoch, nextBalance, 1 << (24 + oracleNo))
+                        .and.emit(oracles[oracleNo], "Saved")
                         .withArgs(nextEpoch, nextBalance);
 
                       vlog("GOT CONSENSUS");
@@ -409,64 +412,73 @@ describe("StakeStarOracleStrict", function () {
 
                       has_consensus = true;
                     } else {
-                      await expect(oracles[oracle_no].save(nextEpoch, nextBalance))
-                        .to.emit(oracles[oracle_no], "Proposed")
-                        .withArgs(nextEpoch, nextBalance, 1 << (24 + oracle_no))
-                        .and.not.to.emit(oracles[oracle_no], "Saved");
+                      await expect(oracles[oracleNo].save(nextEpoch, nextBalance))
+                        .to.emit(oracles[oracleNo], "Proposed")
+                        .withArgs(nextEpoch, nextBalance, 1 << (24 + oracleNo))
+                        .and.not.to.emit(oracles[oracleNo], "Saved");
                     }
                   }
 
-                  oracles_succeeded[oracle_no] = true;
+                  oraclesSucceeded[oracleNo] = true;
 
                   break;
                 }
 
                 case SAVE_CORRECT_EPOCH_INCORRECT_BALANCE: {
-                  const incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
-                  vlog("ORACLE", oracle_no, "SAVE CORRECT EPOCH INCORRECT BALANCE", nextEpoch, incorrectBalance);
+                  let incorrectBalance;
+                  do {
+                    incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                  } while (incorrectBalances.indexOf(incorrectBalance) != -1)
+                  vlog("ORACLE", oracleNo, "SAVE CORRECT EPOCH INCORRECT BALANCE", nextEpoch, incorrectBalance);
                   if (already_in_consensus || has_consensus) {
                     await expect(
-                      oracles[oracle_no].save(nextEpoch, incorrectBalance)
+                      oracles[oracleNo].save(nextEpoch, incorrectBalance)
                     ).to.be.revertedWith("balance not equals");
                   } else {
-                    await expect(oracles[oracle_no].save(nextEpoch, incorrectBalance))
-                      .to.emit(oracles[oracle_no], "Proposed")
-                      .withArgs(nextEpoch, incorrectBalance, 1 << (24 + oracle_no))
-                      .and.not.to.emit(oracles[oracle_no], "Saved");
+                    await expect(oracles[oracleNo].save(nextEpoch, incorrectBalance))
+                      .to.emit(oracles[oracleNo], "Proposed")
+                      .withArgs(nextEpoch, incorrectBalance, 1 << (24 + oracleNo))
+                      .and.not.to.emit(oracles[oracleNo], "Saved");
 
-                    oracles_succeeded[oracle_no] = false;
+                    oraclesSucceeded[oracleNo] = false;
+                    incorrectBalances.push(incorrectBalance);
                   }
 
                   break;
                 }
 
                 case SAVE_INCORRECT_EPOCH_CORRECT_BALANCE: {
-                  const incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
-                  vlog("ORACLE", oracle_no, "SAVE INCORRECT EPOCH CORRECT BALANCE", incorrectEpoch, nextBalance);
+                  let incorrectEpoch;
+                  do {
+                    incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
+                  } while (incorrectEpochs.indexOf(incorrectEpoch) != -1);
+
+                  vlog("ORACLE", oracleNo, "SAVE INCORRECT EPOCH CORRECT BALANCE", incorrectEpoch, nextBalance);
                   const maxEpochPossible = (await stakeStarOracleStrict.timestampToEpoch(
                       (await hre.ethers.provider.getBlock("latest")).timestamp));
                   vlog("maxEpochPossible=", maxEpochPossible);
 
                   if (incorrectEpoch > maxEpochPossible) {
                     await expect(
-                      oracles[oracle_no].save(incorrectEpoch, nextBalance)
+                      oracles[oracleNo].save(incorrectEpoch, nextBalance)
                     ).to.be.revertedWith("epoch from the future");
                   } else if (strict_mode) {
                     await expect(
-                      oracles[oracle_no].save(incorrectEpoch, nextBalance)
+                      oracles[oracleNo].save(incorrectEpoch, nextBalance)
                     ).to.be.revertedWith("only nextEpochToPublish() allowed");
                   } else {
                     if (incorrectEpoch <= currentEpoch) {
                       await expect(
-                        oracles[oracle_no].save(incorrectEpoch, nextBalance)
+                        oracles[oracleNo].save(incorrectEpoch, nextBalance)
                       ).to.be.revertedWith("epoch must increase");
                     } else {
-                      await expect(oracles[oracle_no].save(incorrectEpoch, nextBalance))
-                        .to.emit(oracles[oracle_no], "Proposed")
-                        .withArgs(incorrectEpoch, nextBalance, 1 << (24 + oracle_no))
-                        .and.not.to.emit(oracles[oracle_no], "Saved");
+                      await expect(oracles[oracleNo].save(incorrectEpoch, nextBalance))
+                        .to.emit(oracles[oracleNo], "Proposed")
+                        .withArgs(incorrectEpoch, nextBalance, 1 << (24 + oracleNo))
+                        .and.not.to.emit(oracles[oracleNo], "Saved");
 
-                      oracles_succeeded[oracle_no] = false;
+                      oraclesSucceeded[oracleNo] = false;
+                      incorrectEpochs.push(incorrectEpoch);
                     }
                   }
 
@@ -474,33 +486,43 @@ describe("StakeStarOracleStrict", function () {
                 }
 
                 case SAVE_INCORRECT_EPOCH_INCORRECT_BALANCE: {
-                  const incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
-                  const incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
-                  vlog("ORACLE", oracle_no, "SAVE INCORRECT EPOCH INCORRECT BALANCE", incorrectEpoch, incorrectBalance);
+                  let incorrectEpoch;
+                  do {
+                    incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
+                  } while (incorrectEpochs.indexOf(incorrectEpoch) != -1);
+
+                  let incorrectBalance;
+                  do {
+                    incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                  } while (incorrectBalances.indexOf(incorrectBalance) != -1)
+
+                  vlog("ORACLE", oracleNo, "SAVE INCORRECT EPOCH INCORRECT BALANCE", incorrectEpoch, incorrectBalance);
                   const maxEpochPossible = (await stakeStarOracleStrict.timestampToEpoch(
                       (await hre.ethers.provider.getBlock("latest")).timestamp));
                   vlog("maxEpochPossible=", maxEpochPossible);
 
                   if (incorrectEpoch > maxEpochPossible) {
                     await expect(
-                      oracles[oracle_no].save(incorrectEpoch, incorrectBalance)
+                      oracles[oracleNo].save(incorrectEpoch, incorrectBalance)
                     ).to.be.revertedWith("epoch from the future");
                   } else if (strict_mode) {
                     await expect(
-                      oracles[oracle_no].save(incorrectEpoch, incorrectBalance)
+                      oracles[oracleNo].save(incorrectEpoch, incorrectBalance)
                     ).to.be.revertedWith("only nextEpochToPublish() allowed");
                   } else {
                     if (incorrectEpoch <= currentEpoch) {
                       await expect(
-                        oracles[oracle_no].save(incorrectEpoch, incorrectBalance)
+                        oracles[oracleNo].save(incorrectEpoch, incorrectBalance)
                       ).to.be.revertedWith("epoch must increase");
                     } else {
-                      await expect(oracles[oracle_no].save(incorrectEpoch, incorrectBalance))
-                        .to.emit(oracles[oracle_no], "Proposed")
-                        .withArgs(incorrectEpoch, incorrectBalance, 1 << (24 + oracle_no))
-                        .and.not.to.emit(oracles[oracle_no], "Saved");
+                      await expect(oracles[oracleNo].save(incorrectEpoch, incorrectBalance))
+                        .to.emit(oracles[oracleNo], "Proposed")
+                        .withArgs(incorrectEpoch, incorrectBalance, 1 << (24 + oracleNo))
+                        .and.not.to.emit(oracles[oracleNo], "Saved");
 
-                      oracles_succeeded[oracle_no] = false;
+                      oraclesSucceeded[oracleNo] = false;
+                      incorrectEpochs.push(incorrectEpoch);
+                      incorrectBalances.push(incorrectBalance);
                     }
                   }
 
