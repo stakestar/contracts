@@ -467,7 +467,11 @@ describe("StakeStarOracleStrict", function () {
                       oracles[oracleNo].save(incorrectEpoch, nextBalance)
                     ).to.be.revertedWith("only nextEpochToPublish() allowed");
                   } else {
-                    if (incorrectEpoch <= currentEpoch) {
+                    if (incorrectEpoch == currentEpoch) {
+                      await expect(
+                        oracles[oracleNo].save(incorrectEpoch, nextBalance)
+                      ).to.be.revertedWith("balance not equals");
+                    } else if (incorrectEpoch < currentEpoch) {
                       await expect(
                         oracles[oracleNo].save(incorrectEpoch, nextBalance)
                       ).to.be.revertedWith("epoch must increase");
@@ -510,7 +514,11 @@ describe("StakeStarOracleStrict", function () {
                       oracles[oracleNo].save(incorrectEpoch, incorrectBalance)
                     ).to.be.revertedWith("only nextEpochToPublish() allowed");
                   } else {
-                    if (incorrectEpoch <= currentEpoch) {
+                    if (incorrectEpoch == currentEpoch) {
+                      await expect(
+                        oracles[oracleNo].save(incorrectEpoch, incorrectBalance)
+                      ).to.be.revertedWith("balance not equals");
+                    } else if (incorrectEpoch < currentEpoch) {
                       await expect(
                         oracles[oracleNo].save(incorrectEpoch, incorrectBalance)
                       ).to.be.revertedWith("epoch must increase");
