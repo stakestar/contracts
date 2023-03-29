@@ -28,6 +28,7 @@ import "./scripts/tasks/setRateParameters";
 import "./scripts/tasks/setSwapParameters";
 import "./scripts/tasks/setTreasuryCommission";
 import "./scripts/tasks/setTreasuryRunway";
+import "./scripts/tasks/setValidatorWithdrawalThreshold";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarOracle";
 import "./scripts/tasks/upgrade-StakeStarOracleStrict";
