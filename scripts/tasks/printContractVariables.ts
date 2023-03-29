@@ -92,6 +92,9 @@ task("printContractVariables", "Prints contracts variables").setAction(
       .add(activeValidatorCount)
       .add(exitingValidatorCount);
 
+    console.log("ValidatorCreationAvailability", await stakeStar.validatorCreationAvailability());
+    console.log("ValidatorDestructionAvailability", await stakeStar.validatorDestructionAvailability());
+
     console.log(
       "PENDING validator count",
       humanify(pendingValidatorCount, 0, 0)
