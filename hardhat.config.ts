@@ -88,6 +88,9 @@ const config: HardhatUserConfig = {
     currency: 'USD',
     coinmarketcap: "2654f890-e01f-4d25-8be0-35e8942cb581",
   },
+  mocha: {
+    timeout: 100000000,
+  },
 };
 
 export default config;

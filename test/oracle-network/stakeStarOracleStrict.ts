@@ -215,12 +215,6 @@ describe("StakeStarOracleStrict", function () {
         }`
       );
 
-      await stakeStarOracleStrict.setStrictEpochMode(false);
-
-      await expect(
-        stakeStarOracleStrict1.save(nextEpoch1 - 1, 9000)
-      ).to.be.revertedWith("epoch must increase");
-
       await stakeStarOracleStrict.setStrictEpochMode(true);
 
       // first proposal
@@ -253,8 +247,12 @@ describe("StakeStarOracleStrict", function () {
       await stakeStarOracleStrict.setStrictEpochMode(false);
 
       await expect(
-        stakeStarOracleStrict3.save(nextEpoch2 - 1, 1200)
+        stakeStarOracleStrict3.save(nextEpoch1 - 1, 1200)
       ).to.be.revertedWith("epoch must increase");
+
+      await expect(
+        stakeStarOracleStrict3.save(nextEpoch1, 1200)
+      ).to.be.revertedWith("balance not equals");
 
       // new consensus
       await expect(stakeStarOracleStrict3.save(nextEpoch2, 1200))
@@ -296,7 +294,6 @@ describe("StakeStarOracleStrict", function () {
     });
   });
 
-
   describe("RandomOracleTest", function () {
     it("Randomized oracle test should work", async function () {
       const {
@@ -307,9 +304,14 @@ describe("StakeStarOracleStrict", function () {
         stakeStarOracleStrict3,
       } = await loadFixture(deployStakeStarFixture);
 
+      const verbose_mode = false;
+      const vlog = function(...args) {
+        if (verbose_mode) console.log(...args)
+      }
+
       const network = currentNetwork(hre);
       const epoch_update_period = 24 * 3600;
-      const gasMeasureMode = true
+      const gasMeasureMode = false
 
       const oracles = [stakeStarOracleStrict1, stakeStarOracleStrict2, stakeStarOracleStrict3];
       const ORACLES_COUNT = 3;
@@ -323,7 +325,7 @@ describe("StakeStarOracleStrict", function () {
       const SAVE_INCORRECT_EPOCH_INCORRECT_BALANCE = 4;
       const MAX_ACTION = 4;
 
-      let currentBalance : number = 1000;
+      let currentBalance : number = 10000;
       let currentEpoch : number = (await stakeStarOracleStrict.nextEpochToPublish());
 
       await stakeStarOracleStrict1.save(currentEpoch, currentBalance);
@@ -336,15 +338,16 @@ describe("StakeStarOracleStrict", function () {
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
       for (let strict_mode of [true, false]) {
-        console.log("StrictMode:", strict_mode);
+        vlog("StrictMode:", strict_mode);
 
         await stakeStarOracleStrict.setStrictEpochMode(strict_mode);
 
         for (let iteration = 0; iteration < 100; ++iteration) {
-          console.log("ITERATION:", iteration);
+          vlog("ITERATION:", iteration);
 
           const currentBlock = await hre.ethers.provider.getBlock("latest");
-          console.log("Current Block Timestamp: ", currentBlock.timestamp);
+          const currentBlockEpoch = await stakeStarOracleStrict.timestampToEpoch(currentBlock.timestamp)
+          vlog("Current Block Timestamp:", currentBlock.timestamp, "Current Block Epoch:", currentBlockEpoch);
 
           let nextEpoch;
           if (strict_mode) {
@@ -354,9 +357,7 @@ describe("StakeStarOracleStrict", function () {
             );
           } else {
             nextEpoch = lastSetEpoch + getRandomInt(1, 500);
-            const maxEpochPossible = (await stakeStarOracleStrict.timestampToEpoch(
-                (await hre.ethers.provider.getBlock("latest")).timestamp)) - 1;
-            nextEpoch = nextEpoch > maxEpochPossible ? maxEpochPossible : nextEpoch;
+            nextEpoch = nextEpoch >= currentBlockEpoch ? currentBlockEpoch : nextEpoch;
           }
           let nextBalance = currentBalance + getRandomInt(-100, 1000);
 
@@ -374,11 +375,12 @@ describe("StakeStarOracleStrict", function () {
             for (let oracle_no of oracles_order) {
               const action_id = gasMeasureMode ? SAVE_CORRECT_ALL : getRandomInt(MIN_ACTION, MAX_ACTION);
               switch (action_id) {
-                case NO_ACTION:
-                  console.log("ORACLE", oracle_no, "NO ACTION");
+                case NO_ACTION: {
+                  vlog("ORACLE", oracle_no, "NO ACTION");
                   break;
-                case SAVE_CORRECT_ALL:
-                  console.log("ORACLE", oracle_no, "SAVE CORRECT ALL", nextEpoch, nextBalance);
+                }
+                case SAVE_CORRECT_ALL: {
+                  vlog("ORACLE", oracle_no, "SAVE CORRECT ALL", nextEpoch, nextBalance);
 
                   let confirmations = 0;
                   for (let i = 0; i < ORACLES_COUNT; ++i) {
@@ -399,7 +401,12 @@ describe("StakeStarOracleStrict", function () {
                         .and.emit(oracles[oracle_no], "Saved")
                         .withArgs(nextEpoch, nextBalance);
 
-                      console.log("GOT CONSENSUS");
+                      vlog("GOT CONSENSUS");
+                      currentBalance = (await stakeStarOracleStrict.latestTotalBalance()).totalBalance.toNumber();
+                      currentEpoch = await stakeStarOracleStrict.timestampToEpoch((await stakeStarOracleStrict.latestTotalBalance()).timestamp);
+                      expect(currentBalance).to.be.eq(nextBalance);
+                      expect(currentEpoch).to.be.eq(nextEpoch);
+
                       has_consensus = true;
                     } else {
                       await expect(oracles[oracle_no].save(nextEpoch, nextBalance))
@@ -412,6 +419,93 @@ describe("StakeStarOracleStrict", function () {
                   oracles_succeeded[oracle_no] = true;
 
                   break;
+                }
+
+                case SAVE_CORRECT_EPOCH_INCORRECT_BALANCE: {
+                  const incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                  vlog("ORACLE", oracle_no, "SAVE CORRECT EPOCH INCORRECT BALANCE", nextEpoch, incorrectBalance);
+                  if (already_in_consensus || has_consensus) {
+                    await expect(
+                      oracles[oracle_no].save(nextEpoch, incorrectBalance)
+                    ).to.be.revertedWith("balance not equals");
+                  } else {
+                    await expect(oracles[oracle_no].save(nextEpoch, incorrectBalance))
+                      .to.emit(oracles[oracle_no], "Proposed")
+                      .withArgs(nextEpoch, incorrectBalance, 1 << (24 + oracle_no))
+                      .and.not.to.emit(oracles[oracle_no], "Saved");
+
+                    oracles_succeeded[oracle_no] = false;
+                  }
+
+                  break;
+                }
+
+                case SAVE_INCORRECT_EPOCH_CORRECT_BALANCE: {
+                  const incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
+                  vlog("ORACLE", oracle_no, "SAVE INCORRECT EPOCH CORRECT BALANCE", incorrectEpoch, nextBalance);
+                  const maxEpochPossible = (await stakeStarOracleStrict.timestampToEpoch(
+                      (await hre.ethers.provider.getBlock("latest")).timestamp));
+                  vlog("maxEpochPossible=", maxEpochPossible);
+
+                  if (incorrectEpoch > maxEpochPossible) {
+                    await expect(
+                      oracles[oracle_no].save(incorrectEpoch, nextBalance)
+                    ).to.be.revertedWith("epoch from the future");
+                  } else if (strict_mode) {
+                    await expect(
+                      oracles[oracle_no].save(incorrectEpoch, nextBalance)
+                    ).to.be.revertedWith("only nextEpochToPublish() allowed");
+                  } else {
+                    if (incorrectEpoch <= currentEpoch) {
+                      await expect(
+                        oracles[oracle_no].save(incorrectEpoch, nextBalance)
+                      ).to.be.revertedWith("epoch must increase");
+                    } else {
+                      await expect(oracles[oracle_no].save(incorrectEpoch, nextBalance))
+                        .to.emit(oracles[oracle_no], "Proposed")
+                        .withArgs(incorrectEpoch, nextBalance, 1 << (24 + oracle_no))
+                        .and.not.to.emit(oracles[oracle_no], "Saved");
+
+                      oracles_succeeded[oracle_no] = false;
+                    }
+                  }
+
+                  break;
+                }
+
+                case SAVE_INCORRECT_EPOCH_INCORRECT_BALANCE: {
+                  const incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
+                  const incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                  vlog("ORACLE", oracle_no, "SAVE INCORRECT EPOCH INCORRECT BALANCE", incorrectEpoch, incorrectBalance);
+                  const maxEpochPossible = (await stakeStarOracleStrict.timestampToEpoch(
+                      (await hre.ethers.provider.getBlock("latest")).timestamp));
+                  vlog("maxEpochPossible=", maxEpochPossible);
+
+                  if (incorrectEpoch > maxEpochPossible) {
+                    await expect(
+                      oracles[oracle_no].save(incorrectEpoch, incorrectBalance)
+                    ).to.be.revertedWith("epoch from the future");
+                  } else if (strict_mode) {
+                    await expect(
+                      oracles[oracle_no].save(incorrectEpoch, incorrectBalance)
+                    ).to.be.revertedWith("only nextEpochToPublish() allowed");
+                  } else {
+                    if (incorrectEpoch <= currentEpoch) {
+                      await expect(
+                        oracles[oracle_no].save(incorrectEpoch, incorrectBalance)
+                      ).to.be.revertedWith("epoch must increase");
+                    } else {
+                      await expect(oracles[oracle_no].save(incorrectEpoch, incorrectBalance))
+                        .to.emit(oracles[oracle_no], "Proposed")
+                        .withArgs(incorrectEpoch, incorrectBalance, 1 << (24 + oracle_no))
+                        .and.not.to.emit(oracles[oracle_no], "Saved");
+
+                      oracles_succeeded[oracle_no] = false;
+                    }
+                  }
+
+                  break;
+                }
               }
             }
           }
@@ -419,8 +513,8 @@ describe("StakeStarOracleStrict", function () {
           currentBalance = (await stakeStarOracleStrict.latestTotalBalance()).totalBalance.toNumber();
           currentEpoch = await stakeStarOracleStrict.timestampToEpoch((await stakeStarOracleStrict.latestTotalBalance()).timestamp);
           lastSetEpoch = nextEpoch;
-          console.log("Current Balance:", currentBalance);
-          console.log("Current Epoch:", currentEpoch);
+          vlog("Current Balance:", currentBalance);
+          vlog("Current Epoch:", currentEpoch);
 
           // skip any from [0, 0.5, 1, 1.5, 2] days
           await hre.network.provider.send("evm_setNextBlockTimestamp", [

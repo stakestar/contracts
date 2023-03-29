@@ -62,7 +62,6 @@ describe("StakeStarOracle", function () {
       );
 
       const nextEpochToPublish = await stakeStarOracle.nextEpochToPublish();
-      console.log("nextEpochToPublish=", nextEpochToPublish);
       expect(nextEpochToPublish).to.be.gt(0);
 
       await expect(
@@ -182,6 +181,11 @@ describe("StakeStarOracle", function () {
         stakeStarOracle3,
       } = await loadFixture(deployStakeStarFixture);
 
+      const verbose_mode = false;
+      const vlog = function(...args) {
+        if (verbose_mode) console.log(...args)
+      }
+
       const network = currentNetwork(hre);
       const epoch_update_period = 24 * 3600;
       const gasMeasureMode = true
@@ -208,15 +212,15 @@ describe("StakeStarOracle", function () {
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
       for (let strict_mode of [true, false]) {
-        console.log("StrictMode:", strict_mode);
+        vlog("StrictMode:", strict_mode);
 
         await stakeStarOracle.setStrictEpochMode(strict_mode);
 
         for (let iteration = 0; iteration < 100; ++iteration) {
-          console.log("ITERATION:", iteration);
+          vlog("ITERATION:", iteration);
 
           const currentBlock = await hre.ethers.provider.getBlock("latest");
-          console.log("Current Block Timestamp: ", currentBlock.timestamp);
+          vlog("Current Block Timestamp: ", currentBlock.timestamp);
 
           let nextEpoch;
           if (strict_mode) {
@@ -247,10 +251,10 @@ describe("StakeStarOracle", function () {
               const action_id = gasMeasureMode ? SAVE_CORRECT_ALL : getRandomInt(MIN_ACTION, MAX_ACTION);
               switch (action_id) {
                 case NO_ACTION:
-                  console.log("ORACLE", oracle_no, "NO ACTION");
+                  vlog("ORACLE", oracle_no, "NO ACTION");
                   break;
                 case SAVE_CORRECT_ALL:
-                  console.log("ORACLE", oracle_no, "SAVE CORRECT ALL", nextEpoch, nextBalance);
+                  vlog("ORACLE", oracle_no, "SAVE CORRECT ALL", nextEpoch, nextBalance);
 
                   let confirmations = 0;
                   for (let i = 0; i < ORACLES_COUNT; ++i) {
@@ -275,7 +279,7 @@ describe("StakeStarOracle", function () {
                         .and.emit(oracles[oracle_no], "Saved")
                         .withArgs(nextEpoch, nextBalance);
 
-                      console.log("GOT CONSENSUS");
+                      vlog("GOT CONSENSUS");
                       has_consensus = true;
                     } else {
                       await expect(oracles[oracle_no].save(nextEpoch, nextBalance))
@@ -295,8 +299,8 @@ describe("StakeStarOracle", function () {
           currentBalance = (await stakeStarOracle.latestTotalBalance()).totalBalance.toNumber();
           currentEpoch = await stakeStarOracle.timestampToEpoch((await stakeStarOracle.latestTotalBalance()).timestamp);
           lastSetEpoch = nextEpoch;
-          console.log("Current Balance:", currentBalance);
-          console.log("Current Epoch:", currentEpoch);
+          vlog("Current Balance:", currentBalance);
+          vlog("Current Epoch:", currentEpoch);
 
           // skip any from [1, 1.5, 2] days
           await hre.network.provider.send("evm_setNextBlockTimestamp", [

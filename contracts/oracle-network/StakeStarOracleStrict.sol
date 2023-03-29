@@ -96,7 +96,6 @@ contract StakeStarOracleStrict is
         }
 
         OracleData storage info = _oracleProposal[oracleNo];
-        require(info.next_epoch <= epoch, "epoch must increase");
 
         emit Proposed(
             epoch,
