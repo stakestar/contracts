@@ -18,6 +18,7 @@ import { generateValidatorParams } from "./wrappers";
 // We use loadFixture to run this setup once, snapshot that state,
 // and reset Hardhat Network to that snapshot in every test.
 export async function deployStakeStarFixture() {
+  await hre.storageLayout.export();
   const addresses = ADDRESSES[currentNetwork(hre)];
 
   const {

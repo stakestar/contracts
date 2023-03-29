@@ -11,21 +11,19 @@ contract StakeStarOracleStrict is
     Initializable,
     AccessControlUpgradeable
 {
-    uint64 public _zeroEpochTimestamp;
-
     uint32 private _currentEpoch;
-    uint256 private _currentBalance;
+    uint96 private _currentBalance;
 
+    uint64 public _zeroEpochTimestamp;
+    uint32 _epochUpdateTimePeriodInSeconds;
     bool public _strictEpochMode;
 
     uint8 constant ORACLES_COUNT_MAX = 3;
     uint8 constant ORACLES_COUNT_MIN = 2;
 
-    uint32 _epochUpdateTimePeriodInSeconds;
-
     struct OracleData {
         uint32 next_epoch;
-        uint256 next_balance;
+        uint96 next_balance;
     }
 
     mapping(address => uint32) private _oracleNo;
@@ -122,11 +120,11 @@ contract StakeStarOracleStrict is
 
         if (confirmations >= ORACLES_COUNT_MIN) {
             _currentEpoch = epoch;
-            _currentBalance = totalBalance;
+            _currentBalance = uint96(totalBalance);
             emit Saved(epoch, totalBalance);
         } else {
             info.next_epoch = epoch;
-            info.next_balance = totalBalance;
+            info.next_balance = uint96(totalBalance);
         }
     }
 

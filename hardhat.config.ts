@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
+import 'hardhat-storage-layout';
 
 import { ZERO_PRIVATE_KEY } from "./scripts/constants";
 import { Network } from "./scripts/types";
@@ -61,6 +62,11 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 1000,
           },
+          outputSelection: {
+            "*": {
+                "*": ["storageLayout"],
+            },
+          },
         },
       },
       {
@@ -76,6 +82,11 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     enabled: process.env.GAS_REPORTER === "true",
+    showTimeSpent: true,
+    showMethodSig: false,
+    onlyCalledMethods: true,
+    currency: 'USD',
+    coinmarketcap: "2654f890-e01f-4d25-8be0-35e8942cb581",
   },
 };
 
