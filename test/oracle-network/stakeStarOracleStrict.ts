@@ -305,7 +305,7 @@ describe("StakeStarOracleStrict", function () {
       } = await loadFixture(deployStakeStarFixture);
 
       const verbose_mode = false;
-      const vlog = function(...args) {
+      const vlog = function(...args : any[]) {
         if (verbose_mode) console.log(...args)
       }
 
