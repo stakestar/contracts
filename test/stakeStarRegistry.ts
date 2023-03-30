@@ -209,7 +209,7 @@ describe("StakeStarRegistry", function () {
       );
 
       expect(
-        await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.MISSING)
+        await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.MISSING)
       ).to.eql([]);
       expect(
         await stakeStarRegistry.countValidatorPublicKeys(
@@ -218,7 +218,7 @@ describe("StakeStarRegistry", function () {
       ).to.equal(0);
 
       expect(
-        await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.PENDING)
+        await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.PENDING)
       ).to.eql([publicKey1, publicKey2]);
       expect(
         await stakeStarRegistry.countValidatorPublicKeys(
@@ -227,11 +227,21 @@ describe("StakeStarRegistry", function () {
       ).to.equal(2);
 
       expect(
-        await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.EXITED)
+        await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.EXITED)
       ).to.eql([]);
       expect(
         await stakeStarRegistry.countValidatorPublicKeys(ValidatorStatus.EXITED)
       ).to.equal(0);
+
+      expect(
+        await stakeStarRegistry["getValidatorPublicKeys(uint32,uint32)"](0, 5)
+      ).to.eql([publicKey1, publicKey2, "0x", "0x", "0x"]);
+      expect(
+        await stakeStarRegistry["getValidatorPublicKeys(uint32,uint32)"](0, 1)
+      ).to.eql([publicKey1]);
+      expect(
+        await stakeStarRegistry["getValidatorPublicKeys(uint32,uint32)"](1, 1)
+      ).to.eql([publicKey2]);
     });
 
     it("Should verify validator creation", async function () {
@@ -319,7 +329,7 @@ describe("StakeStarRegistry", function () {
       await stakeStarRegistryManager.initiateExitingValidator(publicKey2);
 
       expect(
-        await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.MISSING)
+        await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.MISSING)
       ).to.eql([]);
       expect(
         await stakeStarRegistry.countValidatorPublicKeys(
@@ -328,7 +338,7 @@ describe("StakeStarRegistry", function () {
       ).to.equal(0);
 
       expect(
-        await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.ACTIVE)
+        await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.ACTIVE)
       ).to.eql([publicKey3]);
       expect(
         await stakeStarRegistry.countValidatorPublicKeys(ValidatorStatus.ACTIVE)
@@ -339,7 +349,7 @@ describe("StakeStarRegistry", function () {
       );
 
       expect(
-        await stakeStarRegistry.getValidatorPublicKeys(ValidatorStatus.EXITING)
+        await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.EXITING)
       ).to.eql([publicKey1, publicKey2]);
       expect(
         await stakeStarRegistry.countValidatorPublicKeys(
