@@ -140,6 +140,21 @@ contract StakeStarRegistry is
         }
     }
 
+    function getValidatorPublicKeys(
+        uint32 offset,
+        uint32 count
+    ) public view returns (bytes[] memory publicKeys) {
+        publicKeys = new bytes[](count);
+
+        for (
+            uint32 i = 0;
+            i < count && i + offset < validatorPublicKeys.length;
+            i++
+        ) {
+            publicKeys[i] = validatorPublicKeys[i + offset];
+        }
+    }
+
     function countValidatorPublicKeys(
         ValidatorStatus status
     ) public view returns (uint256 count) {
