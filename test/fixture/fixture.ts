@@ -10,7 +10,6 @@ import hre from "hardhat";
 import { currentNetwork, generateValidatorParams } from "../../scripts/helpers";
 import { deployAll } from "../../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { Contract } from "ethers";
 import { grantAllManagerRoles } from "../../scripts/tasks/grant-ManagerRole";
 import { grantOracleRoles } from "../../scripts/tasks/grant-OracleRole";
 
@@ -69,20 +68,21 @@ export async function deployStakeStarFixture() {
 
   const ERC20 = await hre.ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);
-  const ssvNetwork = new Contract(
-    addresses.ssvNetwork,
-    [
-      "function getAddressBalance(address ownerAddress) external view returns (uint256)",
-      "function getAddressBurnRate(address ownerAddress) external view returns (uint256)",
-      "function getValidatorsByOwnerAddress(address ownerAddress) external view returns (bytes[] memory)",
-    ],
-    otherAccount
+  const SSVNetwork = await hre.ethers.getContractFactory("SSVNetwork");
+  const SSVNetworkViews = await hre.ethers.getContractFactory(
+    "SSVNetworkViews"
   );
+  const ssvNetwork = await SSVNetwork.attach(addresses.ssvNetwork);
+  const ssvNetworkViews = await SSVNetworkViews.attach(
+    addresses.ssvNetworkViews
+  );
+
+  const operatorIDs = OPERATOR_IDS[currentNetwork(hre)];
 
   const validatorParams1 = await generateValidatorParams(
     RANDOM_PRIVATE_KEY_1,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
-    OPERATOR_IDS[currentNetwork(hre)],
+    operatorIDs,
     withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
@@ -90,7 +90,7 @@ export async function deployStakeStarFixture() {
   const validatorParams2 = await generateValidatorParams(
     RANDOM_PRIVATE_KEY_2,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
-    OPERATOR_IDS[currentNetwork(hre)],
+    operatorIDs,
     withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
@@ -121,9 +121,11 @@ export async function deployStakeStarFixture() {
     uniswapV3Provider,
     ssvToken,
     ssvNetwork,
+    ssvNetworkViews,
     uniswapHelper,
     validatorParams1,
     validatorParams2,
+    operatorIDs,
     owner,
     manager,
     otherAccount,
