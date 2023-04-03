@@ -29,7 +29,6 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes32 depositDataRoot;
         uint64[] operatorIds;
         bytes sharesEncrypted;
-        ISSVNetwork.Cluster cluster;
     }
 
     struct Snapshot {
@@ -429,7 +428,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function createValidator(
         ValidatorParams calldata validatorParams,
-        uint256 ssvDepositAmount
+        uint256 amount,
+        ISSVNetwork.Cluster calldata cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
         require(
@@ -448,16 +448,16 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.depositDataRoot
         );
 
-        ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
+        ssvToken.approve(address(ssvNetwork), amount);
         ssvNetwork.registerValidator(
             validatorParams.publicKey,
             validatorParams.operatorIds,
             validatorParams.sharesEncrypted,
-            ssvDepositAmount,
-            validatorParams.cluster
+            amount,
+            cluster
         );
 
-        emit CreateValidator(validatorParams, ssvDepositAmount);
+        emit CreateValidator(validatorParams, amount);
     }
 
     function destroyValidator(
