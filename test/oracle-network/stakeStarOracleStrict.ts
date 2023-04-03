@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { deployStakeStarFixture } from "../fixture/fixture";
+import { deployStakeStarFixture } from "../test-helpers/fixture";
 import { ConstantsLib, EPOCHS } from "../../scripts/constants";
 import {currentNetwork} from "../../scripts/helpers";
 

@@ -7,11 +7,12 @@ import {
   RANDOM_PRIVATE_KEY_2,
 } from "../../scripts/constants";
 import hre from "hardhat";
-import { currentNetwork, generateValidatorParams } from "../../scripts/helpers";
+import { currentNetwork } from "../../scripts/helpers";
 import { deployAll } from "../../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { grantAllManagerRoles } from "../../scripts/tasks/grant-ManagerRole";
 import { grantOracleRoles } from "../../scripts/tasks/grant-OracleRole";
+import { generateValidatorParams } from "./wrappers";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,
@@ -94,6 +95,22 @@ export async function deployStakeStarFixture() {
     withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
+
+  addresses.stakeStarOracle = stakeStarOracle.address;
+  addresses.stakeStarOracleStrict = stakeStarOracleStrict.address;
+  addresses.stakeStarTreasury = stakeStarTreasury.address;
+  addresses.stakeStarRegistry = stakeStarRegistry.address;
+  addresses.withdrawalAddress = withdrawalAddress.address;
+  addresses.feeRecipient = feeRecipient.address;
+  addresses.mevRecipient = mevRecipient.address;
+  addresses.sstarETH = sstarETH.address;
+  addresses.starETH = starETH.address;
+  addresses.stakeStar = stakeStar.address;
+  addresses.uniswapV3Provider = uniswapV3Provider.address;
+  addresses.uniswapHelper = uniswapHelper.address;
+  addresses.oracle1 = oracle1.address;
+  addresses.oracle2 = oracle2.address;
+  addresses.oracle3 = oracle3.address;
 
   return {
     hre,

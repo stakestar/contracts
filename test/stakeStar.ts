@@ -2,11 +2,12 @@ import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 import { ConstantsLib, EPOCHS, ZERO } from "../scripts/constants";
-import { deployStakeStarFixture } from "./fixture/fixture";
+import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
 import { currentNetwork, humanify, retrieveCluster } from "../scripts/helpers";
 import { BlockTag } from "@ethersproject/providers";
+import { createValidator } from "./test-helpers/wrappers";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -383,9 +384,6 @@ describe("StakeStar", function () {
         owner,
         validatorParams1,
         stakeStarRegistry,
-        ssvToken,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarPublic.deposit({
@@ -396,28 +394,11 @@ describe("StakeStar", function () {
       });
       await stakeStarOwner.deposit({ value: hre.ethers.utils.parseEther("8") });
 
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-
-      const cluster = await retrieveCluster(
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarOwner.withdraw(hre.ethers.utils.parseEther("8"));
@@ -510,18 +491,10 @@ describe("StakeStar", function () {
         stakeStarManager,
         stakeStarPublic,
         stakeStarRegistry,
-        ssvToken,
         validatorParams1,
         owner,
         otherAccount,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
 
       const depositAmount = hre.ethers.utils.parseEther("32");
       const withdrawalAmount = hre.ethers.utils.parseEther("16");
@@ -532,24 +505,11 @@ describe("StakeStar", function () {
 
       await stakeStarPublic.deposit({ value: depositAmount });
 
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-
-      const cluster = await retrieveCluster(
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarPublic.withdraw(withdrawalAmount);
@@ -734,21 +694,11 @@ describe("StakeStar", function () {
       const {
         hre,
         stakeStarOwner,
-        stakeStarManager,
         stakeStarPublic,
         stakeStarRegistry,
-        ssvToken,
         validatorParams1,
         owner,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-
       expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
         false
       );
@@ -765,23 +715,11 @@ describe("StakeStar", function () {
         value: hre.ethers.utils.parseEther("32"),
       });
 
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarOwner.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      const ssvBalance = await ssvToken.balanceOf(stakeStarOwner.address);
-      let cluster = await retrieveCluster(
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        ssvBalance,
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarPublic.withdraw(hre.ethers.utils.parseEther("32"));
@@ -824,40 +762,20 @@ describe("StakeStar", function () {
         stakeStarManager,
         stakeStarRegistry,
         stakeStarRegistryManager,
-        ssvToken,
         validatorParams1,
         hre,
-        owner,
         ssvNetwork,
         operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-
       await stakeStarPublic.deposit({
         value: hre.ethers.utils.parseEther("32"),
       });
 
-      let cluster = await retrieveCluster(
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarPublic.withdraw(hre.ethers.utils.parseEther("32"));
@@ -875,7 +793,7 @@ describe("StakeStar", function () {
         validatorToDestroy
       );
 
-      cluster = await retrieveCluster(
+      const cluster = await retrieveCluster(
         hre,
         ssvNetwork.address,
         stakeStarPublic.address,
@@ -904,55 +822,29 @@ describe("StakeStar", function () {
           stakeStarManager,
           stakeStarRegistry,
           stakeStarRegistryManager,
-          ssvToken,
           validatorParams1,
           validatorParams2,
           hre,
           owner,
-          ssvNetwork,
-          operatorIDs,
         } = await loadFixture(deployStakeStarFixture);
         expect(await stakeStarManager.validatorDestructionAvailability()).to.be
           .false;
-
-        await ssvToken
-          .connect(owner)
-          .transfer(
-            stakeStarManager.address,
-            await ssvToken.balanceOf(owner.address)
-          );
-        for (const operatorId of validatorParams1.operatorIds) {
-          await stakeStarRegistry
-            .connect(owner)
-            .addOperatorToAllowList(operatorId);
-        }
 
         await stakeStarPublic.deposit({
           value: hre.ethers.utils.parseEther("64"),
         });
 
-        let cluster = await retrieveCluster(
+        await createValidator(
           hre,
-          ssvNetwork.address,
-          stakeStarPublic.address,
-          operatorIDs
+          stakeStarPublic,
+          stakeStarRegistry,
+          validatorParams1
         );
-
-        await stakeStarManager.createValidator(
-          validatorParams1,
-          (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
-          cluster
-        );
-        cluster = await retrieveCluster(
+        await createValidator(
           hre,
-          ssvNetwork.address,
-          stakeStarPublic.address,
-          operatorIDs
-        );
-        await stakeStarManager.createValidator(
-          validatorParams2,
-          await ssvToken.balanceOf(stakeStarManager.address),
-          cluster
+          stakeStarPublic,
+          stakeStarRegistry,
+          validatorParams2
         );
 
         expect(await stakeStarManager.validatorDestructionAvailability()).to.be
@@ -999,7 +891,6 @@ describe("StakeStar", function () {
           stakeStarOwner,
           stakeStarRegistry,
           stakeStarRegistryManager,
-          ssvToken,
           validatorParams1,
           validatorParams2,
           hre,
@@ -1007,47 +898,22 @@ describe("StakeStar", function () {
           withdrawalAddress,
           feeRecipient,
           mevRecipient,
-          ssvNetwork,
-          operatorIDs,
         } = await loadFixture(deployStakeStarFixture);
-        await ssvToken
-          .connect(owner)
-          .transfer(
-            stakeStarManager.address,
-            await ssvToken.balanceOf(owner.address)
-          );
-        for (const operatorId of validatorParams1.operatorIds) {
-          await stakeStarRegistry
-            .connect(owner)
-            .addOperatorToAllowList(operatorId);
-        }
-
         await stakeStarPublic.deposit({
           value: hre.ethers.utils.parseEther("64"),
         });
 
-        let cluster = await retrieveCluster(
+        await createValidator(
           hre,
-          ssvNetwork.address,
-          stakeStarPublic.address,
-          operatorIDs
+          stakeStarPublic,
+          stakeStarRegistry,
+          validatorParams1
         );
-
-        await stakeStarManager.createValidator(
-          validatorParams1,
-          (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
-          cluster
-        );
-        cluster = await retrieveCluster(
+        await createValidator(
           hre,
-          ssvNetwork.address,
-          stakeStarPublic.address,
-          operatorIDs
-        );
-        await stakeStarManager.createValidator(
-          validatorParams2,
-          await ssvToken.balanceOf(stakeStarManager.address),
-          cluster
+          stakeStarPublic,
+          stakeStarRegistry,
+          validatorParams2
         );
 
         await stakeStarRegistryManager.confirmActivatingValidator(
@@ -1102,52 +968,26 @@ describe("StakeStar", function () {
           stakeStarManager,
           stakeStarRegistry,
           stakeStarRegistryManager,
-          ssvToken,
           validatorParams1,
           validatorParams2,
           hre,
-          owner,
-          ssvNetwork,
-          operatorIDs,
         } = await loadFixture(deployStakeStarFixture);
-        await ssvToken
-          .connect(owner)
-          .transfer(
-            stakeStarManager.address,
-            await ssvToken.balanceOf(owner.address)
-          );
-        for (const operatorId of validatorParams1.operatorIds) {
-          await stakeStarRegistry
-            .connect(owner)
-            .addOperatorToAllowList(operatorId);
-        }
 
         await stakeStarPublic.deposit({
           value: hre.ethers.utils.parseEther("64"),
         });
 
-        let cluster = await retrieveCluster(
+        await createValidator(
           hre,
-          ssvNetwork.address,
-          stakeStarPublic.address,
-          operatorIDs
+          stakeStarPublic,
+          stakeStarRegistry,
+          validatorParams1
         );
-
-        await stakeStarManager.createValidator(
-          validatorParams1,
-          (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
-          cluster
-        );
-        cluster = await retrieveCluster(
+        await createValidator(
           hre,
-          ssvNetwork.address,
-          stakeStarPublic.address,
-          operatorIDs
-        );
-        await stakeStarManager.createValidator(
-          validatorParams2,
-          await ssvToken.balanceOf(stakeStarManager.address),
-          cluster
+          stakeStarPublic,
+          stakeStarRegistry,
+          validatorParams2
         );
 
         await stakeStarRegistryManager.confirmActivatingValidator(
@@ -1178,38 +1018,20 @@ describe("StakeStar", function () {
         stakeStarManager,
         stakeStarRegistry,
         stakeStarRegistryManager,
-        ssvToken,
         validatorParams1,
         hre,
-        owner,
         ssvNetwork,
         operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-
       await stakeStarPublic.deposit({
         value: hre.ethers.utils.parseEther("32"),
       });
-      let cluster = await retrieveCluster(
+
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await expect(stakeStarPublic.validatorToDestroy()).to.be.revertedWith(
@@ -1235,7 +1057,7 @@ describe("StakeStar", function () {
         "destroy not available"
       );
 
-      cluster = await retrieveCluster(
+      const cluster = await retrieveCluster(
         hre,
         ssvNetwork.address,
         stakeStarPublic.address,
@@ -1486,40 +1308,19 @@ describe("StakeStar", function () {
         stakeStarOwner,
         stakeStarRegistry,
         validatorParams1,
-        ssvToken,
-        stakeStarManager,
-        owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100, true); // 0.1%
 
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("32"),
       });
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      let cluster = await retrieveCluster(
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
       expect(await stakeStarPublic["rate()"]()).to.equal(
         hre.ethers.utils.parseEther("1")
@@ -1946,40 +1747,20 @@ describe("StakeStar", function () {
         sstarETH,
         stakeStarRegistry,
         validatorParams1,
-        ssvToken,
-        stakeStarManager,
-        owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("32"),
       });
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      let cluster = await retrieveCluster(
+
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("16"));
@@ -2030,40 +1811,20 @@ describe("StakeStar", function () {
         sstarETH,
         stakeStarRegistry,
         validatorParams1,
-        ssvToken,
-        stakeStarManager,
-        owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("32"),
       });
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      let cluster = await retrieveCluster(
+
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
@@ -2113,40 +1874,20 @@ describe("StakeStar", function () {
         stakeStarOwner,
         stakeStarRegistry,
         validatorParams1,
-        ssvToken,
-        stakeStarManager,
-        owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("34"),
       });
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      let cluster = await retrieveCluster(
+
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
@@ -2182,40 +1923,20 @@ describe("StakeStar", function () {
         stakeStarOwner,
         stakeStarRegistry,
         validatorParams1,
-        ssvToken,
-        stakeStarManager,
-        owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
-        ssvNetwork,
-        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("34"),
       });
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarManager.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      let cluster = await retrieveCluster(
+
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
-      );
-      await stakeStarManager.createValidator(
-        validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address),
-        cluster
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));

@@ -1,9 +1,10 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { deployStakeStarFixture } from "./fixture/fixture";
+import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { ConstantsLib } from "../scripts/constants";
-import { retrieveCluster } from "../scripts/helpers";
 import { ethers } from "ethers";
+import { retrieveCluster } from "../scripts/helpers";
+import { createValidator } from "./test-helpers/wrappers";
 
 describe("StakeStarTreasury", function () {
   describe("Deployment", function () {
@@ -191,6 +192,7 @@ describe("StakeStarTreasury", function () {
         validatorParams1,
         operatorIDs,
         owner,
+        otherAccount,
       } = await loadFixture(deployStakeStarFixture);
       let cluster;
 
@@ -199,26 +201,25 @@ describe("StakeStarTreasury", function () {
         owner.address
       );
 
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          otherAccount.address,
+          (
+            await ssvToken.balanceOf(owner.address)
+          ).sub(hre.ethers.utils.parseEther("2"))
+        );
+
       await stakeStarPublic.depositAndStake({
         value: hre.ethers.utils.parseEther("32"),
       });
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
 
-      const amount = ethers.utils.parseEther("2");
-      await ssvToken.connect(owner).transfer(stakeStarManager.address, amount);
-
-      cluster = await retrieveCluster(
+      await createValidator(
         hre,
-        ssvNetwork.address,
-        stakeStarPublic.address,
-        operatorIDs
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
       );
-
-      await stakeStarManager.createValidator(validatorParams1, amount, cluster);
 
       cluster = await retrieveCluster(
         hre,
