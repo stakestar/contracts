@@ -113,8 +113,8 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
             value: address(this).balance
         }(burnRate * maxRunway - balance);
 
-        uint256 depositAmount = (ssvToken.balanceOf(address(this)) / 1e7) * 1e7;
-        ssvToken.approve(address(ssvNetworkViews), depositAmount);
+        uint256 depositAmount = ssvToken.balanceOf(address(this));
+        ssvToken.approve(address(ssvNetwork), depositAmount);
         ssvNetwork.deposit(
             stakeStarAddress,
             operatorIds,

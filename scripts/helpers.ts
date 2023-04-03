@@ -1,8 +1,8 @@
 import { AbiCoder } from "@ethersproject/abi";
-import { StakeStar } from "../typechain-types";
+import { SSVNetwork, StakeStar } from "../typechain-types";
 import { Network } from "./types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 
 export function currentNetwork(hre: HardhatRuntimeEnvironment) {
   switch (hre.network.name) {
@@ -12,7 +12,7 @@ export function currentNetwork(hre: HardhatRuntimeEnvironment) {
       return Network.GOERLI;
 
     default:
-      throw "Unsupported network";
+      throw new Error("Unsupported network");
   }
 }
 
@@ -45,11 +45,53 @@ export async function generateValidatorParams(
     signature: data.depositData.signature,
     depositDataRoot: data.depositDataRoot,
     operatorIds: operatorIds,
-    sharesPublicKeys: shares.map((share) => share.publicKey),
-    sharesEncrypted: shares.map((share) =>
-      coder.encode(["string"], [share.privateKey])
+    sharesEncrypted: coder.encode(
+      ["string[]"],
+      [shares.map((share) => share.privateKey)]
     ),
   };
+}
+
+export async function retrieveCluster(
+  hre: HardhatRuntimeEnvironment,
+  ssvNetworkAddress: string,
+  ownerAddress: string,
+  operatorIds: BigNumberish[]
+) {
+  const SSVNetwork = await hre.ethers.getContractFactory("SSVNetwork");
+  const ssvNetwork = await SSVNetwork.attach(ssvNetworkAddress);
+
+  // TODO owner topic
+  const filters = [
+    ssvNetwork.filters.ClusterDeposited(ownerAddress),
+    ssvNetwork.filters.ClusterWithdrawn(ownerAddress),
+    ssvNetwork.filters.ValidatorRemoved(ownerAddress),
+    ssvNetwork.filters.ValidatorAdded(ownerAddress),
+    ssvNetwork.filters.ClusterLiquidated(ownerAddress),
+    ssvNetwork.filters.ClusterReactivated(ownerAddress),
+  ];
+
+  let latestBlockNumber = 0;
+  let cluster = {
+    validatorCount: 0,
+    networkFeeIndex: BigNumber.from(0),
+    index: BigNumber.from(0),
+    balance: BigNumber.from(0),
+    active: true,
+  };
+
+  for (const filter of filters) {
+    const events = await ssvNetwork.queryFilter(filter);
+    for (const event of events) {
+      if (event.blockNumber > latestBlockNumber) {
+        // TODO operator ids verification
+        latestBlockNumber = event.blockNumber;
+        cluster = event.args.cluster;
+      }
+    }
+  }
+
+  return cluster;
 }
 
 export function humanify(

@@ -5,7 +5,7 @@ import { ConstantsLib, EPOCHS, ZERO } from "../scripts/constants";
 import { deployStakeStarFixture } from "./fixture/fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
-import { currentNetwork, humanify } from "../scripts/helpers";
+import { currentNetwork, humanify, retrieveCluster } from "../scripts/helpers";
 import { BlockTag } from "@ethersproject/providers";
 
 describe("StakeStar", function () {
@@ -57,11 +57,23 @@ describe("StakeStar", function () {
 
   describe("AccessControl", function () {
     it("Should not allow to call methods without corresponding roles", async function () {
-      const { stakeStarPublic, validatorParams1, otherAccount } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        stakeStarPublic,
+        validatorParams1,
+        otherAccount,
+        hre,
+        ssvNetwork,
+        operatorIDs,
+      } = await loadFixture(deployStakeStarFixture);
 
       const defaultAdminRole = ConstantsLib.DEFAULT_ADMIN_ROLE;
       const managerRole = ConstantsLib.MANAGER_ROLE;
+      const cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
 
       await expect(
         stakeStarPublic.setAddresses(
@@ -98,21 +110,22 @@ describe("StakeStar", function () {
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
-      await expect(stakeStarPublic.reactivateAccount()).to.be.revertedWith(
+      await expect(
+        stakeStarPublic.reactivate(validatorParams1.operatorIds, 0, cluster)
+      ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
       await expect(
-        stakeStarPublic.createValidator(validatorParams1, 1)
+        stakeStarPublic.createValidator(validatorParams1, 0, cluster)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
       await expect(
-        stakeStarPublic.updateValidator(validatorParams1, 1)
-      ).to.be.revertedWith(
-        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
-      );
-      await expect(
-        stakeStarPublic.destroyValidator(validatorParams1.publicKey)
+        stakeStarPublic.destroyValidator(
+          validatorParams1.publicKey,
+          validatorParams1.operatorIds,
+          cluster
+        )
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${managerRole}`
       );
@@ -371,6 +384,8 @@ describe("StakeStar", function () {
         validatorParams1,
         stakeStarRegistry,
         ssvToken,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarPublic.deposit({
@@ -392,9 +407,17 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+
+      const cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
 
       await stakeStarOwner.withdraw(hre.ethers.utils.parseEther("8"));
@@ -491,6 +514,8 @@ describe("StakeStar", function () {
         validatorParams1,
         owner,
         otherAccount,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
@@ -513,9 +538,18 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+
+      const cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
 
       await stakeStarPublic.withdraw(withdrawalAmount);
@@ -654,6 +688,8 @@ describe("StakeStar", function () {
         validatorParams1,
         owner,
         manager,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await ssvToken
         .connect(owner)
@@ -663,8 +699,15 @@ describe("StakeStar", function () {
         );
       const ssvBalance = await ssvToken.balanceOf(stakeStarManager.address);
 
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarManager.address,
+        operatorIDs
+      );
+
       await expect(
-        stakeStarManager.createValidator(validatorParams1, ssvBalance)
+        stakeStarManager.createValidator(validatorParams1, ssvBalance, cluster)
       ).to.be.revertedWith("cannot create validator");
 
       await manager.sendTransaction({
@@ -673,7 +716,7 @@ describe("StakeStar", function () {
       });
 
       await expect(
-        stakeStarManager.createValidator(validatorParams1, ssvBalance)
+        stakeStarManager.createValidator(validatorParams1, ssvBalance, cluster)
       ).to.be.revertedWith("operators not allowListed");
 
       for (const operatorId of validatorParams1.operatorIds) {
@@ -683,7 +726,7 @@ describe("StakeStar", function () {
       }
 
       await expect(
-        stakeStarManager.createValidator(validatorParams1, ssvBalance)
+        stakeStarManager.createValidator(validatorParams1, ssvBalance, cluster)
       ).to.emit(stakeStarManager, "CreateValidator");
     });
 
@@ -697,6 +740,8 @@ describe("StakeStar", function () {
         ssvToken,
         validatorParams1,
         owner,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       for (const operatorId of validatorParams1.operatorIds) {
         await stakeStarRegistry
@@ -727,7 +772,17 @@ describe("StakeStar", function () {
           await ssvToken.balanceOf(owner.address)
         );
       const ssvBalance = await ssvToken.balanceOf(stakeStarOwner.address);
-      await stakeStarManager.createValidator(validatorParams1, ssvBalance);
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+      await stakeStarManager.createValidator(
+        validatorParams1,
+        ssvBalance,
+        cluster
+      );
 
       await stakeStarPublic.withdraw(hre.ethers.utils.parseEther("32"));
       expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
@@ -762,60 +817,6 @@ describe("StakeStar", function () {
     });
   });
 
-  describe("UpdateValidator", function () {
-    it("Should update existing validator", async function () {
-      const {
-        hre,
-        stakeStarOwner,
-        stakeStarManager,
-        stakeStarRegistry,
-        ssvToken,
-        validatorParams1,
-        owner,
-        manager,
-      } = await loadFixture(deployStakeStarFixture);
-
-      await ssvToken
-        .connect(owner)
-        .transfer(
-          stakeStarOwner.address,
-          await ssvToken.balanceOf(owner.address)
-        );
-      const ssvBalance = await ssvToken.balanceOf(stakeStarOwner.address);
-
-      await manager.sendTransaction({
-        to: stakeStarOwner.address,
-        value: hre.ethers.utils.parseEther("99"),
-      });
-
-      await expect(
-        stakeStarOwner.updateValidator(validatorParams1, ssvBalance)
-      ).to.be.revertedWith("validator missing");
-
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-
-      await expect(
-        stakeStarManager.createValidator(validatorParams1, ssvBalance.div(2))
-      ).to.emit(stakeStarManager, "CreateValidator");
-
-      validatorParams1.operatorIds[0] = 127;
-
-      await expect(
-        stakeStarOwner.updateValidator(validatorParams1, ssvBalance)
-      ).to.be.revertedWith("operators not allowListed");
-
-      await stakeStarRegistry.connect(owner).addOperatorToAllowList(127);
-
-      await expect(
-        stakeStarOwner.updateValidator(validatorParams1, ssvBalance.div(2))
-      ).to.emit(stakeStarOwner, "UpdateValidator");
-    });
-  });
-
   describe("DestroyValidator", function () {
     it("destroyValidator", async function () {
       const {
@@ -824,10 +825,11 @@ describe("StakeStar", function () {
         stakeStarRegistry,
         stakeStarRegistryManager,
         ssvToken,
-        ssvNetwork,
         validatorParams1,
         hre,
         owner,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await ssvToken
         .connect(owner)
@@ -845,9 +847,17 @@ describe("StakeStar", function () {
         value: hre.ethers.utils.parseEther("32"),
       });
 
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+
       await stakeStarManager.createValidator(
         validatorParams1,
-        (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+        (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
+        cluster
       );
 
       await stakeStarPublic.withdraw(hre.ethers.utils.parseEther("32"));
@@ -865,23 +875,26 @@ describe("StakeStar", function () {
         validatorToDestroy
       );
 
-      expect(
-        (await ssvNetwork.getValidatorsByOwnerAddress(stakeStarManager.address))
-          .length
-      ).to.be.greaterThan(0);
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
 
-      await expect(stakeStarManager.destroyValidator(validatorToDestroy))
+      await expect(
+        stakeStarManager.destroyValidator(
+          validatorToDestroy,
+          validatorParams1.operatorIds,
+          cluster
+        )
+      )
         .to.emit(stakeStarManager, "DestroyValidator")
         .withArgs(validatorToDestroy);
 
       expect(
         await stakeStarRegistry.validatorStatuses(validatorToDestroy)
       ).to.eql(ValidatorStatus.EXITED);
-
-      expect(
-        (await ssvNetwork.getValidatorsByOwnerAddress(stakeStarManager.address))
-          .length
-      ).to.be.eql(0);
     });
 
     describe("validatorDestructionAvailability", function () {
@@ -896,6 +909,8 @@ describe("StakeStar", function () {
           validatorParams2,
           hre,
           owner,
+          ssvNetwork,
+          operatorIDs,
         } = await loadFixture(deployStakeStarFixture);
         expect(await stakeStarManager.validatorDestructionAvailability()).to.be
           .false;
@@ -916,13 +931,28 @@ describe("StakeStar", function () {
           value: hre.ethers.utils.parseEther("64"),
         });
 
+        let cluster = await retrieveCluster(
+          hre,
+          ssvNetwork.address,
+          stakeStarPublic.address,
+          operatorIDs
+        );
+
         await stakeStarManager.createValidator(
           validatorParams1,
-          (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+          (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
+          cluster
+        );
+        cluster = await retrieveCluster(
+          hre,
+          ssvNetwork.address,
+          stakeStarPublic.address,
+          operatorIDs
         );
         await stakeStarManager.createValidator(
           validatorParams2,
-          await ssvToken.balanceOf(stakeStarManager.address)
+          await ssvToken.balanceOf(stakeStarManager.address),
+          cluster
         );
 
         expect(await stakeStarManager.validatorDestructionAvailability()).to.be
@@ -977,6 +1007,8 @@ describe("StakeStar", function () {
           withdrawalAddress,
           feeRecipient,
           mevRecipient,
+          ssvNetwork,
+          operatorIDs,
         } = await loadFixture(deployStakeStarFixture);
         await ssvToken
           .connect(owner)
@@ -994,13 +1026,28 @@ describe("StakeStar", function () {
           value: hre.ethers.utils.parseEther("64"),
         });
 
+        let cluster = await retrieveCluster(
+          hre,
+          ssvNetwork.address,
+          stakeStarPublic.address,
+          operatorIDs
+        );
+
         await stakeStarManager.createValidator(
           validatorParams1,
-          (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+          (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
+          cluster
+        );
+        cluster = await retrieveCluster(
+          hre,
+          ssvNetwork.address,
+          stakeStarPublic.address,
+          operatorIDs
         );
         await stakeStarManager.createValidator(
           validatorParams2,
-          await ssvToken.balanceOf(stakeStarManager.address)
+          await ssvToken.balanceOf(stakeStarManager.address),
+          cluster
         );
 
         await stakeStarRegistryManager.confirmActivatingValidator(
@@ -1060,6 +1107,8 @@ describe("StakeStar", function () {
           validatorParams2,
           hre,
           owner,
+          ssvNetwork,
+          operatorIDs,
         } = await loadFixture(deployStakeStarFixture);
         await ssvToken
           .connect(owner)
@@ -1077,13 +1126,28 @@ describe("StakeStar", function () {
           value: hre.ethers.utils.parseEther("64"),
         });
 
+        let cluster = await retrieveCluster(
+          hre,
+          ssvNetwork.address,
+          stakeStarPublic.address,
+          operatorIDs
+        );
+
         await stakeStarManager.createValidator(
           validatorParams1,
-          (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+          (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
+          cluster
+        );
+        cluster = await retrieveCluster(
+          hre,
+          ssvNetwork.address,
+          stakeStarPublic.address,
+          operatorIDs
         );
         await stakeStarManager.createValidator(
           validatorParams2,
-          await ssvToken.balanceOf(stakeStarManager.address)
+          await ssvToken.balanceOf(stakeStarManager.address),
+          cluster
         );
 
         await stakeStarRegistryManager.confirmActivatingValidator(
@@ -1118,6 +1182,8 @@ describe("StakeStar", function () {
         validatorParams1,
         hre,
         owner,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await ssvToken
         .connect(owner)
@@ -1134,10 +1200,16 @@ describe("StakeStar", function () {
       await stakeStarPublic.deposit({
         value: hre.ethers.utils.parseEther("32"),
       });
-
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        (await ssvToken.balanceOf(stakeStarManager.address)).div(2)
+        (await ssvToken.balanceOf(stakeStarManager.address)).div(2),
+        cluster
       );
 
       await expect(stakeStarPublic.validatorToDestroy()).to.be.revertedWith(
@@ -1163,7 +1235,18 @@ describe("StakeStar", function () {
         "destroy not available"
       );
 
-      await stakeStarManager.destroyValidator(validatorToDestroy);
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+
+      await stakeStarManager.destroyValidator(
+        validatorToDestroy,
+        validatorParams1.operatorIds,
+        cluster
+      );
 
       await expect(stakeStarPublic.validatorToDestroy()).to.be.revertedWith(
         "destroy not available"
@@ -1408,6 +1491,8 @@ describe("StakeStar", function () {
         owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100, true); // 0.1%
 
@@ -1425,20 +1510,27 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
       expect(await stakeStarPublic["rate()"]()).to.equal(
         hre.ethers.utils.parseEther("1")
       );
 
       await stakeStarOracleStrict1.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("32")
       ); // base
       await stakeStarOracleStrict2.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("32")
       ); // base
       await stakeStarPublic.commitSnapshot();
@@ -1448,22 +1540,22 @@ describe("StakeStar", function () {
       );
 
       await stakeStarOracleStrict1.save(
-        139_002,
+        166_002,
         hre.ethers.utils.parseEther("32").mul(10011).div(10000)
       ); // 0.11% increase
       await stakeStarOracleStrict2.save(
-        139_002,
+        166_002,
         hre.ethers.utils.parseEther("32").mul(10011).div(10000)
       ); // 0.11% increase
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "rate deviation too big"
       );
       await stakeStarOracleStrict1.save(
-        139_003,
+        166_003,
         hre.ethers.utils.parseEther("32").mul(9989).div(10000)
       ); // 0.11% decrease
       await stakeStarOracleStrict2.save(
-        139_003,
+        166_003,
         hre.ethers.utils.parseEther("32").mul(9989).div(10000)
       ); // 0.11% decrease
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
@@ -1471,16 +1563,16 @@ describe("StakeStar", function () {
       );
 
       await stakeStarOracleStrict1.save(
-        139_004,
+        166_004,
         hre.ethers.utils.parseEther("32").mul(9990).div(10000)
       ); // 0.1% decrease
       await stakeStarOracleStrict2.save(
-        139_004,
+        166_004,
         hre.ethers.utils.parseEther("32").mul(9990).div(10000)
       ); // 0.1% decrease
       await stakeStarPublic.commitSnapshot();
       await stakeStarOracleStrict1.save(
-        139_005,
+        166_005,
         hre.ethers.utils
           .parseEther("32")
           .mul(9990)
@@ -1489,7 +1581,7 @@ describe("StakeStar", function () {
           .div(10000)
       ); // 0.1% increase
       await stakeStarOracleStrict2.save(
-        139_005,
+        166_005,
         hre.ethers.utils
           .parseEther("32")
           .mul(9990)
@@ -1500,11 +1592,11 @@ describe("StakeStar", function () {
       await stakeStarPublic.commitSnapshot();
 
       await stakeStarOracleStrict1.save(
-        139_006,
+        166_006,
         hre.ethers.utils.parseEther("100")
       ); // massive increase
       await stakeStarOracleStrict2.save(
-        139_006,
+        166_006,
         hre.ethers.utils.parseEther("100")
       ); // massive increase
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
@@ -1533,22 +1625,22 @@ describe("StakeStar", function () {
       );
 
       await stakeStarOracleStrict1.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("0.002")
       );
       await stakeStarOracleStrict2.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("0.002")
       );
       await expect(stakeStarPublic.commitSnapshot()).to.be.revertedWith(
         "rate deviation too big"
       );
       await stakeStarOracleStrict1.save(
-        139_002,
+        166_002,
         hre.ethers.utils.parseEther("0.001")
       );
       await stakeStarOracleStrict2.save(
-        139_002,
+        166_002,
         hre.ethers.utils.parseEther("0.001")
       );
       await stakeStarPublic.commitSnapshot();
@@ -1571,6 +1663,7 @@ describe("StakeStar", function () {
           await hre.ethers.provider.getBlockNumber()
         )
       ).timestamp;
+
       const currentEpochNumber = Math.floor(
         (currentTimestamp - EPOCHS[currentNetwork(hre)]) / 384
       );
@@ -1703,7 +1796,7 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic["rate()"]()).to.equal(currentRate);
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        initialTimestamp.toNumber() + 200,
+        initialTimestamp.toNumber() + 400,
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
       await getCurrentRate(hre.ethers.utils.parseEther("100"));
@@ -1858,6 +1951,8 @@ describe("StakeStar", function () {
         owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -1875,9 +1970,16 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("16"));
@@ -1933,6 +2035,8 @@ describe("StakeStar", function () {
         owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -1950,9 +2054,16 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
@@ -2007,6 +2118,8 @@ describe("StakeStar", function () {
         owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -2024,9 +2137,16 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
@@ -2067,6 +2187,8 @@ describe("StakeStar", function () {
         owner,
         stakeStarOracleStrict1,
         stakeStarOracleStrict2,
+        ssvNetwork,
+        operatorIDs,
       } = await loadFixture(deployStakeStarFixture);
       await stakeStarOwner.setRateParameters(100_000, true);
 
@@ -2084,9 +2206,16 @@ describe("StakeStar", function () {
           stakeStarManager.address,
           await ssvToken.balanceOf(owner.address)
         );
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
       await stakeStarManager.createValidator(
         validatorParams1,
-        await ssvToken.balanceOf(stakeStarManager.address)
+        await ssvToken.balanceOf(stakeStarManager.address),
+        cluster
       );
 
       await stakeStarOracleStrict1.save(1, hre.ethers.utils.parseEther("32"));
@@ -2311,11 +2440,11 @@ describe("StakeStar", function () {
       );
 
       await stakeStarOracleStrict1.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("0.1")
       );
       await stakeStarOracleStrict2.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("0.1")
       );
       await stakeStarPublic.commitSnapshot();
@@ -2383,20 +2512,20 @@ describe("StakeStar", function () {
       await stakeStarOwner.setRateParameters(2000, true);
 
       await stakeStarOracleStrict1.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("0.2")
       );
       await stakeStarOracleStrict2.save(
-        139_001,
+        166_001,
         hre.ethers.utils.parseEther("0.2")
       );
       await stakeStarPublic.commitSnapshot();
       await stakeStarOracleStrict1.save(
-        139_002,
+        166_002,
         hre.ethers.utils.parseEther("0.2")
       );
       await stakeStarOracleStrict2.save(
-        139_002,
+        166_002,
         hre.ethers.utils.parseEther("0.2")
       );
       await stakeStarPublic.commitSnapshot();

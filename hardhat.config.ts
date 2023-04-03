@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
     [Network.HARDHAT]: {
       forking: {
         url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
-        blockNumber: 8765700,
+        blockNumber: 8766380,
       },
     },
     [Network.GOERLI]: {
