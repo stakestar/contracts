@@ -1,20 +1,24 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 
-import "./interfaces/ISSVNetwork.sol";
+import "./helpers/Utils.sol";
+
 import "./interfaces/ISwapProvider.sol";
 import "./interfaces/IStakingPool.sol";
-import "./helpers/Utils.sol";
+
+import "./ssv-network/ISSVNetwork.sol";
+import "./ssv-network/ISSVNetworkViews.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SetAddresses(
         address stakeStarAddress,
         address ssvNetworkAddress,
+        address ssvNetworkViewsAddress,
         address ssvTokenAddress,
         address swapProviderAddress
     );
@@ -24,9 +28,11 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
     IStakingPool public stakeStar;
-    ISSVNetwork public ssvNetwork;
     IERC20 public ssvToken;
     ISwapProvider public swapProvider;
+
+    ISSVNetwork public ssvNetwork;
+    ISSVNetworkViews public ssvNetworkViews;
 
     uint24 public commission;
     uint256 public minRunway;
@@ -41,17 +47,20 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     function setAddresses(
         address stakeStarAddress,
         address ssvNetworkAddress,
+        address ssvNetworkViewsAddress,
         address ssvTokenAddress,
         address swapProviderAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         stakeStar = IStakingPool(stakeStarAddress);
         ssvNetwork = ISSVNetwork(ssvNetworkAddress);
+        ssvNetworkViews = ISSVNetworkViews(ssvNetworkViewsAddress);
         ssvToken = IERC20(ssvTokenAddress);
         swapProvider = ISwapProvider(swapProviderAddress);
 
         emit SetAddresses(
             stakeStarAddress,
             ssvNetworkAddress,
+            ssvNetworkViewsAddress,
             ssvTokenAddress,
             swapProviderAddress
         );
@@ -82,28 +91,55 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit Claim(amount);
     }
 
-    function swapETHAndDepositSSV() public payable {
+    function swapETHAndDepositSSV(
+        uint64[] memory operatorIds,
+        ISSVNetwork.Cluster memory cluster
+    ) public payable onlyRole(Utils.MANAGER_ROLE) {
         require(minRunway != maxRunway, "runway not set");
-        require(swapAvailability(), "swap not available");
+        require(swapAvailability(operatorIds, cluster), "swap not available");
 
         address stakeStarAddress = address(stakeStar);
-        uint256 balance = ssvNetwork.getAddressBalance(stakeStarAddress);
-        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStarAddress);
+        uint256 balance = ssvNetworkViews.getBalance(
+            stakeStarAddress,
+            operatorIds,
+            cluster
+        );
+        uint256 burnRate = ssvNetworkViews.getBurnRate(
+            stakeStarAddress,
+            operatorIds,
+            cluster
+        );
         (uint256 amountIn, uint256 amountOut) = swapProvider.swap{
             value: address(this).balance
         }(burnRate * maxRunway - balance);
 
         uint256 depositAmount = (ssvToken.balanceOf(address(this)) / 1e7) * 1e7;
-        ssvToken.approve(address(ssvNetwork), depositAmount);
-        ssvNetwork.deposit(stakeStarAddress, depositAmount);
+        ssvToken.approve(address(ssvNetworkViews), depositAmount);
+        ssvNetwork.deposit(
+            stakeStarAddress,
+            operatorIds,
+            depositAmount,
+            cluster
+        );
 
         emit SwapETHAndDepositSSV(amountIn, amountOut, depositAmount);
     }
 
-    function swapAvailability() public view returns (bool) {
+    function swapAvailability(
+        uint64[] memory operatorIds,
+        ISSVNetwork.Cluster memory cluster
+    ) public view returns (bool) {
         address stakeStarAddress = address(stakeStar);
-        uint256 balance = ssvNetwork.getAddressBalance(stakeStarAddress);
-        uint256 burnRate = ssvNetwork.getAddressBurnRate(stakeStarAddress);
+        uint256 balance = ssvNetworkViews.getBalance(
+            stakeStarAddress,
+            operatorIds,
+            cluster
+        );
+        uint256 burnRate = ssvNetworkViews.getBurnRate(
+            stakeStarAddress,
+            operatorIds,
+            cluster
+        );
 
         return
             address(this).balance > 0 &&
