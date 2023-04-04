@@ -205,6 +205,40 @@ describe("StakeStar", function () {
           mevRecipient.address
         );
       });
+
+      it("Should set fee recipient in SSV Network", async function () {
+        const {
+          stakeStarOwner,
+          addresses,
+          stakeStarOracleStrict,
+          sstarETH,
+          starETH,
+          stakeStarRegistry,
+          stakeStarTreasury,
+          withdrawalAddress,
+          feeRecipient,
+          mevRecipient,
+          ssvNetwork,
+        } = await loadFixture(deployStakeStarFixture);
+
+        await expect(
+          stakeStarOwner.setAddresses(
+            addresses.depositContract,
+            addresses.ssvNetwork,
+            addresses.ssvToken,
+            stakeStarOracleStrict.address,
+            sstarETH.address,
+            starETH.address,
+            stakeStarRegistry.address,
+            stakeStarTreasury.address,
+            withdrawalAddress.address,
+            feeRecipient.address,
+            mevRecipient.address
+          )
+        )
+          .to.emit(ssvNetwork, "FeeRecipientAddressUpdated")
+          .withArgs(stakeStarOwner.address, feeRecipient.address);
+      });
     });
 
     describe("setRateParameters", function () {

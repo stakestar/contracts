@@ -166,6 +166,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         feeRecipient = ETHReceiver(payable(feeRecipientAddress));
         mevRecipient = ETHReceiver(payable(mevRecipientAddress));
 
+        ssvNetwork.setFeeRecipientAddress(feeRecipientAddress);
+
         emit SetAddresses(
             depositContractAddress,
             ssvNetworkAddress,
