@@ -122,10 +122,20 @@ export const EPOCHS: Record<Network, number> = {
   [Network.HARDHAT]: 1616508000,
 };
 
-export const OPERATOR_IDS: Record<Network, number[]> = {
+export const OPERATOR_IDS: Record<Network, BigNumber[]> = {
   [Network.MAINNET]: [],
-  [Network.GOERLI]: [56, 65, 66, 68],
-  [Network.HARDHAT]: [56, 65, 66, 68],
+  [Network.GOERLI]: [
+    BigNumber.from(56),
+    BigNumber.from(65),
+    BigNumber.from(66),
+    BigNumber.from(68),
+  ],
+  [Network.HARDHAT]: [
+    BigNumber.from(56),
+    BigNumber.from(65),
+    BigNumber.from(66),
+    BigNumber.from(68),
+  ],
 };
 
 export const OPERATOR_PUBLIC_KEYS: Record<Network, string[]> = {

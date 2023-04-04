@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { StakeStar, StakeStarRegistry } from "../../typechain-types";
 import { ADDRESSES } from "../../scripts/constants";
-import { BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 import { currentNetwork, retrieveCluster } from "../../scripts/helpers";
 import { AbiCoder } from "@ethersproject/abi";
 
@@ -19,12 +19,12 @@ export async function createValidator(
 
   const [owner, manager] = await hre.ethers.getSigners();
 
-  const operatorIds: BigNumberish[] = [];
+  const operatorIds: BigNumber[] = [];
   for (const operatorId of validatorParams.operatorIds) {
     if (!(await stakeStarRegistry.allowListOfOperators(operatorId))) {
       await stakeStarRegistry.connect(owner).addOperatorToAllowList(operatorId);
     }
-    operatorIds.push(await operatorId);
+    operatorIds.push(BigNumber.from(await operatorId));
   }
 
   const amount = await ssvToken.balanceOf(owner.address);
@@ -45,7 +45,7 @@ export async function createValidator(
 export async function generateValidatorParams(
   privateKey: string,
   operatorPublicKeys: string[],
-  operatorIds: number[],
+  operatorIds: BigNumber[],
   withdrawalAddress: string,
   genesisForkVersion: string
 ) {
@@ -55,7 +55,7 @@ export async function generateValidatorParams(
 
   const shares = await splitPrivateKey(
     hexToBytes(privateKey),
-    operatorIds,
+    operatorIds.map((value) => value.toNumber()),
     operatorPublicKeys
   );
   const data = generateDepositData(

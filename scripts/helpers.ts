@@ -1,6 +1,6 @@
 import { Network } from "./types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BigNumber, BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 
 export function currentNetwork(hre: HardhatRuntimeEnvironment) {
   switch (hre.network.name) {
@@ -28,12 +28,11 @@ export async function retrieveCluster(
   hre: HardhatRuntimeEnvironment,
   ssvNetworkAddress: string,
   ownerAddress: string,
-  operatorIds: BigNumberish[]
+  operatorIds: BigNumber[]
 ) {
   const SSVNetwork = await hre.ethers.getContractFactory("SSVNetwork");
   const ssvNetwork = await SSVNetwork.attach(ssvNetworkAddress);
 
-  // TODO owner topic
   const filters = [
     ssvNetwork.filters.ClusterDeposited(ownerAddress),
     ssvNetwork.filters.ClusterWithdrawn(ownerAddress),
@@ -55,8 +54,10 @@ export async function retrieveCluster(
   for (const filter of filters) {
     const events = await ssvNetwork.queryFilter(filter);
     for (const event of events) {
-      if (event.blockNumber > latestBlockNumber) {
-        // TODO operator ids verification
+      if (
+        event.blockNumber > latestBlockNumber &&
+        compareArrays(event.args.operatorIds, operatorIds)
+      ) {
         latestBlockNumber = event.blockNumber;
         cluster = event.args.cluster;
       }
@@ -64,4 +65,15 @@ export async function retrieveCluster(
   }
 
   return cluster;
+}
+
+function compareArrays(a: BigNumber[], b: BigNumber[]) {
+  for (const aElement of a) {
+    let found = false;
+    for (const bElement of b) {
+      if (aElement.eq(bElement)) found = true;
+    }
+    if (!found) return false;
+  }
+  return true;
 }
