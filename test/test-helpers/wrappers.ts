@@ -63,7 +63,6 @@ export async function generateValidatorParams(
     withdrawalAddress,
     genesisForkVersion
   );
-  const coder = new AbiCoder();
 
   return {
     publicKey: data.depositData.pubkey,
@@ -71,7 +70,7 @@ export async function generateValidatorParams(
     signature: data.depositData.signature,
     depositDataRoot: data.depositDataRoot,
     operatorIds: operatorIds,
-    sharesEncrypted: coder.encode(
+    sharesEncrypted: new AbiCoder().encode(
       ["string[]"],
       [shares.map((share) => share.privateKey)]
     ),

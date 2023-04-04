@@ -1,6 +1,6 @@
-import {task} from "hardhat/config";
-import {ADDRESSES} from "../../constants";
-import {currentNetwork, humanify} from "../../helpers";
+import { task } from "hardhat/config";
+import { ADDRESSES } from "../../constants";
+import { currentNetwork, humanify } from "../../helpers";
 
 task("printSavedEvents", "Prints Saved events").setAction(async (args, hre) => {
   const network = currentNetwork(hre);
