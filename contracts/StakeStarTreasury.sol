@@ -141,6 +141,8 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
             cluster
         );
 
+        if (burnRate == 0) return false;
+
         return
             address(this).balance > 0 &&
             burnRate * minRunway < balance &&
