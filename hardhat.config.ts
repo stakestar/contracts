@@ -86,7 +86,7 @@ const config: HardhatUserConfig = {
     showMethodSig: false,
     onlyCalledMethods: true,
     currency: 'USD',
-    coinmarketcap: "2654f890-e01f-4d25-8be0-35e8942cb581",
+    coinmarketcap: process.env.COINMARKETCAP_TOKEN,
   },
   mocha: {
     timeout: 100000000,
