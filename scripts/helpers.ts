@@ -1,5 +1,3 @@
-import { AbiCoder } from "@ethersproject/abi";
-import { StakeStar } from "../typechain-types";
 import { Network } from "./types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber } from "ethers";
@@ -12,44 +10,8 @@ export function currentNetwork(hre: HardhatRuntimeEnvironment) {
       return Network.GOERLI;
 
     default:
-      throw "Unsupported network";
+      throw new Error("Unsupported network");
   }
-}
-
-export async function generateValidatorParams(
-  privateKey: string,
-  operatorPublicKeys: string[],
-  operatorIds: number[],
-  withdrawalAddress: string,
-  genesisForkVersion: string
-): Promise<StakeStar.ValidatorParamsStruct> {
-  const { generateDepositData, splitPrivateKey, hexToBytes } = await import(
-    "@stakestar/lib"
-  );
-
-  const shares = await splitPrivateKey(
-    hexToBytes(privateKey),
-    operatorIds,
-    operatorPublicKeys
-  );
-  const data = generateDepositData(
-    hexToBytes(privateKey),
-    withdrawalAddress,
-    genesisForkVersion
-  );
-  const coder = new AbiCoder();
-
-  return {
-    publicKey: data.depositData.pubkey,
-    withdrawalCredentials: data.depositData.withdrawalCredentials,
-    signature: data.depositData.signature,
-    depositDataRoot: data.depositDataRoot,
-    operatorIds: operatorIds,
-    sharesPublicKeys: shares.map((share) => share.publicKey),
-    sharesEncrypted: shares.map((share) =>
-      coder.encode(["string"], [share.privateKey])
-    ),
-  };
 }
 
 export function humanify(
@@ -60,4 +22,58 @@ export function humanify(
   return (
     n.div(BigNumber.from(10 ** (decimals - digits))).toNumber() / 10 ** digits
   );
+}
+
+export async function retrieveCluster(
+  hre: HardhatRuntimeEnvironment,
+  ssvNetworkAddress: string,
+  ownerAddress: string,
+  operatorIds: BigNumber[]
+) {
+  const SSVNetwork = await hre.ethers.getContractFactory("SSVNetwork");
+  const ssvNetwork = await SSVNetwork.attach(ssvNetworkAddress);
+
+  const filters = [
+    ssvNetwork.filters.ClusterDeposited(ownerAddress),
+    ssvNetwork.filters.ClusterWithdrawn(ownerAddress),
+    ssvNetwork.filters.ValidatorRemoved(ownerAddress),
+    ssvNetwork.filters.ValidatorAdded(ownerAddress),
+    ssvNetwork.filters.ClusterLiquidated(ownerAddress),
+    ssvNetwork.filters.ClusterReactivated(ownerAddress),
+  ];
+
+  let latestBlockNumber = 0;
+  let cluster = {
+    validatorCount: 0,
+    networkFeeIndex: BigNumber.from(0),
+    index: BigNumber.from(0),
+    balance: BigNumber.from(0),
+    active: true,
+  };
+
+  for (const filter of filters) {
+    const events = await ssvNetwork.queryFilter(filter);
+    for (const event of events) {
+      if (
+        event.blockNumber > latestBlockNumber &&
+        compareArrays(event.args.operatorIds, operatorIds)
+      ) {
+        latestBlockNumber = event.blockNumber;
+        cluster = event.args.cluster;
+      }
+    }
+  }
+
+  return cluster;
+}
+
+function compareArrays(a: BigNumber[], b: BigNumber[]) {
+  for (const aElement of a) {
+    let found = false;
+    for (const bElement of b) {
+      if (aElement.eq(bElement)) found = true;
+    }
+    if (!found) return false;
+  }
+  return true;
 }

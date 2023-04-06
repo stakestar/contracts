@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
 
+import "./helpers/ETHReceiver.sol";
+import "./helpers/Utils.sol";
+
 import "./interfaces/IStakingPool.sol";
 import "./interfaces/IDepositContract.sol";
-import "./interfaces/ISSVNetwork.sol";
 import "./interfaces/IOracleNetwork.sol";
+
+import "./ssv-network/ISSVNetwork.sol";
 
 import "./tokens/SStarETH.sol";
 import "./tokens/StarETH.sol";
+
 import "./StakeStarRegistry.sol";
 import "./StakeStarTreasury.sol";
-
-import "./helpers/ETHReceiver.sol";
-import "./helpers/Utils.sol";
 
 contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     struct ValidatorParams {
@@ -25,9 +27,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes withdrawalCredentials;
         bytes signature;
         bytes32 depositDataRoot;
-        uint32[] operatorIds;
-        bytes[] sharesPublicKeys;
-        bytes[] sharesEncrypted;
+        uint64[] operatorIds;
+        bytes sharesEncrypted;
     }
 
     struct Snapshot {
@@ -164,6 +165,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         withdrawalAddress = ETHReceiver(payable(withdrawalCredentialsAddress));
         feeRecipient = ETHReceiver(payable(feeRecipientAddress));
         mevRecipient = ETHReceiver(payable(mevRecipientAddress));
+
+        ssvNetwork.setFeeRecipientAddress(feeRecipientAddress);
 
         emit SetAddresses(
             depositContractAddress,
@@ -417,13 +420,18 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
     }
 
-    function reactivateAccount() public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        ssvNetwork.reactivateAccount(0);
+    function reactivate(
+        uint64[] memory operatorIds,
+        uint256 amount,
+        ISSVNetwork.Cluster memory cluster
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        ssvNetwork.reactivate(operatorIds, amount, cluster);
     }
 
     function createValidator(
         ValidatorParams calldata validatorParams,
-        uint256 ssvDepositAmount
+        uint256 amount,
+        ISSVNetwork.Cluster calldata cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
         require(
@@ -442,49 +450,25 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             validatorParams.depositDataRoot
         );
 
-        ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
+        ssvToken.approve(address(ssvNetwork), amount);
         ssvNetwork.registerValidator(
             validatorParams.publicKey,
             validatorParams.operatorIds,
-            validatorParams.sharesPublicKeys,
             validatorParams.sharesEncrypted,
-            ssvDepositAmount
+            amount,
+            cluster
         );
 
-        emit CreateValidator(validatorParams, ssvDepositAmount);
-    }
-
-    function updateValidator(
-        ValidatorParams calldata validatorParams,
-        uint256 ssvDepositAmount
-    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(
-            stakeStarRegistry.validatorStatuses(validatorParams.publicKey) !=
-                StakeStarRegistry.ValidatorStatus.MISSING,
-            "validator missing"
-        );
-        require(
-            stakeStarRegistry.verifyOperators(validatorParams.operatorIds),
-            "operators not allowListed"
-        );
-
-        ssvToken.approve(address(ssvNetwork), ssvDepositAmount);
-        ssvNetwork.updateValidator(
-            validatorParams.publicKey,
-            validatorParams.operatorIds,
-            validatorParams.sharesPublicKeys,
-            validatorParams.sharesEncrypted,
-            ssvDepositAmount
-        );
-
-        emit UpdateValidator(validatorParams, ssvDepositAmount);
+        emit CreateValidator(validatorParams, amount);
     }
 
     function destroyValidator(
-        bytes memory publicKey
+        bytes calldata publicKey,
+        uint64[] memory operatorIds,
+        ISSVNetwork.Cluster memory cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         stakeStarRegistry.confirmExitingValidator(publicKey);
-        ssvNetwork.removeValidator(publicKey);
+        ssvNetwork.removeValidator(publicKey, operatorIds, cluster);
 
         emit DestroyValidator(publicKey);
     }

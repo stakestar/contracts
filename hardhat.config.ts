@@ -20,7 +20,7 @@ import "./scripts/tasks/grant-StakeStarRole";
 import "./scripts/tasks/grant-TreasuryRole";
 import "./scripts/tasks/printAddresses";
 import "./scripts/tasks/printContractVariables";
-import "./scripts/tasks/reactivateAccount";
+import "./scripts/tasks/reactivate";
 import "./scripts/tasks/setAllAddresses";
 import "./scripts/tasks/setEpochUpdatePeriod";
 import "./scripts/tasks/setLocalPoolParameters";
@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
     [Network.HARDHAT]: {
       forking: {
         url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
-        blockNumber: 8059292,
+        blockNumber: 8766380,
       },
     },
     [Network.GOERLI]: {
@@ -55,7 +55,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.17",
+        version: "0.8.18",
         settings: {
           optimizer: {
             enabled: true,

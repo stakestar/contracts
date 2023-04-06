@@ -7,12 +7,12 @@ import {
   RANDOM_PRIVATE_KEY_2,
 } from "../../scripts/constants";
 import hre from "hardhat";
-import { currentNetwork, generateValidatorParams } from "../../scripts/helpers";
+import { currentNetwork } from "../../scripts/helpers";
 import { deployAll } from "../../scripts/tasks/deployAll";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { Contract } from "ethers";
 import { grantAllManagerRoles } from "../../scripts/tasks/grant-ManagerRole";
 import { grantOracleRoles } from "../../scripts/tasks/grant-OracleRole";
+import { generateValidatorParams } from "./wrappers";
 
 // We define a fixture to reuse the same setup in every test.
 // We use loadFixture to run this setup once, snapshot that state,
@@ -69,20 +69,21 @@ export async function deployStakeStarFixture() {
 
   const ERC20 = await hre.ethers.getContractFactory("ERC20");
   const ssvToken = await ERC20.attach(addresses.ssvToken);
-  const ssvNetwork = new Contract(
-    addresses.ssvNetwork,
-    [
-      "function getAddressBalance(address ownerAddress) external view returns (uint256)",
-      "function getAddressBurnRate(address ownerAddress) external view returns (uint256)",
-      "function getValidatorsByOwnerAddress(address ownerAddress) external view returns (bytes[] memory)",
-    ],
-    otherAccount
+  const SSVNetwork = await hre.ethers.getContractFactory("SSVNetwork");
+  const SSVNetworkViews = await hre.ethers.getContractFactory(
+    "SSVNetworkViews"
   );
+  const ssvNetwork = await SSVNetwork.attach(addresses.ssvNetwork);
+  const ssvNetworkViews = await SSVNetworkViews.attach(
+    addresses.ssvNetworkViews
+  );
+
+  const operatorIDs = OPERATOR_IDS[currentNetwork(hre)];
 
   const validatorParams1 = await generateValidatorParams(
     RANDOM_PRIVATE_KEY_1,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
-    OPERATOR_IDS[currentNetwork(hre)],
+    operatorIDs,
     withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
@@ -90,10 +91,26 @@ export async function deployStakeStarFixture() {
   const validatorParams2 = await generateValidatorParams(
     RANDOM_PRIVATE_KEY_2,
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
-    OPERATOR_IDS[currentNetwork(hre)],
+    operatorIDs,
     withdrawalAddress.address,
     GENESIS_FORK_VERSIONS[currentNetwork(hre)]
   );
+
+  addresses.stakeStarOracle = stakeStarOracle.address;
+  addresses.stakeStarOracleStrict = stakeStarOracleStrict.address;
+  addresses.stakeStarTreasury = stakeStarTreasury.address;
+  addresses.stakeStarRegistry = stakeStarRegistry.address;
+  addresses.withdrawalAddress = withdrawalAddress.address;
+  addresses.feeRecipient = feeRecipient.address;
+  addresses.mevRecipient = mevRecipient.address;
+  addresses.sstarETH = sstarETH.address;
+  addresses.starETH = starETH.address;
+  addresses.stakeStar = stakeStar.address;
+  addresses.uniswapV3Provider = uniswapV3Provider.address;
+  addresses.uniswapHelper = uniswapHelper.address;
+  addresses.oracle1 = oracle1.address;
+  addresses.oracle2 = oracle2.address;
+  addresses.oracle3 = oracle3.address;
 
   return {
     hre,
@@ -121,9 +138,11 @@ export async function deployStakeStarFixture() {
     uniswapV3Provider,
     ssvToken,
     ssvNetwork,
+    ssvNetworkViews,
     uniswapHelper,
     validatorParams1,
     validatorParams2,
+    operatorIDs,
     owner,
     manager,
     otherAccount,

@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import { ADDRESSES } from "../constants";
 import { currentNetwork, humanify } from "../helpers";
-import {BigNumber} from "ethers";
+import { BigNumber } from "ethers";
 
 task("setValidatorWithdrawalThreshold", "Sets rate parameters to StakeStar")
   .addParam("threshold", "in wei")
@@ -16,6 +16,8 @@ task("setValidatorWithdrawalThreshold", "Sets rate parameters to StakeStar")
     await tx.wait(3);
     console.log(tx.hash);
     console.log(
-      `ValidatorWithdrawalThreshold is set to ${humanify(BigNumber.from(args.threshold))}`
+      `ValidatorWithdrawalThreshold is set to ${humanify(
+        BigNumber.from(args.threshold)
+      )}`
     );
   });

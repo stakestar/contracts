@@ -12,6 +12,7 @@ export const ADDRESSES: Record<
   {
     depositContract: string;
     ssvNetwork: string;
+    ssvNetworkViews: string;
     ssvToken: string;
     stakeStarOracle: string;
     stakeStarOracleStrict: string;
@@ -38,6 +39,7 @@ export const ADDRESSES: Record<
   [Network.MAINNET]: {
     depositContract: "",
     ssvNetwork: "",
+    ssvNetworkViews: "",
     ssvToken: "",
     stakeStarOracle: "",
     stakeStarOracleStrict: "",
@@ -62,7 +64,8 @@ export const ADDRESSES: Record<
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
-    ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
+    ssvNetwork: "0xAfdb141Dd99b5a101065f40e3D7636262dce65b3",
+    ssvNetworkViews: "0x8dB45282d7C4559fd093C26f677B3837a5598914",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "0x14C07A9b7bC0f79fCA05A97B68a2D837e902066d",
     stakeStarOracleStrict: "0xDc90B39E2cad4a7d7FcFAf322772611CE58fa0C2",
@@ -87,7 +90,8 @@ export const ADDRESSES: Record<
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
-    ssvNetwork: "0xb9e155e65B5c4D66df28Da8E9a0957f06F11Bc04",
+    ssvNetwork: "0xAfdb141Dd99b5a101065f40e3D7636262dce65b3",
+    ssvNetworkViews: "0x8dB45282d7C4559fd093C26f677B3837a5598914",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "",
     stakeStarOracleStrict: "",
@@ -118,10 +122,20 @@ export const EPOCHS: Record<Network, number> = {
   [Network.HARDHAT]: 1616508000,
 };
 
-export const OPERATOR_IDS: Record<Network, number[]> = {
+export const OPERATOR_IDS: Record<Network, BigNumber[]> = {
   [Network.MAINNET]: [],
-  [Network.GOERLI]: [24, 312, 335, 50],
-  [Network.HARDHAT]: [24, 312, 335, 50],
+  [Network.GOERLI]: [
+    BigNumber.from(56),
+    BigNumber.from(65),
+    BigNumber.from(66),
+    BigNumber.from(68),
+  ],
+  [Network.HARDHAT]: [
+    BigNumber.from(56),
+    BigNumber.from(65),
+    BigNumber.from(66),
+    BigNumber.from(68),
+  ],
 };
 
 export const OPERATOR_PUBLIC_KEYS: Record<Network, string[]> = {

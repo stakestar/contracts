@@ -23,24 +23,24 @@ task("printContractVariables", "Prints contracts variables").setAction(
     );
     console.log(
       "StakeStarTreasury ETH Balance",
-      humanify(await hre.ethers.provider.getBalance(addresses.stakeStarTreasury))
+      humanify(
+        await hre.ethers.provider.getBalance(addresses.stakeStarTreasury)
+      )
     );
     console.log(
       "WithdrawalAddress ETH Balance",
-      humanify(await hre.ethers.provider.getBalance(addresses.withdrawalAddress))
+      humanify(
+        await hre.ethers.provider.getBalance(addresses.withdrawalAddress)
+      )
     );
     console.log(
       "FeeRecipient ETH Balance",
-      humanify(await hre.ethers.provider.getBalance(addresses.withdrawalAddress))
+      humanify(
+        await hre.ethers.provider.getBalance(addresses.withdrawalAddress)
+      )
     );
-    console.log(
-      "SStarETH TotalSupply",
-      humanify(await sstarETH.totalSupply())
-    );
-    console.log(
-      "StarETH TotalSupply",
-      humanify(await starETH.totalSupply())
-    );
+    console.log("SStarETH TotalSupply", humanify(await sstarETH.totalSupply()));
+    console.log("StarETH TotalSupply", humanify(await starETH.totalSupply()));
     console.log();
 
     console.log(
@@ -92,8 +92,14 @@ task("printContractVariables", "Prints contracts variables").setAction(
       .add(activeValidatorCount)
       .add(exitingValidatorCount);
 
-    console.log("ValidatorCreationAvailability", await stakeStar.validatorCreationAvailability());
-    console.log("ValidatorDestructionAvailability", await stakeStar.validatorDestructionAvailability());
+    console.log(
+      "ValidatorCreationAvailability",
+      await stakeStar.validatorCreationAvailability()
+    );
+    console.log(
+      "ValidatorDestructionAvailability",
+      await stakeStar.validatorDestructionAvailability()
+    );
 
     console.log(
       "PENDING validator count",
@@ -108,19 +114,25 @@ task("printContractVariables", "Prints contracts variables").setAction(
     console.log();
 
     const pendingPublicKeys = (
-      await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.PENDING)
+      await stakeStarRegistry["getValidatorPublicKeys(uint8)"](
+        ValidatorStatus.PENDING
+      )
     ).filter((key) => key !== "0x");
     if (pendingPublicKeys.length > 0) {
       console.log(`PENDING validators\n${pendingPublicKeys.join("\n")}`);
     }
     const activePublicKeys = (
-      await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.ACTIVE)
+      await stakeStarRegistry["getValidatorPublicKeys(uint8)"](
+        ValidatorStatus.ACTIVE
+      )
     ).filter((key) => key !== "0x");
     if (activePublicKeys.length > 0) {
       console.log(`ACTIVE validators\n${activePublicKeys.join("\n")}`);
     }
     const exitingPublicKeys = (
-      await stakeStarRegistry["getValidatorPublicKeys(uint8)"](ValidatorStatus.EXITING)
+      await stakeStarRegistry["getValidatorPublicKeys(uint8)"](
+        ValidatorStatus.EXITING
+      )
     ).filter((key) => key !== "0x");
     if (exitingPublicKeys.length > 0) {
       console.log(`EXITING validators\n${exitingPublicKeys.join("\n")}`);

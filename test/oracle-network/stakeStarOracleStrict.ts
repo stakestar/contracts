@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { deployStakeStarFixture } from "../fixture/fixture";
+import { deployStakeStarFixture } from "../test-helpers/fixture";
 import { ConstantsLib, EPOCHS } from "../../scripts/constants";
-import {currentNetwork} from "../../scripts/helpers";
+import { currentNetwork } from "../../scripts/helpers";
 
 describe("StakeStarOracleStrict", function () {
   describe("Deployment", function () {
@@ -36,39 +36,43 @@ describe("StakeStarOracleStrict", function () {
       await expect(
         stakeStarOracleStrict1.setOracle(oracle1_address, 0)
       ).to.be.revertedWith(
-        `AccessControl: account ${oracle1_address.toLowerCase()} is missing role ${ConstantsLib.DEFAULT_ADMIN_ROLE}`
+        `AccessControl: account ${oracle1_address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
 
       await expect(
         stakeStarOracleStrict.setOracle(oracle1_address, 3)
-      ).to.be.revertedWith(
-        "invalid oracle number"
-      );
+      ).to.be.revertedWith("invalid oracle number");
 
-      await stakeStarOracleStrict.setOracle(oracle1_address, 2)
-      await stakeStarOracleStrict.setOracle(oracle1_address, 0)
+      await stakeStarOracleStrict.setOracle(oracle1_address, 2);
+      await stakeStarOracleStrict.setOracle(oracle1_address, 0);
 
-      await expect(stakeStarOracleStrict.latestTotalBalance()).to.be.revertedWith(
-        `not initialized`
-      );
+      await expect(
+        stakeStarOracleStrict.latestTotalBalance()
+      ).to.be.revertedWith(`not initialized`);
 
       await stakeStarOracleStrict.setStrictEpochMode(true);
 
       await expect(
         stakeStarOracleStrict.setEpochUpdatePeriod(0)
-      ).to.be.revertedWith(
-        "invalid period"
-      );
+      ).to.be.revertedWith("invalid period");
 
       const epoch_update_period = 24 * 3600;
 
       await expect(
-        stakeStarOracleStrict1.setEpochUpdatePeriod(Math.floor(epoch_update_period / ConstantsLib.EPOCH_DURATION))
+        stakeStarOracleStrict1.setEpochUpdatePeriod(
+          Math.floor(epoch_update_period / ConstantsLib.EPOCH_DURATION)
+        )
       ).to.be.revertedWith(
-        `AccessControl: account ${oracle1_address.toLowerCase()} is missing role ${ConstantsLib.DEFAULT_ADMIN_ROLE}`
+        `AccessControl: account ${oracle1_address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
 
-      await stakeStarOracleStrict.setEpochUpdatePeriod(Math.floor(epoch_update_period / ConstantsLib.EPOCH_DURATION));
+      await stakeStarOracleStrict.setEpochUpdatePeriod(
+        Math.floor(epoch_update_period / ConstantsLib.EPOCH_DURATION)
+      );
 
       await expect(stakeStarOracleStrict.save(1, 1)).to.be.revertedWith(
         `oracle role required`
@@ -78,7 +82,11 @@ describe("StakeStarOracleStrict", function () {
 
       const nextEpoch1 = await stakeStarOracleStrict.nextEpochToPublish();
       expect(nextEpoch1).to.be.eq(
-          Math.floor((block0.timestamp - EPOCHS[network] - 1) / epoch_update_period) * epoch_update_period / 384
+        (Math.floor(
+          (block0.timestamp - EPOCHS[network] - 1) / epoch_update_period
+        ) *
+          epoch_update_period) /
+          384
       );
 
       await expect(
@@ -89,18 +97,24 @@ describe("StakeStarOracleStrict", function () {
         stakeStarOracleStrict.getCurrentProposal(stakeStarOracleStrict.address)
       ).to.be.revertedWith("invalid oracle");
 
-      expect((await stakeStarOracleStrict.getCurrentProposal(oracle1_address)).proposed_epoch)
-          .to.be.eq(0);
+      expect(
+        (await stakeStarOracleStrict.getCurrentProposal(oracle1_address))
+          .proposed_epoch
+      ).to.be.eq(0);
 
       await expect(stakeStarOracleStrict1.save(nextEpoch1, 1000))
         .to.emit(stakeStarOracleStrict1, "Proposed")
         .withArgs(nextEpoch1, 1000, 1 << 24)
-        .and.not.to.emit(stakeStarOracleStrict1, "Saved")
+        .and.not.to.emit(stakeStarOracleStrict1, "Saved");
 
-      expect((await stakeStarOracleStrict.getCurrentProposal(oracle1_address)).proposed_epoch)
-          .to.be.eq(nextEpoch1);
-      expect((await stakeStarOracleStrict.getCurrentProposal(oracle1_address)).proposed_balance)
-          .to.be.eq(1000);
+      expect(
+        (await stakeStarOracleStrict.getCurrentProposal(oracle1_address))
+          .proposed_epoch
+      ).to.be.eq(nextEpoch1);
+      expect(
+        (await stakeStarOracleStrict.getCurrentProposal(oracle1_address))
+          .proposed_balance
+      ).to.be.eq(1000);
 
       // ignored
       await expect(stakeStarOracleStrict1.save(nextEpoch1, 1000))
@@ -114,10 +128,14 @@ describe("StakeStarOracleStrict", function () {
         .withArgs(nextEpoch1, 1001, 1 << 24)
         .not.to.emit(stakeStarOracleStrict1, "Saved");
 
-      expect((await stakeStarOracleStrict.getCurrentProposal(oracle1_address)).proposed_epoch)
-          .to.be.eq(nextEpoch1);
-      expect((await stakeStarOracleStrict.getCurrentProposal(oracle1_address)).proposed_balance)
-          .to.be.eq(1001);
+      expect(
+        (await stakeStarOracleStrict.getCurrentProposal(oracle1_address))
+          .proposed_epoch
+      ).to.be.eq(nextEpoch1);
+      expect(
+        (await stakeStarOracleStrict.getCurrentProposal(oracle1_address))
+          .proposed_balance
+      ).to.be.eq(1001);
 
       // change to original
       await expect(stakeStarOracleStrict1.save(nextEpoch1, 1000))
@@ -160,20 +178,27 @@ describe("StakeStarOracleStrict", function () {
         stakeStarOracleStrict1.save(nextEpoch1 + 225, 11000)
       ).to.be.revertedWith("epoch from the future");
 
-
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
-        (await stakeStarOracleStrict.epochToTimestamp(nextEpoch1 + epoch_update_period / 384 + 1)).toNumber(),
+        (
+          await stakeStarOracleStrict.epochToTimestamp(
+            nextEpoch1 + epoch_update_period / 384 + 1
+          )
+        ).toNumber(),
       ]);
       await hre.network.provider.request({ method: "evm_mine", params: [] });
 
       // next epoch
       const nextEpoch2 = await stakeStarOracleStrict.nextEpochToPublish();
-      expect(nextEpoch2).to.be.eq(nextEpoch1 + epoch_update_period / ConstantsLib.EPOCH_DURATION);
+      expect(nextEpoch2).to.be.eq(
+        nextEpoch1 + epoch_update_period / ConstantsLib.EPOCH_DURATION
+      );
 
       await expect(
         stakeStarOracleStrict1.setStrictEpochMode(false)
       ).to.be.revertedWith(
-        `AccessControl: account ${oracle1_address.toLowerCase()} is missing role ${ConstantsLib.DEFAULT_ADMIN_ROLE}`
+        `AccessControl: account ${oracle1_address.toLowerCase()} is missing role ${
+          ConstantsLib.DEFAULT_ADMIN_ROLE
+        }`
       );
 
       await stakeStarOracleStrict.setStrictEpochMode(false);

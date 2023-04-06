@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -19,15 +19,15 @@ contract StakeStarRegistry is
         EXITED
     }
 
-    event AddOperatorToAllowList(uint32 operatorId);
-    event RemoveOperatorFromAllowList(uint32 operatorId);
+    event AddOperatorToAllowList(uint64 operatorId);
+    event RemoveOperatorFromAllowList(uint64 operatorId);
     event ValidatorStatusChange(
         bytes publicKey,
         ValidatorStatus statusFrom,
         ValidatorStatus statusTo
     );
 
-    mapping(uint32 => bool) public allowListOfOperators;
+    mapping(uint64 => bool) public allowListOfOperators;
     mapping(bytes => ValidatorStatus) public validatorStatuses;
     bytes[] public validatorPublicKeys;
 
@@ -36,7 +36,7 @@ contract StakeStarRegistry is
     }
 
     function addOperatorToAllowList(
-        uint32 operatorId
+        uint64 operatorId
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(!allowListOfOperators[operatorId], "operator already added");
         allowListOfOperators[operatorId] = true;
@@ -44,7 +44,7 @@ contract StakeStarRegistry is
     }
 
     function removeOperatorFromAllowList(
-        uint32 operatorId
+        uint64 operatorId
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(allowListOfOperators[operatorId], "operator not added");
         delete allowListOfOperators[operatorId];
@@ -113,7 +113,7 @@ contract StakeStarRegistry is
     }
 
     function verifyOperators(
-        uint32[] memory operatorIds
+        uint64[] memory operatorIds
     ) public view returns (bool) {
         for (uint8 i = 0; i < operatorIds.length; i++) {
             if (!allowListOfOperators[operatorIds[i]]) return false;

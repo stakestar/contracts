@@ -55,7 +55,3 @@ yarn hardhat grant-ManagerRole --network goerli
 ```shell
 yarn hardhat grant-OracleRole --network goerli
 ```
-
-## To do
-
-- add tests for 2 tokens

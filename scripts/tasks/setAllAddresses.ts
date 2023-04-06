@@ -58,6 +58,7 @@ export async function setAllAddresses(
   tx = await stakeStarTreasury.setAddresses(
     stakeStarAddress,
     addresses.ssvNetwork,
+    addresses.ssvNetworkViews,
     addresses.ssvToken,
     uniswapV3ProviderAddress
   );

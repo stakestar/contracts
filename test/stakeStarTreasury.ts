@@ -1,8 +1,10 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { deployStakeStarFixture } from "./fixture/fixture";
-import { ethers } from "hardhat";
+import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { ConstantsLib } from "../scripts/constants";
+import { ethers } from "ethers";
+import { retrieveCluster } from "../scripts/helpers";
+import { createValidator } from "./test-helpers/wrappers";
 
 describe("StakeStarTreasury", function () {
   describe("Deployment", function () {
@@ -43,6 +45,7 @@ describe("StakeStarTreasury", function () {
         stakeStarTreasury
           .connect(otherAccount)
           .setAddresses(
+            stakeStarTreasury.address,
             stakeStarTreasury.address,
             stakeStarTreasury.address,
             stakeStarTreasury.address,
@@ -99,6 +102,7 @@ describe("StakeStarTreasury", function () {
           stakeStarTreasury.setAddresses(
             stakeStarPublic.address,
             addresses.ssvNetwork,
+            addresses.ssvNetworkViews,
             addresses.ssvToken,
             uniswapV3Provider.address
           )
@@ -107,6 +111,7 @@ describe("StakeStarTreasury", function () {
           .withArgs(
             stakeStarPublic.address,
             addresses.ssvNetwork,
+            addresses.ssvNetworkViews,
             addresses.ssvToken,
             uniswapV3Provider.address
           );
@@ -116,6 +121,9 @@ describe("StakeStarTreasury", function () {
         );
         expect(await stakeStarTreasury.ssvNetwork()).to.eq(
           addresses.ssvNetwork
+        );
+        expect(await stakeStarTreasury.ssvNetworkViews()).to.eq(
+          addresses.ssvNetworkViews
         );
         expect(await stakeStarTreasury.ssvToken()).to.eq(addresses.ssvToken);
         expect(await stakeStarTreasury.swapProvider()).to.eq(
@@ -171,68 +179,85 @@ describe("StakeStarTreasury", function () {
   describe("swapETHAndDepositSSV", function () {
     it("Should buy SSV token on UNI V3 and deposit", async function () {
       const {
+        stakeStarPublic,
+        hre,
         stakeStarTreasury,
         stakeStarManager,
         stakeStarRegistry,
         ssvToken,
         ssvNetwork,
+        ssvNetworkViews,
         uniswapV3Provider,
         manager,
         validatorParams1,
+        operatorIDs,
         owner,
+        otherAccount,
       } = await loadFixture(deployStakeStarFixture);
+      let cluster;
 
-      expect(
-        await ssvNetwork.getAddressBalance(stakeStarManager.address)
-      ).to.eq(0);
-      expect(
-        await ssvNetwork.getAddressBurnRate(stakeStarManager.address)
-      ).to.eq(0);
-
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "runway not set"
+      await stakeStarTreasury.grantRole(
+        ConstantsLib.MANAGER_ROLE,
+        owner.address
       );
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          otherAccount.address,
+          (
+            await ssvToken.balanceOf(owner.address)
+          ).sub(hre.ethers.utils.parseEther("2"))
+        );
+
+      await stakeStarPublic.depositAndStake({
+        value: hre.ethers.utils.parseEther("32"),
+      });
+
+      await createValidator(
+        hre,
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
+      );
+
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("runway not set");
       await stakeStarTreasury.setRunway(216000, 216000 * 3); // 1 month, 3 months
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "swap not available"
-      );
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("swap not available");
 
       await manager.sendTransaction({
         to: stakeStarTreasury.address,
         value: ethers.utils.parseEther("10"),
       });
 
-      await ssvToken
-        .connect(owner)
-        .transfer(stakeStarManager.address, ethers.utils.parseEther("10"));
-      const ssvBalance = await ssvToken.balanceOf(stakeStarManager.address);
-
-      await manager.sendTransaction({
-        to: stakeStarManager.address,
-        value: ethers.utils.parseEther("32"),
-      });
-
-      for (const operatorId of validatorParams1.operatorIds) {
-        await stakeStarRegistry
-          .connect(owner)
-          .addOperatorToAllowList(operatorId);
-      }
-
-      await stakeStarManager.createValidator(validatorParams1, ssvBalance);
-
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "swap not available"
-      );
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("swap not available");
       await stakeStarTreasury.setRunway(
         (2 * 30 * 24 * 3600) / 12,
         (6 * 30 * 24 * 3600) / 12
       );
 
-      const aBalance = await ssvNetwork.getAddressBalance(
-        stakeStarManager.address
+      const aBalance = await ssvNetworkViews.getBalance(
+        stakeStarManager.address,
+        operatorIDs,
+        cluster
       );
-      const aBurnRate = await ssvNetwork.getAddressBalance(
-        stakeStarManager.address
+      const aBurnRate = await ssvNetworkViews.getBurnRate(
+        stakeStarManager.address,
+        operatorIDs,
+        cluster
       );
 
       expect(aBalance).to.be.greaterThan(0);
@@ -244,9 +269,9 @@ describe("StakeStarTreasury", function () {
         30 * 60,
         ethers.utils.parseEther("999999")
       );
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "insufficient liquidity"
-      );
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("insufficient liquidity");
       await uniswapV3Provider.setParameters(
         3000,
         0,
@@ -254,9 +279,9 @@ describe("StakeStarTreasury", function () {
         ethers.utils.parseEther("0.1")
       );
 
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "slippage not set"
-      );
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("slippage not set");
       await uniswapV3Provider.setParameters(
         3000,
         99999,
@@ -264,9 +289,9 @@ describe("StakeStarTreasury", function () {
         ethers.utils.parseEther("0.1")
       );
 
-      await expect(stakeStarTreasury.swapETHAndDepositSSV()).to.be.revertedWith(
-        "Too little received"
-      );
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("Too little received");
 
       await uniswapV3Provider.setParameters(
         3000,
@@ -274,13 +299,21 @@ describe("StakeStarTreasury", function () {
         30 * 60,
         ethers.utils.parseEther("0.1")
       );
-      expect(await stakeStarTreasury.swapETHAndDepositSSV()).to.emit(
-        stakeStarTreasury,
-        "SwapETHAndDepositSSV"
+      expect(
+        await stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.emit(stakeStarTreasury, "SwapETHAndDepositSSV");
+
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
       );
 
-      const aBalance2 = await ssvNetwork.getAddressBalance(
-        stakeStarManager.address
+      const aBalance2 = await ssvNetworkViews.getBalance(
+        stakeStarManager.address,
+        operatorIDs,
+        cluster
       );
       expect(aBalance2).to.be.greaterThan(aBalance);
 

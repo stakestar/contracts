@@ -1,6 +1,6 @@
-import {task} from "hardhat/config";
-import {ADDRESSES} from "../constants";
-import {currentNetwork} from "../helpers";
+import { task } from "hardhat/config";
+import { ADDRESSES } from "../constants";
+import { currentNetwork } from "../helpers";
 
 task("setEpochUpdatePeriod", "Sets EpochUpdatePeriod for oracles")
   .addParam("period", "period in epochs")
