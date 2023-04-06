@@ -37,7 +37,7 @@
     "@openzeppelin/contracts": "^4.8.2",
     "@openzeppelin/contracts-upgradeable": "^4.8.2",
     "@openzeppelin/hardhat-upgrades": "^1.22.1",
-    "@stakestar/lib": "^0.6.2",
+    "@stakestar/lib": "^0.7.0",
     "@typechain/ethers-v5": "^10.2.0",
     "@typechain/hardhat": "^6.1.5",
     "@types/chai": "^4.3.4",

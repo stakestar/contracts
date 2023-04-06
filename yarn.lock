@@ -572,12 +572,12 @@
     "@lodestar/params" "^1.7.2"
     "@lodestar/types" "^1.7.2"
 
-"@lodestar/params@^1.5.1", "@lodestar/params@^1.7.2":
+"@lodestar/params@^1.7.2":
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/@lodestar/params/-/params-1.7.2.tgz#649c3950a7929af825adb2afda84cc474bbf6d91"
   integrity sha512-G33+uUOp5IUaAGw0rggaEvH8i/wns/5PnPpUq1HPg8khc/XoHuzDuKLYdAg3Gy9wANf4PGrxDGNJQ32u1MQ4+A==
 
-"@lodestar/state-transition@^1.5.1":
+"@lodestar/state-transition@^1.7.2":
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/@lodestar/state-transition/-/state-transition-1.7.2.tgz#74c03dbe30ca0afde83cdc4cb07134e2024bc060"
   integrity sha512-EQwI1DQFcVYWiezzWADaRZrJQ42DXl8gy11s8mqZEDVwpRo17Fo9qbPt3gNNLaHz5RowWxkr1/XKah4R8bXYlQ==
@@ -1087,17 +1087,17 @@
   dependencies:
     antlr4ts "^0.5.0-alpha.4"
 
-"@stakestar/lib@^0.6.2":
-  version "0.6.2"
-  resolved "https://npm.pkg.github.com/download/@stakestar/lib/0.6.2/db7a0b5e8ccb710896b0deac1be3ce60a15ed63d#db7a0b5e8ccb710896b0deac1be3ce60a15ed63d"
-  integrity sha512-Couevap+RRM5oT7AW3KhE8q1YAE3+UpFCey4idbM16xOnFUuR/BcZTJwvMkscziID7IS0NQ3s/kPrngmlN6DUw==
+"@stakestar/lib@^0.7.0":
+  version "0.7.0"
+  resolved "https://npm.pkg.github.com/download/@stakestar/lib/0.7.0/a4c74651d4b3c4f7556958883fa872d419f79005#a4c74651d4b3c4f7556958883fa872d419f79005"
+  integrity sha512-bWZUCI4f3clBOIs53txndfZwVvYxhgDcyFmF6krYXT+PLxrcA3Kt/8z+MrylLXH93JM54E1QpILDunq76YEcNw==
   dependencies:
     "@chainsafe/bls" "^7.1.1"
     "@chainsafe/bls-keygen" "^0.4.0"
     "@chainsafe/blst" "^0.2.8"
-    "@lodestar/params" "^1.5.1"
-    "@lodestar/state-transition" "^1.5.1"
-    ssv-keys "^0.0.7"
+    "@lodestar/params" "^1.7.2"
+    "@lodestar/state-transition" "^1.7.2"
+    ssv-keys "^0.0.15"
     tslib "^2.5.0"
 
 "@szmarczak/http-timer@^1.1.2":
@@ -4572,10 +4572,10 @@ jsbn@~0.1.0:
   resolved "https://registry.yarnpkg.com/jsbn/-/jsbn-0.1.1.tgz#a5e654c2e5a2deb5f201d96cefbca80c0ef2f513"
   integrity sha512-UVU9dibq2JcFWxQPA6KCqj5O42VOmAY3zQUfEKxU0KpTGXwNoCjkX1e13eHNvw/xPynt6pU0rZ1htjWTNTSXsg==
 
-jsencrypt@^3.2.1:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/jsencrypt/-/jsencrypt-3.3.1.tgz#5d47e6c1079bb50e714a36d009ba09ea81fbfa18"
-  integrity sha512-dVvV54GdFuJgmEKn+oBiaifDMen4p6o6j/lJh0OVMcouME8sST0bJ7bldIgKBQk4za0zyGn0/pm4vOznR25mLw==
+jsencrypt@3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/jsencrypt/-/jsencrypt-3.2.1.tgz#09766983cc760088ff26b12fe7e574252af97727"
+  integrity sha512-k1sD5QV0KPn+D8uG9AdGzTQuamt82QZ3A3l6f7TRwMU6Oi2Vg0BsL+wZIQBONcraO1pc78ExMdvmBBJ8WhNYUA==
 
 json-buffer@3.0.0:
   version "3.0.0"
@@ -5785,10 +5785,9 @@ promise@^8.0.0:
   dependencies:
     asap "~2.0.6"
 
-prompts-ssv@^2.4.2:
+"prompts@git+https://github.com/meshin-blox/prompts.git":
   version "2.4.2"
-  resolved "https://registry.yarnpkg.com/prompts-ssv/-/prompts-ssv-2.4.2.tgz#8202b4da3a8c61f2c9882b0667383b0f19b84f3a"
-  integrity sha512-R2HD2T6uHh0Rkk4PpX+I5sJ4eJTZe57+GNPFL+4+ns8TVb+wFTnQQkNyFpF04hlNB9/e9kf0JhRCAuXybMF5qw==
+  resolved "git+https://github.com/meshin-blox/prompts.git#a22bdac044f6b32ba67adb4eacc2e58322512a2d"
   dependencies:
     kleur "^4.0.1"
     sisteransi "^1.0.5"
@@ -6557,10 +6556,10 @@ ssri@^8.0.0, ssri@^8.0.1:
   dependencies:
     minipass "^3.1.1"
 
-ssv-keys@^0.0.7:
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/ssv-keys/-/ssv-keys-0.0.7.tgz#f871d042e4a9319dceaa5cb228bcddd5b740c676"
-  integrity sha512-DT8tpOSxRoeTvoWwU70NppkBVolCYupOzF+OgB6w+iir74ZOLUbHFOKcFsOuKzjX0OUjg0DxJ+HprdTQaTnkRQ==
+ssv-keys@^0.0.15:
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/ssv-keys/-/ssv-keys-0.0.15.tgz#b4f24ea121a37de2ca353961fc1f09891db43268"
+  integrity sha512-YsVW1KNt5z3mOJGPNZaY7R02az3cVkwpITEaHlH2VT6iarjpqM+JCa9pYD7qgODyl3rw+b5pqiFjHT7POhNBZw==
   dependencies:
     "@types/figlet" "^1.5.4"
     "@types/underscore" "^1.11.4"
@@ -6577,14 +6576,15 @@ ssv-keys@^0.0.7:
     eth2-keystore-js "^1.0.8"
     ethereumjs-util "^7.0.10"
     ethereumjs-wallet "^1.0.1"
+    ethers "^5.7.2"
     events "^3.3.0"
     figlet "^1.5.2"
     js-base64 "^3.7.2"
-    jsencrypt "^3.2.1"
+    jsencrypt "3.2.1"
     minimist "^1.2.6"
     moment "^2.29.3"
     node-jsencrypt "^1.0.0"
-    prompts-ssv "^2.4.2"
+    prompts "https://github.com/meshin-blox/prompts.git"
     scrypt-js "^3.0.1"
     stream "^0.0.2"
     underscore "^1.13.4"
