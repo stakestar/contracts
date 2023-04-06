@@ -1,37 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOracleNetwork.sol";
 import "../helpers/Utils.sol";
 
 contract StakeStarOracleStrict is
     IOracleNetwork,
-    Initializable,
-    AccessControlUpgradeable
+    AccessControl
 {
-    uint64 public _zeroEpochTimestamp;
-
     uint32 private _currentEpoch;
-    uint256 private _currentBalance;
+    uint96 private _currentBalance;
 
+    uint64 public _zeroEpochTimestamp;
+    uint32 _epochUpdateTimePeriodInSeconds;
     bool public _strictEpochMode;
 
     uint8 constant ORACLES_COUNT_MAX = 3;
     uint8 constant ORACLES_COUNT_MIN = 2;
 
-    uint32 _epochUpdateTimePeriodInSeconds;
-
     struct OracleData {
         uint32 next_epoch;
-        uint256 next_balance;
+        uint96 next_balance;
     }
 
     mapping(address => uint32) private _oracleNo;
     mapping(uint32 => OracleData) private _oracleProposal;
 
-    function initialize(uint64 zeroEpochTimestamp) public initializer {
+    constructor (uint64 zeroEpochTimestamp) {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
         setEpochUpdatePeriod(uint32(24 * 3600) / Utils.EPOCH_DURATION);
@@ -100,7 +96,6 @@ contract StakeStarOracleStrict is
         }
 
         OracleData storage info = _oracleProposal[oracleNo];
-        require(info.next_epoch <= epoch, "epoch must increase");
 
         emit Proposed(
             epoch,
@@ -122,11 +117,11 @@ contract StakeStarOracleStrict is
 
         if (confirmations >= ORACLES_COUNT_MIN) {
             _currentEpoch = epoch;
-            _currentBalance = totalBalance;
+            _currentBalance = uint96(totalBalance);
             emit Saved(epoch, totalBalance);
         } else {
             info.next_epoch = epoch;
-            info.next_balance = totalBalance;
+            info.next_balance = uint96(totalBalance);
         }
     }
 

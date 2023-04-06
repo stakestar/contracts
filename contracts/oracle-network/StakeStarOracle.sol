@@ -1,28 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "../interfaces/IOracleNetwork.sol";
 import "../helpers/Utils.sol";
 
 contract StakeStarOracle is
     IOracleNetwork,
-    Initializable,
-    AccessControlUpgradeable
+    AccessControl
 {
-    uint64 public _zeroEpochTimestamp;
-
     // variable pairs has meaning on of
     // 1) current known epoch-balance consensus of the oracles
     // 2) new epoch-balance values is in progress to establish consensus
 
     uint32 private _epoch1;
-    uint256 private _totalBalance1;
+    uint96 private _totalBalance1;
 
     uint32 private _epoch2;
-    uint256 private _totalBalance2;
+    uint96 private _totalBalance2;
 
+    uint64 public _zeroEpochTimestamp;
+    uint32 _epochUpdateTimePeriodInSeconds;
     bool public _strictEpochMode;
 
     uint8 constant ORACLES_COUNT_MAX = 3;
@@ -31,12 +29,10 @@ contract StakeStarOracle is
     uint32 constant ORACLES_COUNT_MASK = 0x0700_0000;
     uint32 constant EPOCH_VALUE_MASK = 0x00FF_FFFF;
 
-    uint32 _epochUpdateTimePeriodInSeconds;
-
     // from address to oracle bit = (1 << oracle_no) << 24;
     mapping(address => uint32) private _oracles;
 
-    function initialize(uint64 zeroEpochTimestamp) public initializer {
+    constructor (uint64 zeroEpochTimestamp) {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
         _zeroEpochTimestamp = zeroEpochTimestamp;
         setEpochUpdatePeriod(uint32(24 * 3600) / Utils.EPOCH_DURATION);
@@ -148,11 +144,11 @@ contract StakeStarOracle is
                     // 2 - current
                     // 1 - old, not used
                     _epoch1 = epoch | oracle_bit;
-                    _totalBalance1 = totalBalance;
+                    _totalBalance1 = uint96(totalBalance);
                 } else {
                     // reset not finished progress in (2)
                     _epoch2 = epoch | oracle_bit;
-                    _totalBalance2 = totalBalance;
+                    _totalBalance2 = uint96(totalBalance);
                 }
             }
         } else {
@@ -177,11 +173,11 @@ contract StakeStarOracle is
                     // 1 - current
                     // 2 - old, not used
                     _epoch2 = epoch | oracle_bit;
-                    _totalBalance2 = totalBalance;
+                    _totalBalance2 = uint96(totalBalance);
                 } else {
                     // reset not finished progress in (1)
                     _epoch1 = epoch | oracle_bit;
-                    _totalBalance1 = totalBalance;
+                    _totalBalance1 = uint96(totalBalance);
                 }
             }
         }
