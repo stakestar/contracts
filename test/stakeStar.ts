@@ -1,13 +1,20 @@
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { ConstantsLib, EPOCHS, ZERO } from "../scripts/constants";
+import {
+  ConstantsLib,
+  EPOCHS,
+  GENESIS_FORK_VERSIONS,
+  OPERATOR_PUBLIC_KEYS,
+  RANDOM_PRIVATE_KEY_2,
+  ZERO
+} from "../scripts/constants";
 import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
 import { currentNetwork, humanify, retrieveCluster } from "../scripts/helpers";
 import { BlockTag } from "@ethersproject/providers";
-import { createValidator } from "./test-helpers/wrappers";
+import {createValidator, generateValidatorParams} from "./test-helpers/wrappers";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -718,6 +725,18 @@ describe("StakeStar", function () {
           .connect(owner)
           .addOperatorToAllowList(operatorId);
       }
+
+      const validatorParams3 = await generateValidatorParams(
+        RANDOM_PRIVATE_KEY_2,
+        OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
+        operatorIDs,
+        stakeStarManager.address,
+        GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+      );
+
+      await expect(
+        stakeStarManager.createValidator(validatorParams3, ssvBalance, cluster)
+      ).to.be.revertedWith("invalid WC");
 
       await expect(
         stakeStarManager.createValidator(validatorParams1, ssvBalance, cluster)

@@ -438,6 +438,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             stakeStarRegistry.verifyOperators(validatorParams.operatorIds),
             "operators not allowListed"
         );
+        require(
+            Utils.compareBytes(
+                validatorParams.withdrawalCredentials,
+                Utils.addressToWithdrawalCredentials(address(withdrawalAddress))
+            ),
+            "invalid WC"
+        );
 
         stakeStarRegistry.initiateActivatingValidator(
             validatorParams.publicKey

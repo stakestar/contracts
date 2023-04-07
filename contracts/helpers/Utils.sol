@@ -15,4 +15,20 @@ library Utils {
         (bool success, ) = to.call{value: value}(new bytes(0));
         require(success, "STE");
     }
+
+    function addressToWithdrawalCredentials(
+        address _address
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodePacked(
+                bytes32((uint256(1) << 248) | uint256(uint160(_address)))
+            );
+    }
+
+    function compareBytes(
+        bytes memory a,
+        bytes memory b
+    ) internal pure returns (bool) {
+        return (keccak256(a) == keccak256(b));
+    }
 }
