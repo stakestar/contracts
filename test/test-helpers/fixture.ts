@@ -37,6 +37,12 @@ export async function deployStakeStarFixture() {
     stakeStarOracleStrict,
     uniswapHelper,
   } = await deployAll(hre);
+
+  const UtilsMock = await hre.ethers.getContractFactory("UtilsMock");
+  const utilsMock = await UtilsMock.deploy();
+  await utilsMock.deployed();
+  console.log(`UtilsMock is deployed to ${utilsMock.address}`);
+
   // Contracts are deployed using the first signer/account by default
   const [owner, manager, otherAccount, oracle1, oracle2, oracle3] =
     await hre.ethers.getSigners();
@@ -152,6 +158,8 @@ export async function deployStakeStarFixture() {
     withdrawalAddress,
     feeRecipient,
     mevRecipient,
+
+    utilsMock,
   };
 }
 
