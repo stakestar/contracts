@@ -4,16 +4,28 @@ import { deployStakeStarFixture } from "../test-helpers/fixture";
 import { ConstantsLib, EPOCHS } from "../../scripts/constants";
 import { currentNetwork } from "../../scripts/helpers";
 
+
+function mulberry32(a : number) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+let Random = mulberry32(42);
+
 // Returns a random number between min (inclusive) and max (exclusive)
 function getRandomInt(min : number, max : number) {
     min = Math.ceil(min);
     max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(Random() * (max - min + 1)) + min;
 }
 
 function shuffleArray(array : number[]) {
     for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(Random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
@@ -427,7 +439,7 @@ describe("StakeStarOracleStrict", function () {
                 case SAVE_CORRECT_EPOCH_INCORRECT_BALANCE: {
                   let incorrectBalance;
                   do {
-                    incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                    incorrectBalance = nextBalance + (Random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
                   } while (incorrectBalances.indexOf(incorrectBalance) != -1)
                   vlog("ORACLE", oracleNo, "SAVE CORRECT EPOCH INCORRECT BALANCE", nextEpoch, incorrectBalance);
                   if (already_in_consensus || has_consensus) {
@@ -450,7 +462,7 @@ describe("StakeStarOracleStrict", function () {
                 case SAVE_INCORRECT_EPOCH_CORRECT_BALANCE: {
                   let incorrectEpoch;
                   do {
-                    incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
+                    incorrectEpoch = nextEpoch + (Random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
                   } while (incorrectEpochs.indexOf(incorrectEpoch) != -1);
 
                   vlog("ORACLE", oracleNo, "SAVE INCORRECT EPOCH CORRECT BALANCE", incorrectEpoch, nextBalance);
@@ -492,12 +504,12 @@ describe("StakeStarOracleStrict", function () {
                 case SAVE_INCORRECT_EPOCH_INCORRECT_BALANCE: {
                   let incorrectEpoch;
                   do {
-                    incorrectEpoch = nextEpoch + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
+                    incorrectEpoch = nextEpoch + (Random() > 0.5 ? 1 : -1) * getRandomInt(1, 100);
                   } while (incorrectEpochs.indexOf(incorrectEpoch) != -1);
 
                   let incorrectBalance;
                   do {
-                    incorrectBalance = nextBalance + (Math.random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                    incorrectBalance = nextBalance + (Random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
                   } while (incorrectBalances.indexOf(incorrectBalance) != -1)
 
                   vlog("ORACLE", oracleNo, "SAVE INCORRECT EPOCH INCORRECT BALANCE", incorrectEpoch, incorrectBalance);
