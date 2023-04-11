@@ -4,16 +4,27 @@ import { deployStakeStarFixture } from "../test-helpers/fixture";
 import {ConstantsLib, EPOCHS} from "../../scripts/constants";
 import {currentNetwork} from "../../scripts/helpers";
 
+function mulberry32(a : number) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+let Random = mulberry32(42);
+
 // Returns a random number between min (inclusive) and max (exclusive)
 function getRandomInt(min : number, max : number) {
     min = Math.ceil(min);
     max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(Random() * (max - min + 1)) + min;
 }
 
 function shuffleArray(array : number[]) {
     for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(Random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
