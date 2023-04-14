@@ -61,6 +61,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event DestroyValidator(bytes publicKey);
+    event RegisterValidator(ValidatorParams params);
+    event UnregisterValidator(bytes publicKey);
     event Deposit(address indexed who, uint256 eth);
     event Stake(address indexed who, uint256 starETH, uint256 sstarETH);
     event Unstake(address indexed who, uint256 sstarETH, uint256 starETH);
@@ -478,6 +480,31 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork.removeValidator(publicKey, operatorIds, cluster);
 
         emit DestroyValidator(publicKey);
+    }
+
+    function registerValidator(
+        ValidatorParams calldata validatorParams,
+        ISSVNetwork.Cluster calldata cluster
+    ) public onlyRole(Utils.MANAGER_ROLE) {
+        ssvNetwork.registerValidator(
+            validatorParams.publicKey,
+            validatorParams.operatorIds,
+            validatorParams.sharesEncrypted,
+            0,
+            cluster
+        );
+
+        emit RegisterValidator(validatorParams);
+    }
+
+    function unregisterValidator(
+        bytes calldata publicKey,
+        uint64[] memory operatorIds,
+        ISSVNetwork.Cluster memory cluster
+    ) public onlyRole(Utils.MANAGER_ROLE) {
+        ssvNetwork.removeValidator(publicKey, operatorIds, cluster);
+
+        emit UnregisterValidator(publicKey);
     }
 
     function harvest() public {
