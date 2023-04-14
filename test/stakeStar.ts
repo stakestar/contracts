@@ -7,14 +7,17 @@ import {
   GENESIS_FORK_VERSIONS,
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY_2,
-  ZERO
+  ZERO,
 } from "../scripts/constants";
 import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { BigNumber } from "ethers";
 import { ValidatorStatus } from "../scripts/types";
 import { currentNetwork, humanify, retrieveCluster } from "../scripts/helpers";
 import { BlockTag } from "@ethersproject/providers";
-import {createValidator, generateValidatorParams} from "./test-helpers/wrappers";
+import {
+  createValidator,
+  generateValidatorParams,
+} from "./test-helpers/wrappers";
 
 describe("StakeStar", function () {
   describe("Deployment", function () {
@@ -805,6 +808,56 @@ describe("StakeStar", function () {
       expect(await stakeStarPublic.validatorCreationAvailability()).to.equal(
         true
       );
+    });
+  });
+
+  describe("register/unregister validator", function () {
+    it("register/unregister validator", async function () {
+      const {
+        hre,
+        stakeStarManager,
+        stakeStarRegistry,
+        validatorParams1,
+        manager,
+        ssvNetwork,
+        operatorIDs,
+      } = await loadFixture(deployStakeStarFixture);
+      await manager.sendTransaction({
+        to: stakeStarManager.address,
+        value: hre.ethers.utils.parseEther("99"),
+      });
+
+      await createValidator(
+        hre,
+        stakeStarManager,
+        stakeStarRegistry,
+        validatorParams1
+      );
+
+      let cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarManager.address,
+        operatorIDs
+      );
+
+      await expect(
+        stakeStarManager.unregisterValidator(
+          validatorParams1.publicKey,
+          validatorParams1.operatorIds,
+          cluster
+        )
+      ).to.emit(stakeStarManager, "UnregisterValidator");
+
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarManager.address,
+        operatorIDs
+      );
+      await expect(
+        stakeStarManager.registerValidator(validatorParams1, cluster)
+      ).to.emit(stakeStarManager, "RegisterValidator");
     });
   });
 
