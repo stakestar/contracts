@@ -48,6 +48,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
       humanify(await stakeStar.pendingWithdrawalSum())
     );
     console.log("localPoolSize", humanify(await stakeStar.localPoolSize()));
+    console.log("localPoolWithdrawalFrequencyLimit", await stakeStar.localPoolWithdrawalFrequencyLimit());
     console.log("maxRateDeviation", await stakeStar.maxRateDeviation());
     console.log();
 
