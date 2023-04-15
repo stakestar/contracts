@@ -57,6 +57,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 frequencyLimit
     );
     event SetQueueParameters(uint32 loopLimit);
+    event SetCommissionParameters(uint256 rateDiffThreshold);
     event SetValidatorWithdrawalThreshold(uint256 threshold);
     event CreateValidator(ValidatorParams params, uint256 ssvDepositAmount);
     event UpdateValidator(ValidatorParams params, uint256 ssvDepositAmount);
@@ -120,6 +121,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     uint256 public rateEC;
     uint256 public rateCorrectionFactor;
+    uint256 public rateDiffThreshold;
 
     receive() external payable {}
 
@@ -224,6 +226,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         loopLimit = _loopLimit;
 
         emit SetQueueParameters(_loopLimit);
+    }
+
+    function setCommissionParameters(
+        uint256 _rateDiffThreshold
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        rateDiffThreshold = _rateDiffThreshold;
+
+        emit SetCommissionParameters(_rateDiffThreshold);
     }
 
     function setValidatorWithdrawalThreshold(
@@ -369,6 +379,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         uint256 currentRate = rate();
         if (currentRate > rateEC) {
+            if (currentRate <= rateEC + rateDiffThreshold) return;
+
             uint256 unrecordedRewards = MathUpgradeable.mulDiv(
                 totalSupply_sstarETH,
                 currentRate - rateEC,

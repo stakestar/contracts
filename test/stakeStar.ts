@@ -3542,5 +3542,49 @@ describe("StakeStar", function () {
         10
       ); // less than 0.01% difference
     });
+
+    it("rateDiffThreshold", async function () {
+      const {
+        hre,
+        stakeStarPublic,
+        stakeStarOwner,
+        stakeStarTreasury,
+        sstarETH,
+        stakeStarOracleStrict1,
+        stakeStarOracleStrict2,
+      } = await loadFixture(deployStakeStarFixture);
+      await stakeStarTreasury.setCommission(10000); // 10%
+      await stakeStarPublic.depositAndStake({
+        value: hre.ethers.utils.parseEther("10"),
+      });
+      await stakeStarOwner.setRateParameters(2000, true);
+
+      await stakeStarOracleStrict1.save(
+        166_001,
+        hre.ethers.utils.parseEther("0.2")
+      );
+      await stakeStarOracleStrict2.save(
+        166_001,
+        hre.ethers.utils.parseEther("0.2")
+      );
+      await stakeStarPublic.commitSnapshot();
+
+      await stakeStarOwner.setCommissionParameters(
+        hre.ethers.utils.parseEther("1")
+      );
+      await stakeStarPublic.depositAndStake({
+        value: hre.ethers.utils.parseEther("0.1"),
+      });
+
+      expect(await sstarETH.balanceOf(stakeStarTreasury.address)).to.be.eq(0);
+
+      await stakeStarOwner.setCommissionParameters(
+        hre.ethers.utils.parseEther("0.01")
+      );
+      await stakeStarPublic.depositAndStake({
+        value: hre.ethers.utils.parseEther("0.1"),
+      });
+      expect(await sstarETH.balanceOf(stakeStarTreasury.address)).to.be.gt(0);
+    });
   });
 });
