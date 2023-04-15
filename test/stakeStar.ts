@@ -856,7 +856,7 @@ describe("StakeStar", function () {
         operatorIDs
       );
       await expect(
-        stakeStarManager.registerValidator(validatorParams1, cluster)
+        stakeStarManager.registerValidator(validatorParams1, 0, cluster)
       ).to.emit(stakeStarManager, "RegisterValidator");
     });
   });

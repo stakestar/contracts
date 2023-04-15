@@ -484,13 +484,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     function registerValidator(
         ValidatorParams calldata validatorParams,
+        uint256 amount,
         ISSVNetwork.Cluster calldata cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         ssvNetwork.registerValidator(
             validatorParams.publicKey,
             validatorParams.operatorIds,
             validatorParams.sharesEncrypted,
-            0,
+            amount,
             cluster
         );
 
