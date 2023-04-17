@@ -3,7 +3,6 @@ import { StakeStar, StakeStarRegistry } from "../../typechain-types";
 import { ADDRESSES } from "../../scripts/constants";
 import { BigNumber } from "ethers";
 import { currentNetwork, retrieveCluster } from "../../scripts/helpers";
-import { AbiCoder } from "@ethersproject/abi";
 
 export async function createValidator(
   hre: HardhatRuntimeEnvironment,
@@ -49,11 +48,10 @@ export async function generateValidatorParams(
   withdrawalAddress: string,
   genesisForkVersion: string
 ) {
-  const { generateDepositData, splitPrivateKey, hexToBytes } = await import(
-    "@stakestar/lib"
-  );
+  const { generateDepositData, generateKeySharesPayload, hexToBytes } =
+    await import("@stakestar/lib");
 
-  const shares = await splitPrivateKey(
+  const shares = await generateKeySharesPayload(
     hexToBytes(privateKey),
     operatorIds.map((value) => value.toNumber()),
     operatorPublicKeys
@@ -70,9 +68,6 @@ export async function generateValidatorParams(
     signature: data.depositData.signature,
     depositDataRoot: data.depositDataRoot,
     operatorIds: operatorIds,
-    sharesEncrypted: new AbiCoder().encode(
-      ["string[]"],
-      [shares.map((share) => share.privateKey)]
-    ),
+    sharesEncrypted: shares.encryptedShares,
   } as StakeStar.ValidatorParamsStruct;
 }
