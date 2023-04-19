@@ -353,6 +353,7 @@ describe("StakeStarOracleStrict", function () {
         vlog("StrictMode:", strict_mode);
 
         await stakeStarOracleStrict.setStrictEpochMode(strict_mode);
+        let previousBalances : number[] = [];
 
         for (let iteration = 0; iteration < 100; ++iteration) {
           vlog("ITERATION:", iteration);
@@ -371,25 +372,42 @@ describe("StakeStarOracleStrict", function () {
             nextEpoch = lastSetEpoch + getRandomInt(1, 500);
             nextEpoch = nextEpoch >= currentBlockEpoch ? currentBlockEpoch : nextEpoch;
           }
-          let nextBalance = currentBalance + getRandomInt(-100, 1000);
+          let incorrectBalances : number[] = [...previousBalances, currentBalance];
+
+          let nextBalance;
+          do {
+            nextBalance = currentBalance + getRandomInt(-100, 1000);
+          } while (incorrectBalances.indexOf(nextBalance) != -1)
+
+          incorrectBalances.push(nextBalance);
 
           let repeats = gasMeasureMode ? 1 : 2;
           let oraclesSucceeded : { [key:number]: boolean; } = {};
-          let has_consensus = false;
+          let hasConsensus = false;
 
           const already_in_consensus = (await stakeStarOracleStrict.timestampToEpoch(
               (await stakeStarOracleStrict.latestTotalBalance()).timestamp)) === nextEpoch;
 
-          let incorrectEpochs : number[] = []
-          let incorrectBalances : number[] = []
+          let incorrectEpochs : number[] = [];
 
           while (repeats--) {
             let oracles_order = [...Array(ORACLES_COUNT).keys()]
             shuffleArray(oracles_order);
 
             for (let oracleNo of oracles_order) {
-              const action_id = gasMeasureMode ? SAVE_CORRECT_ALL : getRandomInt(MIN_ACTION, MAX_ACTION);
-              switch (action_id) {
+              const realNextEpochToPublish = await stakeStarOracleStrict.nextEpochToPublish();
+              if (strict_mode) {
+                const currentBlock = await hre.ethers.provider.getBlock("latest");
+                const nextEpochIn60Seconds = Math.floor((currentBlock.timestamp + 60 - EPOCHS[network] - 1) / epoch_update_period) * epoch_update_period / 384
+
+                if (nextEpochIn60Seconds !== nextEpoch || realNextEpochToPublish !== nextEpoch) {
+                  vlog("nextEpochToPublish will be switches soon. Exit this iteration");
+                  break;
+                }
+              }
+
+              const actionId = gasMeasureMode ? SAVE_CORRECT_ALL : getRandomInt(MIN_ACTION, MAX_ACTION);
+              switch (actionId) {
                 case NO_ACTION: {
                   vlog("ORACLE", oracleNo, "NO ACTION");
                   break;
@@ -409,7 +427,7 @@ describe("StakeStarOracleStrict", function () {
                       oracles[oracleNo].save(nextEpoch, nextBalance)
                     ).to.be.revertedWith("balance not equals");
                   } else {
-                    if (!has_consensus && confirmations == MIN_CONSENSUS_COUNT - 1) {
+                    if (!hasConsensus && confirmations == MIN_CONSENSUS_COUNT - 1) {
                       await expect(oracles[oracleNo].save(nextEpoch, nextBalance))
                         .to.emit(oracles[oracleNo], "Proposed")
                         .withArgs(nextEpoch, nextBalance, 1 << (24 + oracleNo))
@@ -422,7 +440,7 @@ describe("StakeStarOracleStrict", function () {
                       expect(currentBalance).to.be.eq(nextBalance);
                       expect(currentEpoch).to.be.eq(nextEpoch);
 
-                      has_consensus = true;
+                      hasConsensus = true;
                     } else {
                       await expect(oracles[oracleNo].save(nextEpoch, nextBalance))
                         .to.emit(oracles[oracleNo], "Proposed")
@@ -439,10 +457,10 @@ describe("StakeStarOracleStrict", function () {
                 case SAVE_CORRECT_EPOCH_INCORRECT_BALANCE: {
                   let incorrectBalance;
                   do {
-                    incorrectBalance = nextBalance + (Random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                    incorrectBalance = nextBalance + getRandomInt(-1000, 1000);
                   } while (incorrectBalances.indexOf(incorrectBalance) != -1)
                   vlog("ORACLE", oracleNo, "SAVE CORRECT EPOCH INCORRECT BALANCE", nextEpoch, incorrectBalance);
-                  if (already_in_consensus || has_consensus) {
+                  if (already_in_consensus || hasConsensus) {
                     await expect(
                       oracles[oracleNo].save(nextEpoch, incorrectBalance)
                     ).to.be.revertedWith("balance not equals");
@@ -509,7 +527,7 @@ describe("StakeStarOracleStrict", function () {
 
                   let incorrectBalance;
                   do {
-                    incorrectBalance = nextBalance + (Random() > 0.5 ? 1 : -1) * getRandomInt(1, 1000);
+                    incorrectBalance = nextBalance + getRandomInt(-1000, 1000);
                   } while (incorrectBalances.indexOf(incorrectBalance) != -1)
 
                   vlog("ORACLE", oracleNo, "SAVE INCORRECT EPOCH INCORRECT BALANCE", incorrectEpoch, incorrectBalance);
@@ -555,6 +573,7 @@ describe("StakeStarOracleStrict", function () {
           currentBalance = (await stakeStarOracleStrict.latestTotalBalance()).totalBalance.toNumber();
           currentEpoch = await stakeStarOracleStrict.timestampToEpoch((await stakeStarOracleStrict.latestTotalBalance()).timestamp);
           lastSetEpoch = nextEpoch;
+          previousBalances = [...incorrectBalances, nextBalance];
           vlog("Current Balance:", currentBalance);
           vlog("Current Epoch:", currentEpoch);
 
