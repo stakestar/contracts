@@ -36,7 +36,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
     console.log(
       "FeeRecipient ETH Balance",
       humanify(
-        await hre.ethers.provider.getBalance(addresses.withdrawalAddress)
+        await hre.ethers.provider.getBalance(addresses.feeRecipient)
       )
     );
     console.log("SStarETH TotalSupply", humanify(await sstarETH.totalSupply()));
@@ -48,7 +48,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
       humanify(await stakeStar.pendingWithdrawalSum())
     );
     console.log("localPoolSize", humanify(await stakeStar.localPoolSize()));
-    console.log("localPoolWithdrawalFrequencyLimit", await stakeStar.localPoolWithdrawalFrequencyLimit());
+    console.log("localPoolWithdrawalFrequencyLimit", (await stakeStar.localPoolWithdrawalFrequencyLimit()).toNumber());
     console.log("maxRateDeviation", await stakeStar.maxRateDeviation());
     console.log();
 
