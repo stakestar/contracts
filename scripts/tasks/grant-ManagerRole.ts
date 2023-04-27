@@ -7,6 +7,7 @@ export async function grantAllManagerRoles(
   hre: HardhatRuntimeEnvironment,
   stakeStarAddress: string,
   stakeStarRegistryAddress: string,
+  stakeStarTreasuryAddress: string,
   managerAddress: string
 ) {
   const StakeStar = await hre.ethers.getContractFactory("StakeStar");
@@ -17,6 +18,13 @@ export async function grantAllManagerRoles(
   );
   const stakeStarRegistry = await StakeStarRegistry.attach(
     stakeStarRegistryAddress
+  );
+
+  const StakeStarTreasury = await hre.ethers.getContractFactory(
+    "StakeStarTreasury"
+  );
+  const stakeStarTreasury = await StakeStarTreasury.attach(
+    stakeStarTreasuryAddress
   );
 
   let tx;
@@ -33,6 +41,15 @@ export async function grantAllManagerRoles(
   console.log(
     `StakeStarRegistry::MANAGER_ROLE is granted to ${managerAddress}`
   );
+
+  tx = await stakeStarTreasury.grantRole(
+    ConstantsLib.MANAGER_ROLE,
+    managerAddress
+  );
+  console.log(tx.hash);
+  console.log(
+    `StakeStarTreasury::MANAGER_ROLE is granted to ${managerAddress}`
+  );
 }
 
 task("grant-ManagerRole", "Grants a MANAGER_ROLE to the manager").setAction(
@@ -43,6 +60,7 @@ task("grant-ManagerRole", "Grants a MANAGER_ROLE to the manager").setAction(
       hre,
       addresses.stakeStar,
       addresses.stakeStarRegistry,
+      addresses.stakeStarTreasury,
       addresses.stakeStarBot
     );
   }

@@ -64,6 +64,7 @@ export async function deployStakeStarFixture() {
     hre,
     stakeStar.address,
     stakeStarRegistry.address,
+    stakeStarTreasury.address,
     manager.address
   );
 
