@@ -55,13 +55,13 @@ task("printContractVariables", "Prints contracts variables").setAction(
     const snapshot0 = await stakeStar.snapshots(0);
     const snapshot1 = await stakeStar.snapshots(1);
     console.log("snapshot0 total_ETH", humanify(snapshot0.total_ETH));
-    console.log("snapshot0 total_sstarETH", humanify(snapshot0.total_sstarETH));
+    console.log("snapshot0 total_stakedStar", humanify(snapshot0.total_stakedStar));
     console.log(
       "snapshot0 timestamp",
       new Date(snapshot0.timestamp.toNumber() * 1000).toISOString()
     );
     console.log("snapshot1 total_ETH", humanify(snapshot1.total_ETH));
-    console.log("snapshot1 total_sstarETH", humanify(snapshot1.total_sstarETH));
+    console.log("snapshot1 total_stakedStar", humanify(snapshot1.total_stakedStar));
     console.log(
       "snapshot1 timestamp",
       new Date(snapshot1.timestamp.toNumber() * 1000).toISOString()
@@ -69,7 +69,7 @@ task("printContractVariables", "Prints contracts variables").setAction(
     console.log();
 
     console.log("rate", humanify(await stakeStar["rate()"]()));
-    console.log("rateEC", humanify(await stakeStar.rateEC()));
+    console.log("rateEC", humanify(await stakeStar.rateForExtractCommision()));
     console.log(
       "rateCorrectionFactor",
       humanify(await stakeStar.rateCorrectionFactor())

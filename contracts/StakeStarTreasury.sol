@@ -23,7 +23,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address swapProviderAddress
     );
     event SetCommission(uint24 value);
-    event SetRunway(uint256 minRunway, uint256 maxRunway);
+    event SetRunway(uint32 minRunway, uint32 maxRunway);
     event Claim(uint256 amount);
     event SwapETHAndDepositSSV(uint256 ETH, uint256 SSV, uint256 depositAmount);
 
@@ -34,9 +34,12 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     ISSVNetwork public ssvNetwork;
     ISSVNetworkViews public ssvNetworkViews;
 
+    // 1/100_000
     uint24 public commission;
-    uint256 public minRunway;
-    uint256 public maxRunway;
+    // measured in blocks, for 12 seconds block uint32 will be enough 1500 years
+    uint32 public minRunway;
+    uint32 public maxRunway;
+    uint32 constant maxPossibleRunway = 365 * 24 * 3600 / 12;  // 1 year
 
     receive() external payable {}
 
@@ -75,10 +78,11 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     }
 
     function setRunway(
-        uint256 minRunwayPeriod,
-        uint256 maxRunwayPeriod
+        uint32 minRunwayPeriod,
+        uint32 maxRunwayPeriod
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         require(minRunwayPeriod <= maxRunwayPeriod, "minRunway > maxRunway");
+        require(maxRunwayPeriod < maxPossibleRunway, "too big maxRunway");
 
         minRunway = minRunwayPeriod;
         maxRunway = maxRunwayPeriod;
