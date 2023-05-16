@@ -36,7 +36,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     // 1/100_000
     uint24 public commission;
-    // measured in blocks, for 12 seconds block uint32 will be enough 1500 years
+    // measured in blocks, for 12 seconds block uint32 will be enough for 1500 years
     uint32 public minRunway;
     uint32 public maxRunway;
     uint32 constant maxPossibleRunway = 365 * 24 * 3600 / 12;  // 1 year
@@ -90,6 +90,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         emit SetRunway(minRunwayPeriod, maxRunwayPeriod);
     }
 
+    // Withdraw gathered commission
     function claim(uint256 amount) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         Utils.safeTransferETH(msg.sender, amount);
         emit Claim(amount);
@@ -100,19 +101,9 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         ISSVNetwork.Cluster memory cluster
     ) public payable onlyRole(Utils.MANAGER_ROLE) {
         require(minRunway != maxRunway, "runway not set");
-        require(swapAvailability(operatorIds, cluster), "swap not available");
+        (bool avail, uint256 balance, uint256 burnRate) = swapAvailability(operatorIds, cluster);
+        require(avail, "swap not available");
 
-        address stakeStarAddress = address(stakeStar);
-        uint256 balance = ssvNetworkViews.getBalance(
-            stakeStarAddress,
-            operatorIds,
-            cluster
-        );
-        uint256 burnRate = ssvNetworkViews.getBurnRate(
-            stakeStarAddress,
-            operatorIds,
-            cluster
-        );
         (uint256 amountIn, uint256 amountOut) = swapProvider.swap{
             value: address(this).balance
         }(burnRate * maxRunway - balance);
@@ -120,7 +111,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         uint256 depositAmount = ssvToken.balanceOf(address(this));
         ssvToken.approve(address(ssvNetwork), depositAmount);
         ssvNetwork.deposit(
-            stakeStarAddress,
+            address(stakeStar),
             operatorIds,
             depositAmount,
             cluster
@@ -132,25 +123,27 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     function swapAvailability(
         uint64[] memory operatorIds,
         ISSVNetwork.Cluster memory cluster
-    ) public view returns (bool) {
+    ) public view returns (bool avail, uint256 balance, uint256 burnRate) {
         address stakeStarAddress = address(stakeStar);
-        uint256 balance = ssvNetworkViews.getBalance(
+        balance = ssvNetworkViews.getBalance(
             stakeStarAddress,
             operatorIds,
             cluster
         );
-        uint256 burnRate = ssvNetworkViews.getBurnRate(
+        burnRate = ssvNetworkViews.getBurnRate(
             stakeStarAddress,
             operatorIds,
             cluster
         );
 
-        if (burnRate == 0) return false;
-
-        return
-            address(this).balance > 0 &&
-            burnRate * minRunway < balance &&
-            balance < burnRate * maxRunway;
+        if (burnRate == 0) {
+            avail = false;
+        } else {
+            avail =
+                address(this).balance > 0 &&
+                burnRate * minRunway < balance &&
+                balance < burnRate * maxRunway;
+        }
     }
 
     function getCommission(uint256 amount) public view returns (uint256) {

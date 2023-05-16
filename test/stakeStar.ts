@@ -7,7 +7,7 @@ import {
   GENESIS_FORK_VERSIONS,
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY_2,
-  ZERO,
+  ZERO, ZERO_ADDRESS,
 } from "../scripts/constants";
 import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { BigNumber } from "ethers";
@@ -274,7 +274,7 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.localPoolMaxSize()).to.equal(0);
         expect(await stakeStarOwner.localPoolWithdrawalLimit()).to.equal(0);
         expect(
-          await stakeStarOwner.localPoolWithdrawalFrequencyLimit()
+          await stakeStarOwner.localPoolWithdrawalPeriodLimit()
         ).to.equal(0);
 
         await expect(stakeStarOwner.setLocalPoolParameters(1, 2, 3))
@@ -283,7 +283,7 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.localPoolMaxSize()).to.equal(1);
         expect(await stakeStarOwner.localPoolWithdrawalLimit()).to.equal(2);
         expect(
-          await stakeStarOwner.localPoolWithdrawalFrequencyLimit()
+          await stakeStarOwner.localPoolWithdrawalPeriodLimit()
         ).to.equal(3);
 
         await stakeStarOwner.setLocalPoolParameters(100, 2, 3);
@@ -391,24 +391,20 @@ describe("StakeStar", function () {
         withdrawalAmountETH
       );
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(withdrawalAmountETH);
 
-      expect(await stakeStarPublic.head()).to.equal(1);
-      expect(await stakeStarPublic.tail()).to.equal(2);
-      expect(await stakeStarPublic.next(1)).to.equal(2);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        1
-      );
+      expect(await stakeStarPublic.head()).to.equal(otherAccount.address);
+      expect(await stakeStarPublic.tail()).to.equal(otherAccount.address);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(1);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
 
       await stakeStarPublic.claim();
 
-      expect(await stakeStarPublic.head()).to.equal(2);
-      expect(await stakeStarPublic.tail()).to.equal(2);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
-      expect(await stakeStarPublic.next(1)).to.equal(0);
+      expect(await stakeStarPublic.head()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.tail()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
 
       await expect(stakeStarPublic.withdraw(withdrawalAmountStarETH))
         .to.emit(stakeStarPublic, "Withdraw")
@@ -443,22 +439,43 @@ describe("StakeStar", function () {
         validatorParams1
       );
 
+      expect(await stakeStarPublic.head()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.tail()).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarOwner.withdraw(hre.ethers.utils.parseEther("8"));
+
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(owner.address);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarManager.withdraw(hre.ethers.utils.parseEther("8"));
+
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(manager.address);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarPublic.withdraw(hre.ethers.utils.parseEther("16"));
 
-      expect(await stakeStarPublic.head()).to.equal(1);
-      expect(await stakeStarPublic.tail()).to.equal(4);
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(otherAccount.address);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("16"));
 
-      for (let i = 1; i <= 3; i++) {
-        expect(await stakeStarPublic.next(i)).to.equal(i + 1);
-      }
+      expect((await stakeStarPublic.queue(owner.address)).next).to.equal(manager.address);
+      expect((await stakeStarPublic.queue(manager.address)).next).to.equal(otherAccount.address);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(0);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
       await owner.sendTransaction({
         to: stakeStarManager.address,
@@ -467,9 +484,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
       await owner.sendTransaction({
         to: stakeStarManager.address,
@@ -478,21 +493,24 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(2);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
       await stakeStarManager.claim();
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
-      expect(await stakeStarPublic.next(1)).to.equal(3);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
-      expect(await stakeStarPublic.head()).to.equal(1);
-      expect(await stakeStarPublic.tail()).to.equal(4);
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(otherAccount.address);
+
+      expect((await stakeStarPublic.queue(owner.address)).next).to.equal(otherAccount.address);
+      expect((await stakeStarPublic.queue(manager.address)).next).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
+
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("16"));
 
       await owner.sendTransaction({
         to: stakeStarManager.address,
@@ -500,22 +518,34 @@ describe("StakeStar", function () {
       });
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
-      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        3
-      );
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);  // manager already claimed
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(2);
 
       await stakeStarPublic.claim();
+
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(owner.address);
+
+      expect((await stakeStarPublic.queue(owner.address)).next).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(manager.address)).next).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
+
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarOwner.claim();
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(0);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
-      expect(await stakeStarPublic.head()).to.equal(4);
-      expect(await stakeStarPublic.tail()).to.equal(4);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
+      expect(await stakeStarPublic.head()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.tail()).to.equal(ZERO_ADDRESS);
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(0);
     });
@@ -567,7 +597,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(ZERO);
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(ZERO);
 
       await stakeStarPublic.withdraw(withdrawalAmount);
@@ -610,7 +640,7 @@ describe("StakeStar", function () {
       );
       await expect(
         stakeStarPublic.localPoolWithdraw(hre.ethers.utils.parseEther("1"))
-      ).to.be.revertedWith("localPoolWithdrawalFrequencyLimit");
+      ).to.be.revertedWith("localPoolWithdrawalPeriodLimit");
 
       await stakeStarOwner.setLocalPoolParameters(
         hre.ethers.utils.parseEther("2"),
@@ -631,7 +661,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(ZERO);
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(ZERO);
     });
 
@@ -670,7 +700,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(ZERO);
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(ZERO);
     });
   });
