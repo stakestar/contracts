@@ -39,7 +39,7 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
   console.log();
 
   console.log(
-    "CommitSnapshot [block timestamp, timestamp, total_ETH, total_sstarETH, rate]"
+    "CommitSnapshot [block timestamp, timestamp, total_ETH, total_stakedStar, rate]"
   );
   events = await stakeStar.queryFilter(stakeStar.filters.CommitSnapshot());
   for (const event of events) {
@@ -47,7 +47,7 @@ task("printRateEvents", "Prints Rate events").setAction(async (args, hre) => {
       new Date((await event.getBlock()).timestamp * 1000).toUTCString(),
       new Date(event.args.timestamp.toNumber() * 1000).toUTCString(),
       humanify(event.args.total_ETH),
-      humanify(event.args.total_sstarETH),
+      humanify(event.args.total_stakedStar),
       humanify(event.args.rate)
     );
   }

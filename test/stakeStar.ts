@@ -7,7 +7,7 @@ import {
   GENESIS_FORK_VERSIONS,
   OPERATOR_PUBLIC_KEYS,
   RANDOM_PRIVATE_KEY_2,
-  ZERO,
+  ZERO, ZERO_ADDRESS,
 } from "../scripts/constants";
 import { deployStakeStarFixture } from "./test-helpers/fixture";
 import { BigNumber } from "ethers";
@@ -274,7 +274,7 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.localPoolMaxSize()).to.equal(0);
         expect(await stakeStarOwner.localPoolWithdrawalLimit()).to.equal(0);
         expect(
-          await stakeStarOwner.localPoolWithdrawalFrequencyLimit()
+          await stakeStarOwner.localPoolWithdrawalPeriodLimit()
         ).to.equal(0);
 
         await expect(stakeStarOwner.setLocalPoolParameters(1, 2, 3))
@@ -283,7 +283,7 @@ describe("StakeStar", function () {
         expect(await stakeStarOwner.localPoolMaxSize()).to.equal(1);
         expect(await stakeStarOwner.localPoolWithdrawalLimit()).to.equal(2);
         expect(
-          await stakeStarOwner.localPoolWithdrawalFrequencyLimit()
+          await stakeStarOwner.localPoolWithdrawalPeriodLimit()
         ).to.equal(3);
 
         await stakeStarOwner.setLocalPoolParameters(100, 2, 3);
@@ -391,26 +391,20 @@ describe("StakeStar", function () {
         withdrawalAmountETH
       );
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(withdrawalAmountETH);
 
-      expect(await stakeStarPublic.left()).to.equal(1);
-      expect(await stakeStarPublic.right()).to.equal(2);
-      expect(await stakeStarPublic.previous(2)).to.equal(1);
-      expect(await stakeStarPublic.next(1)).to.equal(2);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        1
-      );
+      expect(await stakeStarPublic.head()).to.equal(otherAccount.address);
+      expect(await stakeStarPublic.tail()).to.equal(otherAccount.address);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(1);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
 
       await stakeStarPublic.claim();
 
-      expect(await stakeStarPublic.left()).to.equal(2);
-      expect(await stakeStarPublic.right()).to.equal(2);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
-      expect(await stakeStarPublic.previous(1)).to.equal(0);
-      expect(await stakeStarPublic.next(1)).to.equal(0);
+      expect(await stakeStarPublic.head()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.tail()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
 
       await expect(stakeStarPublic.withdraw(withdrawalAmountStarETH))
         .to.emit(stakeStarPublic, "Withdraw")
@@ -445,23 +439,43 @@ describe("StakeStar", function () {
         validatorParams1
       );
 
+      expect(await stakeStarPublic.head()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.tail()).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarOwner.withdraw(hre.ethers.utils.parseEther("8"));
+
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(owner.address);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarManager.withdraw(hre.ethers.utils.parseEther("8"));
+
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(manager.address);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarPublic.withdraw(hre.ethers.utils.parseEther("16"));
 
-      expect(await stakeStarPublic.left()).to.equal(1);
-      expect(await stakeStarPublic.right()).to.equal(4);
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(otherAccount.address);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("16"));
 
-      for (let i = 1; i <= 3; i++) {
-        expect(await stakeStarPublic.previous(i)).to.equal(i - 1);
-        expect(await stakeStarPublic.next(i)).to.equal(i + 1);
-      }
+      expect((await stakeStarPublic.queue(owner.address)).next).to.equal(manager.address);
+      expect((await stakeStarPublic.queue(manager.address)).next).to.equal(otherAccount.address);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(0);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
       await owner.sendTransaction({
         to: stakeStarManager.address,
@@ -470,9 +484,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
       await owner.sendTransaction({
         to: stakeStarManager.address,
@@ -481,22 +493,24 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(2);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
       await stakeStarManager.claim();
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
-      expect(await stakeStarPublic.next(1)).to.equal(3);
-      expect(await stakeStarPublic.previous(3)).to.equal(1);
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
-      expect(await stakeStarPublic.left()).to.equal(1);
-      expect(await stakeStarPublic.right()).to.equal(4);
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(otherAccount.address);
+
+      expect((await stakeStarPublic.queue(owner.address)).next).to.equal(otherAccount.address);
+      expect((await stakeStarPublic.queue(manager.address)).next).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
+
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("16"));
 
       await owner.sendTransaction({
         to: stakeStarManager.address,
@@ -504,27 +518,36 @@ describe("StakeStar", function () {
       });
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(1);
-      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        3
-      );
+      expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);  // manager already claimed
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(2);
 
       await stakeStarPublic.claim();
+
+      expect(await stakeStarPublic.head()).to.equal(owner.address);
+      expect(await stakeStarPublic.tail()).to.equal(owner.address);
+
+      expect((await stakeStarPublic.queue(owner.address)).next).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(manager.address)).next).to.equal(ZERO_ADDRESS);
+      expect((await stakeStarPublic.queue(otherAccount.address)).next).to.equal(ZERO_ADDRESS);
+
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(hre.ethers.utils.parseEther("8"));
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
       await stakeStarOwner.claim();
 
       expect(await stakeStarPublic.queueIndex(owner.address)).to.equal(0);
       expect(await stakeStarPublic.queueIndex(manager.address)).to.equal(0);
-      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(
-        0
-      );
+      expect(await stakeStarPublic.queueIndex(otherAccount.address)).to.equal(0);
 
-      expect(await stakeStarPublic.left()).to.equal(4);
-      expect(await stakeStarPublic.right()).to.equal(4);
+      expect((await stakeStarPublic.queue(owner.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(manager.address)).pendingAmount).to.equal(ZERO);
+      expect((await stakeStarPublic.queue(otherAccount.address)).pendingAmount).to.equal(ZERO);
+
+      expect(await stakeStarPublic.head()).to.equal(ZERO_ADDRESS);
+      expect(await stakeStarPublic.tail()).to.equal(ZERO_ADDRESS);
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(0);
-
-      expect(await stakeStarPublic.next(4)).to.equal(0);
-      expect(await stakeStarPublic.previous(4)).to.equal(0);
     });
   });
 
@@ -574,7 +597,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(ZERO);
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(ZERO);
 
       await stakeStarPublic.withdraw(withdrawalAmount);
@@ -617,7 +640,7 @@ describe("StakeStar", function () {
       );
       await expect(
         stakeStarPublic.localPoolWithdraw(hre.ethers.utils.parseEther("1"))
-      ).to.be.revertedWith("localPoolWithdrawalFrequencyLimit");
+      ).to.be.revertedWith("localPoolWithdrawalPeriodLimit");
 
       await stakeStarOwner.setLocalPoolParameters(
         hre.ethers.utils.parseEther("2"),
@@ -638,7 +661,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(ZERO);
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(ZERO);
     });
 
@@ -677,7 +700,7 @@ describe("StakeStar", function () {
 
       expect(await stakeStarPublic.pendingWithdrawalSum()).to.equal(ZERO);
       expect(
-        await stakeStarPublic.pendingWithdrawal(otherAccount.address)
+        (await stakeStarPublic.queue(otherAccount.address)).pendingAmount
       ).to.equal(ZERO);
     });
   });
@@ -1282,10 +1305,10 @@ describe("StakeStar", function () {
       expect(snapshot1.total_ETH).to.equal(
         hre.ethers.utils.parseEther("1.003")
       );
-      expect(snapshot0.total_sstarETH).to.equal(
+      expect(snapshot0.total_stakedStar).to.equal(
         hre.ethers.utils.parseEther("1")
       );
-      expect(snapshot1.total_sstarETH).to.equal(
+      expect(snapshot1.total_stakedStar).to.equal(
         hre.ethers.utils.parseEther("1")
       );
       expect(snapshot0.timestamp).to.equal(
@@ -1342,7 +1365,7 @@ describe("StakeStar", function () {
       expect(snapshot1.total_ETH).to.equal(
         hre.ethers.utils.parseEther("1.00111")
       );
-      expect(snapshot1.total_sstarETH).to.equal(
+      expect(snapshot1.total_stakedStar).to.equal(
         hre.ethers.utils.parseEther("1")
       );
       expect(snapshot1.timestamp).to.equal(
@@ -1395,7 +1418,7 @@ describe("StakeStar", function () {
       expect(snapshot1.total_ETH).to.equal(
         hre.ethers.utils.parseEther("1.0001")
       );
-      expect(snapshot1.total_sstarETH).to.equal(
+      expect(snapshot1.total_stakedStar).to.equal(
         hre.ethers.utils.parseEther("1")
       );
       expect(snapshot1.timestamp).to.equal(
@@ -1819,7 +1842,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1.1")
       );
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("4.2"), 1e9);
       expect(
         (await sstarETH.totalSupply())
@@ -1836,7 +1859,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1.1")
       );
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("2"), 1e9);
       expect(
         (await sstarETH.totalSupply())
@@ -1883,7 +1906,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("0.5")
       );
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("18"), 1e9);
       expect(
         (await sstarETH.totalSupply())
@@ -1900,7 +1923,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("0.5")
       );
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("17"), 1e9);
       expect(
         (await sstarETH.totalSupply())
@@ -1947,7 +1970,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("34"), 1e9);
       expect(
         (await sstarETH.totalSupply())
@@ -1964,7 +1987,7 @@ describe("StakeStar", function () {
         hre.ethers.utils.parseEther("1")
       );
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("32"), 1e9);
       expect(
         (await sstarETH.totalSupply())
@@ -2306,12 +2329,12 @@ describe("StakeStar", function () {
         await provider.getBalance(stakeStarTreasury.address)
       ).to.be.closeTo(hre.ethers.utils.parseEther("0.01"), 100);
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(
+        await stakeStarPublic.stakedStarToETH(
           await sstarETH.balanceOf(otherAccount.address)
         )
       ).to.be.closeTo(hre.ethers.utils.parseEther("20.09"), 100);
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("20.09"), 100);
       expect(
         await sstarETH.balanceOf(stakeStarTreasury.address)
@@ -2373,12 +2396,12 @@ describe("StakeStar", function () {
         await provider.getBalance(stakeStarTreasury.address)
       ).to.be.closeTo(hre.ethers.utils.parseEther("0.02"), 100);
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(
+        await stakeStarPublic.stakedStarToETH(
           await sstarETH.balanceOf(otherAccount.address)
         )
       ).to.be.closeTo(hre.ethers.utils.parseEther("20.18"), 100);
       expect(
-        await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+        await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
       ).to.be.closeTo(hre.ethers.utils.parseEther("20.18"), 100);
     });
 
@@ -2433,7 +2456,7 @@ describe("StakeStar", function () {
       );
 
       const total_ssETH = await sstarETH.totalSupply();
-      const total_ETH = await stakeStarPublic.sstarETH_to_ETH(total_ssETH);
+      const total_ETH = await stakeStarPublic.stakedStarToETH(total_ssETH);
 
       await hre.network.provider.send("evm_setNextBlockTimestamp", [
         (await stakeStarOracleStrict1.epochToTimestamp(epoch0 + 1)).toNumber(),
@@ -2521,11 +2544,11 @@ describe("StakeStar", function () {
       expect(
         snapshot0.total_ETH
           .mul(hre.ethers.utils.parseEther("1"))
-          .div(snapshot0.total_sstarETH)
+          .div(snapshot0.total_stakedStar)
       ).to.equal(
         snapshot1.total_ETH
           .mul(hre.ethers.utils.parseEther("1"))
-          .div(snapshot1.total_sstarETH)
+          .div(snapshot1.total_stakedStar)
       );
 
       console.log(
@@ -2535,7 +2558,7 @@ describe("StakeStar", function () {
       console.log(
         "user ssETH -> ETH",
         humanify(
-          await stakeStarPublic.sstarETH_to_ETH(
+          await stakeStarPublic.stakedStarToETH(
             await sstarETH.balanceOf(otherAccount.address)
           )
         )
@@ -2543,11 +2566,11 @@ describe("StakeStar", function () {
       console.log(
         "total ssETH -> ETH",
         humanify(
-          await stakeStarPublic.sstarETH_to_ETH(await sstarETH.totalSupply())
+          await stakeStarPublic.stakedStarToETH(await sstarETH.totalSupply())
         )
       );
 
-      const total_ETH2 = await stakeStarPublic.sstarETH_to_ETH(
+      const total_ETH2 = await stakeStarPublic.stakedStarToETH(
         await sstarETH.totalSupply()
       );
       const treasuryRewards = await provider.getBalance(
@@ -2590,7 +2613,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2620,7 +2643,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2657,7 +2680,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2686,7 +2709,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2725,7 +2748,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2754,7 +2777,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2791,7 +2814,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2820,7 +2843,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2881,7 +2904,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2911,7 +2934,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2948,7 +2971,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -2977,7 +3000,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3016,7 +3039,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3042,7 +3065,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3072,7 +3095,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3098,7 +3121,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3151,7 +3174,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3180,7 +3203,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3237,7 +3260,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3267,7 +3290,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3304,7 +3327,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3341,7 +3364,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3391,7 +3414,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3449,7 +3472,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();
@@ -3509,7 +3532,7 @@ describe("StakeStar", function () {
       poolBalance = await provider.getBalance(stakeStarPublic.address);
       treasuryBalance = await provider.getBalance(stakeStarTreasury.address);
       totalSupply_ssETH = await sstarETH.totalSupply();
-      totalSupply_ETH = await stakeStarPublic.sstarETH_to_ETH(
+      totalSupply_ETH = await stakeStarPublic.stakedStarToETH(
         totalSupply_ssETH
       );
       rate = await stakeStarPublic["rate()"]();

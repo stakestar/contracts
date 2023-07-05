@@ -33,10 +33,13 @@ contract UniswapV3Provider is SwapProvider {
     address public ssvToken;
     address public pool;
 
+    uint96 public minETHLiquidity;
+    // Pool fee is in hundredths of basis points
+    // (e.g. the fee for a pool at the 0.3% tier is 3000; the fee for a pool at the 0.01% tier is 100).
     uint24 public poolFee;
+    // in 1/100_000, e.g. 0.5% = 500
     uint24 public slippage;
     uint32 public twapInterval;
-    uint256 public minETHLiquidity;
 
     function initialize() public initializer {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
@@ -76,11 +79,12 @@ contract UniswapV3Provider is SwapProvider {
         require(interval > 0, "twapInterval = 0");
         require(numerator <= Utils.BASE, "slippage must be in [0, 100_000]");
         require(minLiquidity > 0, "minLiquidity = 0");
+        require(fee <= 1_000_000, "fee must be in [0, 1_000_000]");
 
         poolFee = fee;
         slippage = numerator;
         twapInterval = interval;
-        minETHLiquidity = minLiquidity;
+        minETHLiquidity = uint96(minLiquidity);
 
         emit SetParameters(fee, numerator, interval, minLiquidity);
     }
