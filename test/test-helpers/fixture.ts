@@ -95,7 +95,9 @@ export async function deployStakeStarFixture() {
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     operatorIDs,
     withdrawalAddress.address,
-    GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+    GENESIS_FORK_VERSIONS[currentNetwork(hre)],
+    stakeStar.address,
+    0
   );
 
   const validatorParams2 = await generateValidatorParams(
@@ -103,7 +105,9 @@ export async function deployStakeStarFixture() {
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     operatorIDs,
     withdrawalAddress.address,
-    GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+    GENESIS_FORK_VERSIONS[currentNetwork(hre)],
+    stakeStar.address,
+    1
   );
 
   addresses.stakeStarOracle = stakeStarOracle.address;

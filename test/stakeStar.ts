@@ -757,7 +757,9 @@ describe("StakeStar", function () {
         OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
         operatorIDs,
         stakeStarManager.address,
-        GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+        GENESIS_FORK_VERSIONS[currentNetwork(hre)],
+        stakeStarManager.address,
+        3
       );
 
       await expect(
