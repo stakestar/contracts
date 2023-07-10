@@ -1,7 +1,9 @@
-name: Run tests on pull request
-on: pull_request
+name: Publish
+on:
+  release:
+    types: [created]
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -13,7 +15,6 @@ jobs:
       - run: yarn && yarn build
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GPR_TOKEN }}
-      - run: yarn test
+      - run: yarn publish
         env:
-          GOERLI_RPC: ${{ secrets.GOERLI_RPC }}
-          GOERLI_DEPLOYER_PRIVKEY: ${{ secrets.GOERLI_DEPLOYER_PRIVKEY }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

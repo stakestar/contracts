@@ -1,9 +1,7 @@
-name: Publish package to npm.pkg.github.com on release
-on:
-  release:
-    types: [created]
+name: Tests
+on: pull_request
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,6 +13,7 @@ jobs:
       - run: yarn && yarn build
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GPR_TOKEN }}
-      - run: yarn publish
+      - run: yarn test
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOERLI_RPC: ${{ secrets.GOERLI_RPC }}
+          GOERLI_DEPLOYER_PRIVKEY: ${{ secrets.GOERLI_DEPLOYER_PRIVKEY }}
