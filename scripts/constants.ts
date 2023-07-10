@@ -12,6 +12,7 @@ export const ADDRESSES: Record<
   {
     depositContract: string;
     ssvNetwork: string;
+    ssvNetworkOwner: string;
     ssvNetworkViews: string;
     ssvToken: string;
     stakeStarOracle: string;
@@ -39,6 +40,7 @@ export const ADDRESSES: Record<
   [Network.MAINNET]: {
     depositContract: "",
     ssvNetwork: "",
+    ssvNetworkOwner: "",
     ssvNetworkViews: "",
     ssvToken: "",
     stakeStarOracle: "",
@@ -64,8 +66,9 @@ export const ADDRESSES: Record<
   },
   [Network.GOERLI]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
-    ssvNetwork: "0xAfdb141Dd99b5a101065f40e3D7636262dce65b3",
-    ssvNetworkViews: "0x8dB45282d7C4559fd093C26f677B3837a5598914",
+    ssvNetwork: "0xC3CD9A0aE89Fff83b71b58b6512D43F8a41f363D",
+    ssvNetworkOwner: "0xC564AF154621Ee8D0589758d535511aEc8f67b40",
+    ssvNetworkViews: "0x807E241D3118fC8F231948C60aa42a4C606C2545",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "0x5c0D534F56b90Fe84dF786127492D148dCBcd374",
     stakeStarOracleStrict: "0x8Fcf0b26f677833E62b199b92eFf9A48333b6639",
@@ -90,8 +93,9 @@ export const ADDRESSES: Record<
   },
   [Network.HARDHAT]: {
     depositContract: "0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b",
-    ssvNetwork: "0xAfdb141Dd99b5a101065f40e3D7636262dce65b3",
-    ssvNetworkViews: "0x8dB45282d7C4559fd093C26f677B3837a5598914",
+    ssvNetwork: "0xC3CD9A0aE89Fff83b71b58b6512D43F8a41f363D",
+    ssvNetworkOwner: "0xC564AF154621Ee8D0589758d535511aEc8f67b40",
+    ssvNetworkViews: "0x807E241D3118fC8F231948C60aa42a4C606C2545",
     ssvToken: "0x3a9f01091C446bdE031E39ea8354647AFef091E7",
     stakeStarOracle: "",
     stakeStarOracleStrict: "",
@@ -131,10 +135,10 @@ export const OPERATOR_IDS: Record<Network, BigNumber[]> = {
     BigNumber.from(68),
   ],
   [Network.HARDHAT]: [
-    BigNumber.from(56),
-    BigNumber.from(65),
-    BigNumber.from(66),
-    BigNumber.from(68),
+    BigNumber.from(1),
+    BigNumber.from(2),
+    BigNumber.from(3),
+    BigNumber.from(4),
   ],
 };
 
