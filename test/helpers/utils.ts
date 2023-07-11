@@ -31,8 +31,13 @@ describe("Utils", function () {
 
   describe("compareBytes", function () {
     it("Should compare two byte arrays", async function () {
-      const { validatorParams1, utilsMock, operatorIDs, feeRecipient } =
-        await loadFixture(deployStakeStarFixture);
+      const {
+        validatorParams1,
+        utilsMock,
+        operatorIDs,
+        feeRecipient,
+        stakeStarManager,
+      } = await loadFixture(deployStakeStarFixture);
 
       expect(
         await utilsMock.compareBytes(
@@ -46,7 +51,9 @@ describe("Utils", function () {
         OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
         operatorIDs,
         feeRecipient.address,
-        GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+        GENESIS_FORK_VERSIONS[currentNetwork(hre)],
+        stakeStarManager.address,
+        2
       );
 
       expect(

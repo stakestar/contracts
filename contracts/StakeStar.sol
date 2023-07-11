@@ -13,7 +13,7 @@ import "./interfaces/IStakingPool.sol";
 import "./interfaces/IDepositContract.sol";
 import "./interfaces/IOracleNetwork.sol";
 
-import "./ssv-network/ISSVNetwork.sol";
+import "./ssv-network/SSVNetwork.sol";
 
 import "./tokens/SStarETH.sol";
 import "./tokens/StarETH.sol";
@@ -29,7 +29,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         bytes signature;
         bytes32 depositDataRoot;
         uint64[] operatorIds;
-        bytes sharesEncrypted;
+        bytes sharesData;
     }
 
     // Balances (earned and staked) for specified timestamp
@@ -97,7 +97,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     // Other external contracts
     IDepositContract public depositContract;    // Contract for validator creation by 32ETH
-    ISSVNetwork public ssvNetwork;              // SSV Network
+    SSVNetwork public ssvNetwork;               // SSV Network
     IERC20 public ssvToken;                     // SSV Token used to pay for SSV Network usage
     IOracleNetwork public oracleNetwork;        // Oracle aggregation contract to get current staked + earned PoS balance
 
@@ -168,7 +168,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address mevRecipientAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         depositContract = IDepositContract(depositContractAddress);
-        ssvNetwork = ISSVNetwork(ssvNetworkAddress);
+        ssvNetwork = SSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);
         oracleNetwork = IOracleNetwork(oracleNetworkAddress);
 
@@ -493,7 +493,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function reactivate(
         uint64[] memory operatorIds,
         uint256 amount,
-        ISSVNetwork.Cluster memory cluster
+        SSVNetwork.Cluster memory cluster
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         ssvNetwork.reactivate(operatorIds, amount, cluster);
     }
@@ -503,7 +503,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function createValidator(
         ValidatorParams calldata validatorParams,
         uint256 amount,
-        ISSVNetwork.Cluster calldata cluster
+        SSVNetwork.Cluster calldata cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         require(validatorCreationAvailability(), "cannot create validator");
         require(
@@ -533,7 +533,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         ssvNetwork.registerValidator(
             validatorParams.publicKey,
             validatorParams.operatorIds,
-            validatorParams.sharesEncrypted,
+            validatorParams.sharesData,
             amount,
             cluster
         );
@@ -545,7 +545,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function destroyValidator(
         bytes calldata publicKey,
         uint64[] memory operatorIds,
-        ISSVNetwork.Cluster memory cluster
+        SSVNetwork.Cluster memory cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         stakeStarRegistry.confirmExitingValidator(publicKey);
         ssvNetwork.removeValidator(publicKey, operatorIds, cluster);
@@ -557,13 +557,13 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function registerValidator(
         ValidatorParams calldata validatorParams,
         uint256 amount,
-        ISSVNetwork.Cluster calldata cluster
+        SSVNetwork.Cluster calldata cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         ssvToken.approve(address(ssvNetwork), amount);
         ssvNetwork.registerValidator(
             validatorParams.publicKey,
             validatorParams.operatorIds,
-            validatorParams.sharesEncrypted,
+            validatorParams.sharesData,
             amount,
             cluster
         );
@@ -574,7 +574,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function unregisterValidator(
         bytes calldata publicKey,
         uint64[] memory operatorIds,
-        ISSVNetwork.Cluster memory cluster
+        SSVNetwork.Cluster memory cluster
     ) public onlyRole(Utils.MANAGER_ROLE) {
         ssvNetwork.removeValidator(publicKey, operatorIds, cluster);
 

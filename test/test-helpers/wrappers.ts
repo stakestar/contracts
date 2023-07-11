@@ -46,7 +46,9 @@ export async function generateValidatorParams(
   operatorPublicKeys: string[],
   operatorIds: BigNumber[],
   withdrawalAddress: string,
-  genesisForkVersion: string
+  genesisForkVersion: string,
+  ownerAddress: string,
+  ownerNonce: number
 ) {
   const { generateDepositData, generateKeySharesPayload, hexToBytes } =
     await import("@stakestar/lib");
@@ -54,7 +56,9 @@ export async function generateValidatorParams(
   const shares = await generateKeySharesPayload(
     hexToBytes(privateKey),
     operatorIds.map((value) => value.toNumber()),
-    operatorPublicKeys
+    operatorPublicKeys,
+    ownerAddress,
+    ownerNonce
   );
   const data = generateDepositData(
     hexToBytes(privateKey),
@@ -68,6 +72,6 @@ export async function generateValidatorParams(
     signature: data.depositData.signature,
     depositDataRoot: data.depositDataRoot,
     operatorIds: operatorIds,
-    sharesEncrypted: shares.encryptedShares,
+    sharesData: shares.sharesData,
   } as StakeStar.ValidatorParamsStruct;
 }

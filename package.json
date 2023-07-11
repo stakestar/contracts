@@ -9,7 +9,7 @@
     "dist/index.*",
     "artifacts/contracts/**/*"
   ],
-  "version": "0.17.5",
+  "version": "0.18.0-beta.1",
   "description": "StakeStar staking pool",
   "author": "onestar.dev",
   "license": "MIT",
@@ -37,7 +37,7 @@
     "@openzeppelin/contracts": "^4.8.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
     "@openzeppelin/hardhat-upgrades": "^1.22.1",
-    "@stakestar/lib": "^0.8.0",
+    "@stakestar/lib": "^1.0.1",
     "@typechain/ethers-v5": "^10.2.0",
     "@typechain/hardhat": "^6.1.5",
     "@types/chai": "^4.3.4",

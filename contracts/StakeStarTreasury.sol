@@ -11,8 +11,8 @@ import "./helpers/Utils.sol";
 import "./interfaces/ISwapProvider.sol";
 import "./interfaces/IStakingPool.sol";
 
-import "./ssv-network/ISSVNetwork.sol";
-import "./ssv-network/ISSVNetworkViews.sol";
+import "./ssv-network/SSVNetwork.sol";
+import "./ssv-network/SSVNetworkViews.sol";
 
 contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     event SetAddresses(
@@ -31,8 +31,8 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     IERC20 public ssvToken;
     ISwapProvider public swapProvider;
 
-    ISSVNetwork public ssvNetwork;
-    ISSVNetworkViews public ssvNetworkViews;
+    SSVNetwork public ssvNetwork;
+    SSVNetworkViews public ssvNetworkViews;
 
     // 1/100_000
     uint24 public commission;
@@ -55,8 +55,8 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address swapProviderAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
         stakeStar = IStakingPool(stakeStarAddress);
-        ssvNetwork = ISSVNetwork(ssvNetworkAddress);
-        ssvNetworkViews = ISSVNetworkViews(ssvNetworkViewsAddress);
+        ssvNetwork = SSVNetwork(ssvNetworkAddress);
+        ssvNetworkViews = SSVNetworkViews(ssvNetworkViewsAddress);
         ssvToken = IERC20(ssvTokenAddress);
         swapProvider = ISwapProvider(swapProviderAddress);
 
@@ -98,7 +98,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function swapETHAndDepositSSV(
         uint64[] memory operatorIds,
-        ISSVNetwork.Cluster memory cluster
+        SSVNetwork.Cluster memory cluster
     ) public payable onlyRole(Utils.MANAGER_ROLE) {
         require(minRunway != maxRunway, "runway not set");
         (bool avail, uint256 balance, uint256 burnRate) = swapAvailability(operatorIds, cluster);
@@ -122,7 +122,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function swapAvailability(
         uint64[] memory operatorIds,
-        ISSVNetwork.Cluster memory cluster
+        SSVNetwork.Cluster memory cluster
     ) public view returns (bool avail, uint256 balance, uint256 burnRate) {
         address stakeStarAddress = address(stakeStar);
         balance = ssvNetworkViews.getBalance(

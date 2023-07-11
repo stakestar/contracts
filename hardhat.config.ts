@@ -45,7 +45,7 @@ const config: HardhatUserConfig = {
     [Network.HARDHAT]: {
       forking: {
         url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
-        blockNumber: 8766380,
+        blockNumber: 9305000,
       },
     },
     [Network.GOERLI]: {
@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
           },
           outputSelection: {
             "*": {
-                "*": ["storageLayout"],
+              "*": ["storageLayout"],
             },
           },
         },
@@ -86,7 +86,7 @@ const config: HardhatUserConfig = {
     showTimeSpent: true,
     showMethodSig: false,
     onlyCalledMethods: true,
-    currency: 'USD',
+    currency: "USD",
     coinmarketcap: process.env.COINMARKETCAP_TOKEN,
   },
   mocha: {

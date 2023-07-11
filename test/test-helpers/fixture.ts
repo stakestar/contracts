@@ -83,10 +83,17 @@ export async function deployStakeStarFixture() {
   const SSVNetworkViews = await hre.ethers.getContractFactory(
     "SSVNetworkViews"
   );
-  const ssvNetwork = await SSVNetwork.attach(addresses.ssvNetwork);
+  const ssvNetworkOwner = await hre.ethers.getImpersonatedSigner(
+    addresses.ssvNetworkOwner
+  );
+  const ssvNetwork = (await SSVNetwork.attach(addresses.ssvNetwork)).connect(
+    ssvNetworkOwner
+  );
   const ssvNetworkViews = await SSVNetworkViews.attach(
     addresses.ssvNetworkViews
   );
+
+  await ssvNetwork.setRegisterAuth(stakeStar.address, false, true);
 
   const operatorIDs = OPERATOR_IDS[currentNetwork(hre)];
 
@@ -95,7 +102,9 @@ export async function deployStakeStarFixture() {
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     operatorIDs,
     withdrawalAddress.address,
-    GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+    GENESIS_FORK_VERSIONS[currentNetwork(hre)],
+    stakeStar.address,
+    0
   );
 
   const validatorParams2 = await generateValidatorParams(
@@ -103,7 +112,9 @@ export async function deployStakeStarFixture() {
     OPERATOR_PUBLIC_KEYS[currentNetwork(hre)],
     operatorIDs,
     withdrawalAddress.address,
-    GENESIS_FORK_VERSIONS[currentNetwork(hre)]
+    GENESIS_FORK_VERSIONS[currentNetwork(hre)],
+    stakeStar.address,
+    1
   );
 
   addresses.stakeStarOracle = stakeStarOracle.address;
