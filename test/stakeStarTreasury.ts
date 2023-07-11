@@ -176,155 +176,155 @@ describe("StakeStarTreasury", function () {
     });
   });
 
-  // describe("swapETHAndDepositSSV", function () {
-  //   it("Should buy SSV token on UNI V3 and deposit", async function () {
-  //     const {
-  //       stakeStarPublic,
-  //       hre,
-  //       stakeStarTreasury,
-  //       stakeStarManager,
-  //       stakeStarRegistry,
-  //       ssvToken,
-  //       ssvNetwork,
-  //       ssvNetworkViews,
-  //       uniswapV3Provider,
-  //       manager,
-  //       validatorParams1,
-  //       operatorIDs,
-  //       owner,
-  //       otherAccount,
-  //     } = await loadFixture(deployStakeStarFixture);
-  //     let cluster;
-  //
-  //     await stakeStarTreasury.grantRole(
-  //       ConstantsLib.MANAGER_ROLE,
-  //       owner.address
-  //     );
-  //
-  //     await ssvToken
-  //       .connect(owner)
-  //       .transfer(
-  //         otherAccount.address,
-  //         (
-  //           await ssvToken.balanceOf(owner.address)
-  //         ).sub(hre.ethers.utils.parseEther("2"))
-  //       );
-  //
-  //     await stakeStarPublic.depositAndStake({
-  //       value: hre.ethers.utils.parseEther("32"),
-  //     });
-  //
-  //     await createValidator(
-  //       hre,
-  //       stakeStarPublic,
-  //       stakeStarRegistry,
-  //       validatorParams1
-  //     );
-  //
-  //     cluster = await retrieveCluster(
-  //       hre,
-  //       ssvNetwork.address,
-  //       stakeStarPublic.address,
-  //       operatorIDs
-  //     );
-  //
-  //     await expect(
-  //       stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.be.revertedWith("runway not set");
-  //     await stakeStarTreasury.setRunway(216000 * 6, 216000 * 12); // 1 month, 3 months
-  //     await expect(
-  //       stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.be.revertedWith("swap not available");
-  //
-  //     await manager.sendTransaction({
-  //       to: stakeStarTreasury.address,
-  //       value: ethers.utils.parseEther("10"),
-  //     });
-  //
-  //     await expect(
-  //       stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.be.revertedWith("swap not available");
-  //     await stakeStarTreasury.setRunway(
-  //       (2 * 30 * 24 * 3600) / 12,
-  //       (6 * 30 * 24 * 3600) / 12
-  //     );
-  //
-  //     const aBalance = await ssvNetworkViews.getBalance(
-  //       stakeStarManager.address,
-  //       operatorIDs,
-  //       cluster
-  //     );
-  //     const aBurnRate = await ssvNetworkViews.getBurnRate(
-  //       stakeStarManager.address,
-  //       operatorIDs,
-  //       cluster
-  //     );
-  //
-  //     expect(aBalance).to.be.greaterThan(0);
-  //     expect(aBurnRate).to.be.greaterThan(0);
-  //
-  //     await uniswapV3Provider.setParameters(
-  //       3000,
-  //       0,
-  //       30 * 60,
-  //       ethers.utils.parseEther("999999")
-  //     );
-  //     await expect(
-  //       stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.be.revertedWith("insufficient liquidity");
-  //     await uniswapV3Provider.setParameters(
-  //       3000,
-  //       0,
-  //       30 * 60,
-  //       ethers.utils.parseEther("0.1")
-  //     );
-  //
-  //     await expect(
-  //       stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.be.revertedWith("slippage not set");
-  //     await uniswapV3Provider.setParameters(
-  //       3000,
-  //       99999,
-  //       30 * 60,
-  //       ethers.utils.parseEther("0.1")
-  //     );
-  //
-  //     await expect(
-  //       stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.be.revertedWith("Too little received");
-  //
-  //     await uniswapV3Provider.setParameters(
-  //       3000,
-  //       97000,
-  //       30 * 60,
-  //       ethers.utils.parseEther("0.1")
-  //     );
-  //     expect(
-  //       await stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
-  //     ).to.emit(stakeStarTreasury, "SwapETHAndDepositSSV");
-  //
-  //     cluster = await retrieveCluster(
-  //       hre,
-  //       ssvNetwork.address,
-  //       stakeStarPublic.address,
-  //       operatorIDs
-  //     );
-  //
-  //     const aBalance2 = await ssvNetworkViews.getBalance(
-  //       stakeStarManager.address,
-  //       operatorIDs,
-  //       cluster
-  //     );
-  //     expect(aBalance2).to.be.greaterThan(aBalance);
-  //
-  //     expect(
-  //       await uniswapV3Provider.provider.getBalance(uniswapV3Provider.address)
-  //     ).to.equal(0);
-  //     expect(
-  //       await stakeStarTreasury.provider.getBalance(stakeStarTreasury.address)
-  //     ).to.be.greaterThan(0);
-  //   });
-  // });
+  describe("swapETHAndDepositSSV", function () {
+    it("Should buy SSV token on UNI V3 and deposit", async function () {
+      const {
+        stakeStarPublic,
+        hre,
+        stakeStarTreasury,
+        stakeStarManager,
+        stakeStarRegistry,
+        ssvToken,
+        ssvNetwork,
+        ssvNetworkViews,
+        uniswapV3Provider,
+        manager,
+        validatorParams1,
+        operatorIDs,
+        owner,
+        otherAccount,
+      } = await loadFixture(deployStakeStarFixture);
+      let cluster;
+
+      await stakeStarTreasury.grantRole(
+        ConstantsLib.MANAGER_ROLE,
+        owner.address
+      );
+
+      await ssvToken
+        .connect(owner)
+        .transfer(
+          otherAccount.address,
+          (
+            await ssvToken.balanceOf(owner.address)
+          ).sub(hre.ethers.utils.parseEther("2"))
+        );
+
+      await stakeStarPublic.depositAndStake({
+        value: hre.ethers.utils.parseEther("32"),
+      });
+
+      await createValidator(
+        hre,
+        stakeStarPublic,
+        stakeStarRegistry,
+        validatorParams1
+      );
+
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("runway not set");
+      await stakeStarTreasury.setRunway(216000 * 6, 216000 * 12); // 1 month, 3 months
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("swap not available");
+
+      await manager.sendTransaction({
+        to: stakeStarTreasury.address,
+        value: ethers.utils.parseEther("10"),
+      });
+
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("swap not available");
+      await stakeStarTreasury.setRunway(
+        (2 * 30 * 24 * 3600) / 12,
+        (6 * 30 * 24 * 3600) / 12
+      );
+
+      const aBalance = await ssvNetworkViews.getBalance(
+        stakeStarManager.address,
+        operatorIDs,
+        cluster
+      );
+      const aBurnRate = await ssvNetworkViews.getBurnRate(
+        stakeStarManager.address,
+        operatorIDs,
+        cluster
+      );
+
+      expect(aBalance).to.be.greaterThan(0);
+      expect(aBurnRate).to.be.greaterThan(0);
+
+      await uniswapV3Provider.setParameters(
+        3000,
+        0,
+        30 * 60,
+        ethers.utils.parseEther("999999")
+      );
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("insufficient liquidity");
+      await uniswapV3Provider.setParameters(
+        3000,
+        0,
+        30 * 60,
+        ethers.utils.parseEther("0.1")
+      );
+
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("slippage not set");
+      await uniswapV3Provider.setParameters(
+        3000,
+        99999,
+        30 * 60,
+        ethers.utils.parseEther("0.1")
+      );
+
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.be.revertedWith("Too little received");
+
+      await uniswapV3Provider.setParameters(
+        3000,
+        97000,
+        30 * 60,
+        ethers.utils.parseEther("0.1")
+      );
+      expect(
+        await stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+      ).to.emit(stakeStarTreasury, "SwapETHAndDepositSSV");
+
+      cluster = await retrieveCluster(
+        hre,
+        ssvNetwork.address,
+        stakeStarPublic.address,
+        operatorIDs
+      );
+
+      const aBalance2 = await ssvNetworkViews.getBalance(
+        stakeStarManager.address,
+        operatorIDs,
+        cluster
+      );
+      expect(aBalance2).to.be.greaterThan(aBalance);
+
+      expect(
+        await uniswapV3Provider.provider.getBalance(uniswapV3Provider.address)
+      ).to.equal(0);
+      expect(
+        await stakeStarTreasury.provider.getBalance(stakeStarTreasury.address)
+      ).to.be.greaterThan(0);
+    });
+  });
 
   describe("Claim", function () {
     it("Should emit Pull event", async function () {
