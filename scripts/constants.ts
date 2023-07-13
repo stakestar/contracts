@@ -133,6 +133,10 @@ export const OPERATOR_IDS: Record<Network, BigNumber[]> = {
     BigNumber.from(61),
     BigNumber.from(62),
     BigNumber.from(63),
+    BigNumber.from(64),
+    BigNumber.from(65),
+    BigNumber.from(66),
+    BigNumber.from(67),
   ],
   [Network.HARDHAT]: [
     BigNumber.from(1),
