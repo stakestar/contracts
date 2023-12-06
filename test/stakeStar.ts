@@ -105,6 +105,11 @@ describe("StakeStar", function () {
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
       await expect(
+        stakeStarPublic.setUnstakeParameters(1)
+      ).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
+      await expect(
         stakeStarPublic.setRateParameters(1, false)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
@@ -252,6 +257,20 @@ describe("StakeStar", function () {
       });
     });
 
+    describe("setUnstakeParameters", function () {
+      it("Should setUnstakeParameters", async function () {
+        const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+
+        expect(await stakeStarOwner.unstakePeriodLimit()).to.equal(0);
+
+        await expect(stakeStarOwner.setUnstakeParameters(7))
+          .to.emit(stakeStarOwner, "SetUnstakeParameters")
+          .withArgs(7);
+
+        expect(await stakeStarOwner.unstakePeriodLimit()).to.equal(7);
+      });
+    });
+
     describe("setRateParameters", function () {
       it("Should setRateParameters", async function () {
         const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
@@ -362,6 +381,24 @@ describe("StakeStar", function () {
   });
 
   describe("Withdraw", function () {
+    it("unstakePeriodLimit", async function() {
+      const { hre, stakeStarOwner } = await loadFixture(
+        deployStakeStarFixture
+      );
+
+      await stakeStarOwner.setUnstakeParameters(10);
+
+      await stakeStarOwner.depositAndStake({ value: hre.ethers.utils.parseEther("2") })
+
+      await expect(stakeStarOwner.unstake(hre.ethers.utils.parseEther("1"))).to.be.revertedWith(
+        "unstakePeriodLimit"
+      );
+
+      await mine(50);
+
+      await stakeStarOwner.unstake(hre.ethers.utils.parseEther("1"));
+    });
+
     it("Should create pendingWithdrawal", async function () {
       const { hre, stakeStarPublic, otherAccount, starETH } = await loadFixture(
         deployStakeStarFixture

@@ -53,6 +53,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address feeRecipient,
         address mevRecipient
     );
+    event SetUnstakeParameters(uint32 ustakePeriodLimit);
     event SetRateParameters(uint24 maxRateDeviation, bool rateDeviationCheck);
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
@@ -101,6 +102,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     IERC20 public ssvToken; // SSV Token used to pay for SSV Network usage
     IOracleNetwork public oracleNetwork; // Oracle aggregation contract to get current staked + earned PoS balance
 
+    mapping(address => uint32) public stakeHistory;
+
     // Data structures for withdrawal operation
     // Linked list structure
     struct PendingWithdrawalData {
@@ -129,6 +132,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     Snapshot[2] public snapshots;
 
     uint96 public validatorWithdrawalThreshold;
+
+    uint32 public unstakePeriodLimit;
 
     // Rate control variables. Stored as numerator with 1e18 denominator
     // rate = TotalEth / StakedStar * 1e18
@@ -211,6 +216,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             feeRecipientAddress,
             mevRecipientAddress
         );
+    }
+
+    function setUnstakeParameters(
+        uint32 _unstakePeriodLimit
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        unstakePeriodLimit = _unstakePeriodLimit;
+
+        emit SetUnstakeParameters(_unstakePeriodLimit);
     }
 
     function setRateParameters(
@@ -298,6 +311,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         starETH.burn(msg.sender, starAmount);
         sstarETH.mint(msg.sender, stakedStarAmount);
 
+        stakeHistory[msg.sender] = uint32(block.number);
+
         emit Stake(msg.sender, starAmount, stakedStarAmount);
     }
 
@@ -311,6 +326,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     function unstake(
         uint256 stakedStarAmount
     ) public returns (uint256 starAmount) {
+        require(
+            uint32(block.number) - stakeHistory[msg.sender] >
+                unstakePeriodLimit,
+            "unstakePeriodLimit"
+        );
+
         extractCommission();
 
         starAmount = stakedStarToETH(stakedStarAmount);
