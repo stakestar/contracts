@@ -35,9 +35,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // Balances (earned and staked) for specified timestamp
     // used to calculate rate for any time in future using linear extrapolation
     struct Snapshot {
-        uint96 total_ETH;          // in ether (decimals = 1e18)
-        uint96 total_stakedStar;   // in SStarETH (decimals = 1e18)
-        uint64 timestamp;          // in seconds (taken from block.timestamp)
+        uint96 total_ETH; // in ether (decimals = 1e18)
+        uint96 total_stakedStar; // in SStarETH (decimals = 1e18)
+        uint64 timestamp; // in seconds (taken from block.timestamp)
     }
 
     event SetAddresses(
@@ -86,20 +86,20 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     // External contract addresses. Can be changed only using setAddresses method
     SStarETH public sstarETH; // StakedStarETH token
-    StarETH public starETH;   // StarETH token
+    StarETH public starETH; // StarETH token
     StakeStarRegistry public stakeStarRegistry; // Stake Star Registry with the list of operators/validators
     StakeStarTreasury public stakeStarTreasury; // Treasury used to collect commission
 
     // Special contracts used to receive profit
-    ETHReceiver public withdrawalAddress;       // Money got by Ethereum PoS protocol + when validator is destroyed
-    ETHReceiver public feeRecipient;            // Money got by user transaction fee when validator propose block
-    ETHReceiver public mevRecipient;            // Money got by MEV optimization on validator nodes
+    ETHReceiver public withdrawalAddress; // Money got by Ethereum PoS protocol + when validator is destroyed
+    ETHReceiver public feeRecipient; // Money got by user transaction fee when validator propose block
+    ETHReceiver public mevRecipient; // Money got by MEV optimization on validator nodes
 
     // Other external contracts
-    IDepositContract public depositContract;    // Contract for validator creation by 32ETH
-    SSVNetwork public ssvNetwork;               // SSV Network
-    IERC20 public ssvToken;                     // SSV Token used to pay for SSV Network usage
-    IOracleNetwork public oracleNetwork;        // Oracle aggregation contract to get current staked + earned PoS balance
+    IDepositContract public depositContract; // Contract for validator creation by 32ETH
+    SSVNetwork public ssvNetwork; // SSV Network
+    IERC20 public ssvToken; // SSV Token used to pay for SSV Network usage
+    IOracleNetwork public oracleNetwork; // Oracle aggregation contract to get current staked + earned PoS balance
 
     // Data structures for withdrawal operation
     // Linked list structure
@@ -107,22 +107,23 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address next;
         uint96 pendingAmount;
     }
-    mapping(address => PendingWithdrawalData) public queue;  // withdrawal queue organized as one-way list
+
+    mapping(address => PendingWithdrawalData) public queue; // withdrawal queue organized as one-way list
 
     // -= slot =-
-    uint96 public pendingWithdrawalSum;     // total current pending withdrawal sum
-    address public head;                    // pointer to the first item
+    uint96 public pendingWithdrawalSum; // total current pending withdrawal sum
+    address public head; // pointer to the first item
 
     // -= slot =-
-    address public tail;                    // pointer to the last item
-    uint32 public loopLimit;                // max queue items to process (other items are saved but can't be withdrawn)
+    address public tail; // pointer to the last item
+    uint32 public loopLimit; // max queue items to process (other items are saved but can't be withdrawn)
 
     // Local Pool data for LocalWithdrawal operations
-    mapping(address => uint32) public localPoolWithdrawalHistory;  // block number for last LocalWithdrawal operation for user
-    uint96 public localPoolSize;                     // current local pool size in ETH
-    uint96 public localPoolMaxSize;                  // max pool size
-    uint32 public localPoolWithdrawalPeriodLimit;    // in blocks 12 seconds * 2^32 =~ 1600 years
-    uint96 public localPoolWithdrawalLimit;          // max amount allowed for LocalWithdrawal operation
+    mapping(address => uint32) public localPoolWithdrawalHistory; // block number for last LocalWithdrawal operation for user
+    uint96 public localPoolSize; // current local pool size in ETH
+    uint96 public localPoolMaxSize; // max pool size
+    uint32 public localPoolWithdrawalPeriodLimit; // in blocks 12 seconds * 2^32 =~ 1600 years
+    uint96 public localPoolWithdrawalLimit; // max amount allowed for LocalWithdrawal operation
 
     // Last two balance data used for rate approximation
     Snapshot[2] public snapshots;
@@ -131,19 +132,19 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     // Rate control variables. Stored as numerator with 1e18 denominator
     // rate = TotalEth / StakedStar * 1e18
-    uint24 public maxRateDeviation;         // rate deviation control. In 1/100_000
-    bool public rateDeviationCheck;         // rate deviation check temporary disable. Can be used only once
+    uint24 public maxRateDeviation; // rate deviation control. In 1/100_000
+    bool public rateDeviationCheck; // rate deviation check temporary disable. Can be used only once
 
-    uint96 public rateForExtractCommision;  // last rate used for extractCommission
-    uint64 public rateDiffThreshold;        // if (rate2 - rate1) < rateDiffThreshold do not extract any commission
-    uint96 public rateCorrectionFactor;     // rate correction to consider commission
+    uint96 public rateForExtractCommision; // last rate used for extractCommission
+    uint64 public rateDiffThreshold; // if (rate2 - rate1) < rateDiffThreshold do not extract any commission
+    uint96 public rateCorrectionFactor; // rate correction to consider commission
 
     receive() external payable {}
 
     function initialize() public initializer {
         loopLimit = 25;
 
-        maxRateDeviation = 500;  // 0.5%
+        maxRateDeviation = 500; // 0.5%
         rateDeviationCheck = true;
 
         rateForExtractCommision = 1 ether;
@@ -236,7 +237,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         localPoolWithdrawalLimit = _localPoolWithdrawalLimit;
         localPoolWithdrawalPeriodLimit = _localPoolWithdrawalPeriodLimit;
 
-        localPoolSize = localPoolSize < localPoolMaxSize ? localPoolSize : localPoolMaxSize;
+        localPoolSize = localPoolSize < localPoolMaxSize
+            ? localPoolSize
+            : localPoolMaxSize;
 
         emit SetLocalPoolParameters(
             _localPoolMaxSize,
@@ -326,12 +329,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
         starETH.burn(msg.sender, starAmount);
 
-        queue[msg.sender].pendingAmount = uint96(starAmount);  // next = 0
+        queue[msg.sender].pendingAmount = uint96(starAmount); // next = 0
         pendingWithdrawalSum += uint96(starAmount);
         if (head == address(0)) {
             head = msg.sender;
         } else {
-            assert(tail != address(0));    // tail can be 0 only if head = 0
+            assert(tail != address(0)); // tail can be 0 only if head = 0
             queue[tail].next = msg.sender;
         }
         tail = msg.sender;
@@ -381,8 +384,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         );
         require(starAmount <= localPoolSize, "localPoolSize");
         require(
-            uint32(block.number) - localPoolWithdrawalHistory[msg.sender] > localPoolWithdrawalPeriodLimit,
+            uint32(block.number) - localPoolWithdrawalHistory[msg.sender] >
+                localPoolWithdrawalPeriodLimit,
             "localPoolWithdrawalPeriodLimit"
+        );
+        require(
+            uint32(block.number) - uint32(starETH.history(msg.sender)) >
+                localPoolWithdrawalPeriodLimit,
+            "localPoolWithdrawalPeriodLimit after transfer"
         );
 
         starETH.burn(msg.sender, starAmount);
@@ -403,7 +412,9 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // find position of msgSender address in the withdrawal queue starting from 1 (zero has special meaning)
     // also return previous to this position element to make available one-way list remove operation
     // if position in queue more then loopLimit or msgSender not found return (0, 0)
-    function queueIndexAndPrevious(address msgSender) internal view returns (uint32, address) {
+    function queueIndexAndPrevious(
+        address msgSender
+    ) internal view returns (uint32, address) {
         address current = head;
         address previous = address(0);
 
@@ -438,7 +449,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
         uint96 currentRate = uint96(rate());
         if (currentRate > rateForExtractCommision) {
-            if (currentRate <= rateForExtractCommision + rateDiffThreshold) return;
+            if (currentRate <= rateForExtractCommision + rateDiffThreshold)
+                return;
 
             uint256 unrecordedRewards = MathUpgradeable.mulDiv(
                 totalSupply_stakedStar,
@@ -462,10 +474,12 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
             // Snapshots are not updated after minting commission_stakedStar,
             // so save the change and update rate to consider this commission
-            rateCorrectionFactor = uint96(MathUpgradeable.mulDiv(
-                rateCorrectionFactor,
-                totalSupply_stakedStar,
-                totalSupply_stakedStar + commission_stakedStar)
+            rateCorrectionFactor = uint96(
+                MathUpgradeable.mulDiv(
+                    rateCorrectionFactor,
+                    totalSupply_stakedStar,
+                    totalSupply_stakedStar + commission_stakedStar
+                )
             );
             sstarETH.mint(address(stakeStarTreasury), commission_stakedStar);
 
@@ -602,7 +616,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // update rate according to the new total balance
     function commitSnapshot() public {
         // Warning: totalBalance includes withdrawalAddress balance!
-        (uint256 totalBalance, uint256 timestamp) = oracleNetwork.latestTotalBalance();
+        (uint256 totalBalance, uint256 timestamp) = oracleNetwork
+            .latestTotalBalance();
 
         require(
             timestamp >= snapshots[1].timestamp + Utils.EPOCH_DURATION,
@@ -651,7 +666,11 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         }
 
         snapshots[0] = snapshots[1];
-        snapshots[1] = Snapshot(uint96(total_ETH), uint96(total_stakedStar), uint64(timestamp));
+        snapshots[1] = Snapshot(
+            uint96(total_ETH),
+            uint96(total_stakedStar),
+            uint64(timestamp)
+        );
 
         rateCorrectionFactor = 1 ether;
 
@@ -676,7 +695,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         uint256 freeETH = address(this).balance - localPoolSize;
         uint256 exitedETH = address(withdrawalAddress).balance;
         uint256 fees = address(feeRecipient).balance +
-                       address(mevRecipient).balance;
+            address(mevRecipient).balance;
         uint256 exitingValidators = stakeStarRegistry.countValidatorPublicKeys(
             StakeStarRegistry.ValidatorStatus.EXITING
         );
