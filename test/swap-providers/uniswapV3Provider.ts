@@ -67,7 +67,7 @@ describe("UniswapV3Provider", function () {
         }`
       );
       await expect(
-        uniswapV3Provider.connect(otherAccount).swap(1)
+        uniswapV3Provider.connect(otherAccount).swap(1, 0)
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${
           ConstantsLib.TREASURY_ROLE

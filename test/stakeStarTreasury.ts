@@ -229,11 +229,11 @@ describe("StakeStarTreasury", function () {
       );
 
       await expect(
-        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.be.revertedWith("runway not set");
       await stakeStarTreasury.setRunway(216000 * 6, 216000 * 12); // 1 month, 3 months
       await expect(
-        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.be.revertedWith("swap not available");
 
       await manager.sendTransaction({
@@ -242,7 +242,7 @@ describe("StakeStarTreasury", function () {
       });
 
       await expect(
-        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.be.revertedWith("swap not available");
       await stakeStarTreasury.setRunway(
         (2 * 30 * 24 * 3600) / 12,
@@ -270,7 +270,7 @@ describe("StakeStarTreasury", function () {
         ethers.utils.parseEther("999999")
       );
       await expect(
-        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.be.revertedWith("insufficient liquidity");
       await uniswapV3Provider.setParameters(
         3000,
@@ -280,7 +280,7 @@ describe("StakeStarTreasury", function () {
       );
 
       await expect(
-        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.be.revertedWith("slippage not set");
       await uniswapV3Provider.setParameters(
         3000,
@@ -290,7 +290,7 @@ describe("StakeStarTreasury", function () {
       );
 
       await expect(
-        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.be.revertedWith("Too little received");
 
       await uniswapV3Provider.setParameters(
@@ -300,7 +300,7 @@ describe("StakeStarTreasury", function () {
         ethers.utils.parseEther("0.1")
       );
       expect(
-        await stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster)
+        await stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.emit(stakeStarTreasury, "SwapETHAndDepositSSV");
 
       cluster = await retrieveCluster(

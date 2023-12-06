@@ -14,7 +14,8 @@ abstract contract SwapProvider is
     event Swap(uint256 amountIn, uint256 amountOut);
 
     function swap(
-        uint256 desiredAmountOut
+        uint256 desiredAmountOut,
+        uint256 deadline
     )
         public
         payable
@@ -22,11 +23,12 @@ abstract contract SwapProvider is
         onlyRole(Utils.TREASURY_ROLE)
         returns (uint256 amountIn, uint256 amountOut)
     {
-        (amountIn, amountOut) = _swap(desiredAmountOut);
+        (amountIn, amountOut) = _swap(desiredAmountOut, deadline);
         emit Swap(amountIn, amountOut);
     }
 
     function _swap(
-        uint256 desiredAmountOut
+        uint256 desiredAmountOut,
+        uint256 deadline
     ) internal virtual returns (uint256 amountIn, uint256 amountOut);
 }

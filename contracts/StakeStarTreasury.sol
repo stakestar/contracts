@@ -39,7 +39,7 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
     // measured in blocks, for 12 seconds block uint32 will be enough for 1500 years
     uint32 public minRunway;
     uint32 public maxRunway;
-    uint32 constant maxPossibleRunway = 365 * 24 * 3600 / 12;  // 1 year
+    uint32 constant maxPossibleRunway = (365 * 24 * 3600) / 12; // 1 year
 
     receive() external payable {}
 
@@ -98,15 +98,19 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
 
     function swapETHAndDepositSSV(
         uint64[] memory operatorIds,
-        SSVNetwork.Cluster memory cluster
+        SSVNetwork.Cluster memory cluster,
+        uint256 deadline
     ) public payable onlyRole(Utils.MANAGER_ROLE) {
         require(minRunway != maxRunway, "runway not set");
-        (bool avail, uint256 balance, uint256 burnRate) = swapAvailability(operatorIds, cluster);
+        (bool avail, uint256 balance, uint256 burnRate) = swapAvailability(
+            operatorIds,
+            cluster
+        );
         require(avail, "swap not available");
 
         (uint256 amountIn, uint256 amountOut) = swapProvider.swap{
             value: address(this).balance
-        }(burnRate * maxRunway - balance);
+        }(burnRate * maxRunway - balance, deadline);
 
         uint256 depositAmount = ssvToken.balanceOf(address(this));
         ssvToken.approve(address(ssvNetwork), depositAmount);

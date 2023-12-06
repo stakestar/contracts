@@ -90,13 +90,16 @@ contract UniswapV3Provider is SwapProvider {
     }
 
     function _swap(
-        uint256 desiredAmountOut
+        uint256 desiredAmountOut,
+        uint256 deadline
     ) internal override returns (uint256 amountIn, uint256 amountOut) {
         require(
             IERC20(wETH).balanceOf(pool) >= minETHLiquidity,
             "insufficient liquidity"
         );
         require(slippage > 0, "slippage not set");
+
+        if (deadline == 0) deadline = block.timestamp;
 
         amountIn = quoter.quoteExactOutputSingle(
             wETH,
