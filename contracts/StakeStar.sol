@@ -167,6 +167,18 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address feeRecipientAddress,
         address mevRecipientAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        require(depositContractAddress != address(0), "zero address");
+        require(ssvNetworkAddress != address(0), "zero address");
+        require(ssvTokenAddress != address(0), "zero address");
+        require(oracleNetworkAddress != address(0), "zero address");
+        require(sstarETHAddress != address(0), "zero address");
+        require(starETHAddress != address(0), "zero address");
+        require(stakeStarRegistryAddress != address(0), "zero address");
+        require(stakeStarTreasuryAddress != address(0), "zero address");
+        require(withdrawalCredentialsAddress != address(0), "zero address");
+        require(feeRecipientAddress != address(0), "zero address");
+        require(mevRecipientAddress != address(0), "zero address");
+
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = SSVNetwork(ssvNetworkAddress);
         ssvToken = IERC20(ssvTokenAddress);

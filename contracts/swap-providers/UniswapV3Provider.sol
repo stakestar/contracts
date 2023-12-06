@@ -53,6 +53,13 @@ contract UniswapV3Provider is SwapProvider {
         address ssvTokenAddress,
         address poolAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        require(swapRouterAddress != address(0), "zero address");
+        require(quoterAddress != address(0), "zero address");
+        require(uniswapHelperAddress != address(0), "zero address");
+        require(wETHAddress != address(0), "zero address");
+        require(ssvTokenAddress != address(0), "zero address");
+        require(poolAddress != address(0), "zero address");
+
         swapRouter = ISwapRouter(swapRouterAddress);
         quoter = IQuoter(quoterAddress);
         uniswapHelper = IUniswapHelper(uniswapHelperAddress);
