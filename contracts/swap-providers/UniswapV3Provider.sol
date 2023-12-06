@@ -3,13 +3,20 @@ pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 
-import "./SwapProvider.sol";
+import "../helpers/Utils.sol";
+import "../interfaces/ISwapProvider.sol";
 import "../interfaces/IUniswapHelper.sol";
 
-contract UniswapV3Provider is SwapProvider {
+contract UniswapV3Provider is
+    ISwapProvider,
+    Initializable,
+    AccessControlUpgradeable
+{
     event SetAddresses(
         address swapRouter,
         address quoter,
@@ -96,10 +103,10 @@ contract UniswapV3Provider is SwapProvider {
         emit SetParameters(fee, numerator, interval, minLiquidity);
     }
 
-    function _swap(
+    function swap(
         uint256 desiredAmountOut,
         uint256 deadline
-    ) internal override returns (uint256 amountIn, uint256 amountOut) {
+    ) public payable onlyRole(Utils.TREASURY_ROLE) override returns (uint256 amountIn, uint256 amountOut)  {
         require(
             IERC20(wETH).balanceOf(pool) >= minETHLiquidity,
             "insufficient liquidity"
@@ -142,5 +149,7 @@ contract UniswapV3Provider is SwapProvider {
 
         uint256 ethBalance = address(this).balance;
         if (ethBalance > 0) Utils.safeTransferETH(msg.sender, ethBalance);
+
+        emit Swap(amountIn, amountOut);
     }
 }
