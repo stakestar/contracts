@@ -54,6 +54,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address mevRecipient
     );
     event SetUnstakeParameters(uint32 ustakePeriodLimit);
+    event SetWithdrawalParameters(uint96 withdrawalMinLimit);
     event SetRateParameters(uint24 maxRateDeviation, bool rateDeviationCheck);
     event SetLocalPoolParameters(
         uint256 localPoolMaxSize,
@@ -134,6 +135,8 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     uint96 public validatorWithdrawalThreshold;
 
     uint32 public unstakePeriodLimit;
+
+    uint96 public withdrawalMinLimit;
 
     // Rate control variables. Stored as numerator with 1e18 denominator
     // rate = TotalEth / StakedStar * 1e18
@@ -224,6 +227,14 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         unstakePeriodLimit = _unstakePeriodLimit;
 
         emit SetUnstakeParameters(_unstakePeriodLimit);
+    }
+
+    function setWithdrawalParameters(
+        uint96 _withdrawalMinLimit
+    ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        withdrawalMinLimit = _withdrawalMinLimit;
+
+        emit SetWithdrawalParameters(_withdrawalMinLimit);
     }
 
     function setRateParameters(
@@ -344,6 +355,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     // unwrap Star tokens to ETH (1:1). Ether do not send immediately, but put in withdrawal queue
     // when balance of the contract will have enough free ETH you can `claim` it
     function withdraw(uint256 starAmount) public {
+        require(starAmount >= withdrawalMinLimit, "withdrawalMinLimit");
         require(
             queue[msg.sender].pendingAmount == 0,
             "one withdrawal at a time only"
@@ -371,29 +383,44 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
 
     // Try to receive ETH already requested to withdraw
     function claim() public {
-        PendingWithdrawalData memory pendingData = queue[msg.sender];
+        _claim(msg.sender);
+    }
+
+    // Forcefully empty the withdrawal queue
+    function forceClaim(uint8 n) public {
+        require(n > 0, "n = 0");
+        require(head != address(0), "queue is empty");
+
+        while(n > 0 && head != address(0)) {
+            _claim(head);
+            n = n - 1;
+        }
+    }
+
+    function _claim(address msgSender) internal {
+        PendingWithdrawalData memory pendingData = queue[msgSender];
         uint96 eth = pendingData.pendingAmount;
         require(eth > 0, "no pending withdrawal");
 
-        (uint32 index, address index_prev) = queueIndexAndPrevious(msg.sender);
+        (uint32 index, address index_prev) = queueIndexAndPrevious(msgSender);
         require(index > 0, "lack of eth / queue length");
 
         pendingWithdrawalSum -= eth;
-        if (head == msg.sender) {
+        if (head == msgSender) {
             head = pendingData.next;
         } else {
             queue[index_prev].next = pendingData.next;
         }
-        if (tail == msg.sender) {
+        if (tail == msgSender) {
             tail = index_prev;
         }
 
-        delete queue[msg.sender];
+        delete queue[msgSender];
 
         // possible reentrancy, but as a last call before return it's safe
-        Utils.safeTransferETH(msg.sender, eth);
+        Utils.safeTransferETH(msgSender, eth);
 
-        emit Claim(msg.sender, eth);
+        emit Claim(msgSender, eth);
     }
 
     // for small SStar amount make withdraw without enqueue/claim operations

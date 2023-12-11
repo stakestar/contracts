@@ -104,8 +104,13 @@ describe("StakeStar", function () {
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
+      await expect(stakeStarPublic.setUnstakeParameters(1)).to.be.revertedWith(
+        `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
+      );
       await expect(
-        stakeStarPublic.setUnstakeParameters(1)
+        stakeStarPublic.setWithdrawalParameters(
+          hre.ethers.utils.parseEther("0.05")
+        )
       ).to.be.revertedWith(
         `AccessControl: account ${otherAccount.address.toLowerCase()} is missing role ${defaultAdminRole}`
       );
@@ -259,7 +264,9 @@ describe("StakeStar", function () {
 
     describe("setUnstakeParameters", function () {
       it("Should setUnstakeParameters", async function () {
-        const { stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+        const { stakeStarOwner } = await loadFixture(
+          deployStakeStarFixture
+        );
 
         expect(await stakeStarOwner.unstakePeriodLimit()).to.equal(0);
 
@@ -381,18 +388,18 @@ describe("StakeStar", function () {
   });
 
   describe("Withdraw", function () {
-    it("unstakePeriodLimit", async function() {
-      const { hre, stakeStarOwner } = await loadFixture(
-        deployStakeStarFixture
-      );
+    it("unstakePeriodLimit", async function () {
+      const { hre, stakeStarOwner } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarOwner.setUnstakeParameters(10);
 
-      await stakeStarOwner.depositAndStake({ value: hre.ethers.utils.parseEther("2") })
+      await stakeStarOwner.depositAndStake({
+        value: hre.ethers.utils.parseEther("2"),
+      });
 
-      await expect(stakeStarOwner.unstake(hre.ethers.utils.parseEther("1"))).to.be.revertedWith(
-        "unstakePeriodLimit"
-      );
+      await expect(
+        stakeStarOwner.unstake(hre.ethers.utils.parseEther("1"))
+      ).to.be.revertedWith("unstakePeriodLimit");
 
       await mine(50);
 
@@ -722,6 +729,65 @@ describe("StakeStar", function () {
       await expect(stakeStarPublic.claim())
         .to.emit(stakeStarPublic, "Claim")
         .withArgs(otherAccount.address, withdrawalAmount);
+    });
+
+    it.skip("claim queue gas check", async function () {
+      const { hre, stakeStarOwner, stakeStarPublic, otherAccount } =
+        await loadFixture(deployStakeStarFixture);
+
+      const maxN = 100;
+
+      await stakeStarOwner.setQueueParameters(maxN + 10);
+
+      const wallets = [];
+      for (let i = 0; i < maxN; i++) {
+        wallets[i] = hre.ethers.Wallet.createRandom().connect(
+          hre.ethers.provider
+        );
+        const ssw = stakeStarPublic.connect(wallets[i]);
+
+        await otherAccount.sendTransaction({
+          value: hre.ethers.utils.parseEther("0.1"),
+          to: wallets[i].address,
+        });
+        await ssw.deposit({ value: hre.ethers.utils.parseEther("0.005") });
+        await ssw.withdraw(hre.ethers.utils.parseEther("0.005"));
+
+        console.log(
+          `${i + 1}th will pay`,
+          (await ssw.estimateGas.claim()).toNumber(),
+          "units of gas"
+        );
+      }
+    });
+
+    it("forceClaim", async function () {
+      const { hre, stakeStarPublic, otherAccount } =
+        await loadFixture(deployStakeStarFixture);
+
+      const maxN = 10;
+
+      const wallets = [];
+      for (let i = 0; i < maxN; i++) {
+        wallets[i] = hre.ethers.Wallet.createRandom().connect(
+          hre.ethers.provider
+        );
+        const ssw = stakeStarPublic.connect(wallets[i]);
+
+        await otherAccount.sendTransaction({
+          value: hre.ethers.utils.parseEther("0.1"),
+          to: wallets[i].address,
+        });
+        await ssw.deposit({ value: hre.ethers.utils.parseEther("0.005") });
+        await ssw.withdraw(hre.ethers.utils.parseEther("0.005"));
+      }
+
+      await stakeStarPublic.forceClaim(8);
+      await stakeStarPublic.forceClaim(2);
+
+      await expect(
+        stakeStarPublic.forceClaim(1)
+      ).to.be.revertedWith("queue is empty");
     });
   });
 
