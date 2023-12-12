@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./helpers/ETHReceiver.sol";
 import "./helpers/Utils.sol";
@@ -21,7 +22,12 @@ import "./tokens/StarETH.sol";
 import "./StakeStarRegistry.sol";
 import "./StakeStarTreasury.sol";
 
-contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
+contract StakeStar is
+    IStakingPool,
+    Initializable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     // Data just to aggregate validator parameters, not used in any data structure
     struct ValidatorParams {
         bytes publicKey;
@@ -176,17 +182,29 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
         address feeRecipientAddress,
         address mevRecipientAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(depositContractAddress != address(0), "zero address");
-        require(ssvNetworkAddress != address(0), "zero address");
-        require(ssvTokenAddress != address(0), "zero address");
-        require(oracleNetworkAddress != address(0), "zero address");
-        require(sstarETHAddress != address(0), "zero address");
-        require(starETHAddress != address(0), "zero address");
-        require(stakeStarRegistryAddress != address(0), "zero address");
-        require(stakeStarTreasuryAddress != address(0), "zero address");
-        require(withdrawalCredentialsAddress != address(0), "zero address");
-        require(feeRecipientAddress != address(0), "zero address");
-        require(mevRecipientAddress != address(0), "zero address");
+        require(
+            depositContractAddress != address(0),
+            Utils.ZERO_ADDR_ERROR_MSG
+        );
+        require(ssvNetworkAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(ssvTokenAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(oracleNetworkAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(sstarETHAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(starETHAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(
+            stakeStarRegistryAddress != address(0),
+            Utils.ZERO_ADDR_ERROR_MSG
+        );
+        require(
+            stakeStarTreasuryAddress != address(0),
+            Utils.ZERO_ADDR_ERROR_MSG
+        );
+        require(
+            withdrawalCredentialsAddress != address(0),
+            Utils.ZERO_ADDR_ERROR_MSG
+        );
+        require(feeRecipientAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(mevRecipientAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
 
         depositContract = IDepositContract(depositContractAddress);
         ssvNetwork = SSVNetwork(ssvNetworkAddress);
@@ -382,16 +400,16 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
     }
 
     // Try to receive ETH already requested to withdraw
-    function claim() public {
+    function claim() public nonReentrant {
         _claim(msg.sender);
     }
 
     // Forcefully empty the withdrawal queue
-    function forceClaim(uint8 n) public {
+    function forceClaim(uint8 n) public nonReentrant {
         require(n > 0, "n = 0");
         require(head != address(0), "queue is empty");
 
-        while(n > 0 && head != address(0)) {
+        while (n > 0 && head != address(0)) {
             _claim(head);
             n = n - 1;
         }
@@ -437,7 +455,7 @@ contract StakeStar is IStakingPool, Initializable, AccessControlUpgradeable {
             "localPoolWithdrawalPeriodLimit"
         );
         require(
-            uint32(block.number) - uint32(starETH.history(msg.sender)) >
+            uint32(block.number) - starETH.history(msg.sender) >
                 localPoolWithdrawalPeriodLimit,
             "localPoolWithdrawalPeriodLimit after transfer"
         );

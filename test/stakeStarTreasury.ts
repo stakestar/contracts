@@ -299,6 +299,11 @@ describe("StakeStarTreasury", function () {
         30 * 60,
         ethers.utils.parseEther("0.1")
       );
+
+      await expect(
+        stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 1)
+      ).to.be.revertedWith("Transaction too old");
+
       expect(
         await stakeStarTreasury.swapETHAndDepositSSV(operatorIDs, cluster, 0)
       ).to.emit(stakeStarTreasury, "SwapETHAndDepositSSV");

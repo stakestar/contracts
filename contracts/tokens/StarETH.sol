@@ -9,7 +9,7 @@ contract StarETH is ERC20, AccessControl {
     event Mint(address indexed to, uint256 value);
     event Burn(address indexed from, uint256 value);
 
-    mapping(address => uint256) public history;
+    mapping(address => uint32) public history;
 
     constructor() ERC20("StarETH", "starETH") {
         _setupRole(Utils.DEFAULT_ADMIN_ROLE, msg.sender);
@@ -37,7 +37,7 @@ contract StarETH is ERC20, AccessControl {
         uint256 amount
     ) internal virtual override {
         if (from != address(0)) {
-            history[to] = block.number;
+            history[to] = uint32(block.number);
         }
     }
 }

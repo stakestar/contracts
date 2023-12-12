@@ -54,11 +54,11 @@ contract StakeStarTreasury is Initializable, AccessControlUpgradeable {
         address ssvTokenAddress,
         address swapProviderAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(stakeStarAddress != address(0), "zero address");
-        require(ssvNetworkAddress != address(0), "zero address");
-        require(ssvNetworkViewsAddress != address(0), "zero address");
-        require(ssvTokenAddress != address(0), "zero address");
-        require(swapProviderAddress != address(0), "zero address");
+        require(stakeStarAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(ssvNetworkAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(ssvNetworkViewsAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(ssvTokenAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(swapProviderAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
 
         stakeStar = IStakingPool(stakeStarAddress);
         ssvNetwork = SSVNetwork(ssvNetworkAddress);

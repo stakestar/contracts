@@ -60,12 +60,12 @@ contract UniswapV3Provider is
         address ssvTokenAddress,
         address poolAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
-        require(swapRouterAddress != address(0), "zero address");
-        require(quoterAddress != address(0), "zero address");
-        require(uniswapHelperAddress != address(0), "zero address");
-        require(wETHAddress != address(0), "zero address");
-        require(ssvTokenAddress != address(0), "zero address");
-        require(poolAddress != address(0), "zero address");
+        require(swapRouterAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(quoterAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(uniswapHelperAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(wETHAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(ssvTokenAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(poolAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
 
         swapRouter = ISwapRouter(swapRouterAddress);
         quoter = IQuoter(quoterAddress);
@@ -140,7 +140,7 @@ contract UniswapV3Provider is
                 tokenOut: ssvToken,
                 fee: poolFee,
                 recipient: msg.sender,
-                deadline: block.timestamp,
+                deadline: deadline,
                 amountIn: amountIn,
                 amountOutMinimum: amountOutMinimum,
                 sqrtPriceLimitX96: 0

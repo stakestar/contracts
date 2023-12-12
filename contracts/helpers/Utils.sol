@@ -11,6 +11,8 @@ library Utils {
 
     uint32 public constant EPOCH_DURATION = 384;
 
+    string public constant ZERO_ADDR_ERROR_MSG = "zero address";
+
     function safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
         require(success, "STE");
