@@ -360,6 +360,11 @@ contract StakeStar is
                 unstakePeriodLimit,
             "unstakePeriodLimit"
         );
+        require(
+            uint32(block.number) - sstarETH.history(msg.sender) >
+            unstakePeriodLimit,
+            "unstakePeriodLimit after transfer"
+        );
 
         extractCommission();
 

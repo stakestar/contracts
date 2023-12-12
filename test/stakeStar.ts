@@ -389,7 +389,7 @@ describe("StakeStar", function () {
 
   describe("Withdraw", function () {
     it("unstakePeriodLimit", async function () {
-      const { hre, stakeStarOwner } = await loadFixture(deployStakeStarFixture);
+      const { hre, stakeStarOwner, stakeStarPublic, sstarETH, owner, otherAccount } = await loadFixture(deployStakeStarFixture);
 
       await stakeStarOwner.setUnstakeParameters(10);
 
@@ -401,9 +401,16 @@ describe("StakeStar", function () {
         stakeStarOwner.unstake(hre.ethers.utils.parseEther("1"))
       ).to.be.revertedWith("unstakePeriodLimit");
 
+      await (sstarETH.connect(owner)).transfer(otherAccount.address, hre.ethers.utils.parseEther("1"));
+
+      await expect(
+        stakeStarPublic.unstake(hre.ethers.utils.parseEther("1"))
+      ).to.be.revertedWith("unstakePeriodLimit after transfer");
+
       await mine(50);
 
       await stakeStarOwner.unstake(hre.ethers.utils.parseEther("1"));
+      await stakeStarPublic.unstake(hre.ethers.utils.parseEther("1"));
     });
 
     it("Should create pendingWithdrawal", async function () {
