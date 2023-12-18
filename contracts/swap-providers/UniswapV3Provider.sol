@@ -3,13 +3,20 @@ pragma solidity 0.8.18;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 
-import "./SwapProvider.sol";
+import "../helpers/Utils.sol";
+import "../interfaces/ISwapProvider.sol";
 import "../interfaces/IUniswapHelper.sol";
 
-contract UniswapV3Provider is SwapProvider {
+contract UniswapV3Provider is
+    ISwapProvider,
+    Initializable,
+    AccessControlUpgradeable
+{
     event SetAddresses(
         address swapRouter,
         address quoter,
@@ -53,6 +60,13 @@ contract UniswapV3Provider is SwapProvider {
         address ssvTokenAddress,
         address poolAddress
     ) public onlyRole(Utils.DEFAULT_ADMIN_ROLE) {
+        require(swapRouterAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(quoterAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(uniswapHelperAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(wETHAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(ssvTokenAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+        require(poolAddress != address(0), Utils.ZERO_ADDR_ERROR_MSG);
+
         swapRouter = ISwapRouter(swapRouterAddress);
         quoter = IQuoter(quoterAddress);
         uniswapHelper = IUniswapHelper(uniswapHelperAddress);
@@ -89,14 +103,17 @@ contract UniswapV3Provider is SwapProvider {
         emit SetParameters(fee, numerator, interval, minLiquidity);
     }
 
-    function _swap(
-        uint256 desiredAmountOut
-    ) internal override returns (uint256 amountIn, uint256 amountOut) {
+    function swap(
+        uint256 desiredAmountOut,
+        uint256 deadline
+    ) public payable onlyRole(Utils.TREASURY_ROLE) override returns (uint256 amountIn, uint256 amountOut)  {
         require(
             IERC20(wETH).balanceOf(pool) >= minETHLiquidity,
             "insufficient liquidity"
         );
         require(slippage > 0, "slippage not set");
+
+        if (deadline == 0) deadline = block.timestamp;
 
         amountIn = quoter.quoteExactOutputSingle(
             wETH,
@@ -123,7 +140,7 @@ contract UniswapV3Provider is SwapProvider {
                 tokenOut: ssvToken,
                 fee: poolFee,
                 recipient: msg.sender,
-                deadline: block.timestamp,
+                deadline: deadline,
                 amountIn: amountIn,
                 amountOutMinimum: amountOutMinimum,
                 sqrtPriceLimitX96: 0
@@ -132,5 +149,7 @@ contract UniswapV3Provider is SwapProvider {
 
         uint256 ethBalance = address(this).balance;
         if (ethBalance > 0) Utils.safeTransferETH(msg.sender, ethBalance);
+
+        emit Swap(amountIn, amountOut);
     }
 }
