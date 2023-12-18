@@ -2668,7 +2668,7 @@ describe("StakeStar", function () {
       const provider = stakeStarPublic.provider;
 
       const block0 = await hre.ethers.provider.getBlock("latest");
-      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384) + 1;
 
       await stakeStarTreasury.setCommission(10000); // 10%
       await stakeStarPublic.depositAndStake({
@@ -2856,7 +2856,7 @@ describe("StakeStar", function () {
         totalStaked;
 
       const block0 = await hre.ethers.provider.getBlock("latest");
-      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384) + 1;
 
       console.log("before any operations");
       poolBalance = await provider.getBalance(stakeStarPublic.address);
@@ -3147,7 +3147,7 @@ describe("StakeStar", function () {
         totalStaked;
 
       const block0 = await hre.ethers.provider.getBlock("latest");
-      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384) + 1;
 
       console.log("before any operations");
       poolBalance = await provider.getBalance(stakeStarPublic.address);
@@ -3503,7 +3503,7 @@ describe("StakeStar", function () {
         totalStaked;
 
       const block0 = await hre.ethers.provider.getBlock("latest");
-      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384);
+      const epoch0 = Math.ceil((block0.timestamp - EPOCHS[network]) / 384) + 1;
 
       console.log("before any operations");
       poolBalance = await provider.getBalance(stakeStarPublic.address);
