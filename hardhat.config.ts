@@ -34,6 +34,7 @@ import "./scripts/tasks/setTreasuryRunway";
 import "./scripts/tasks/setUnstakeParameters";
 import "./scripts/tasks/setValidatorWithdrawalThreshold";
 import "./scripts/tasks/setWithdrawalParameters";
+import "./scripts/tasks/storageLayout";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarOracle";
 import "./scripts/tasks/upgrade-StakeStarOracleStrict";

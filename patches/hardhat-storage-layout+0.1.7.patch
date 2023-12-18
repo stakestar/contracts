@@ -1,0 +1,24 @@
+diff --git a/node_modules/hardhat-storage-layout/dist/index.js b/node_modules/hardhat-storage-layout/dist/index.js
+index 86ce857..0933dd2 100644
+--- a/node_modules/hardhat-storage-layout/dist/index.js
++++ b/node_modules/hardhat-storage-layout/dist/index.js
+@@ -19,7 +19,6 @@ config_1.task(task_names_1.TASK_COMPILE).setAction(async function (args, hre, ru
+     for (const compiler of hre.config.solidity.compilers) {
+         compiler.settings.outputSelection["*"]["*"].push("storageLayout");
+     }
+-    console.log(hre.config.solidity.compilers);
+     await runSuper(args);
+ });
+ config_1.extendConfig((config, userConfig) => {
+diff --git a/node_modules/hardhat-storage-layout/src/index.ts b/node_modules/hardhat-storage-layout/src/index.ts
+index 081844b..724aa5c 100644
+--- a/node_modules/hardhat-storage-layout/src/index.ts
++++ b/node_modules/hardhat-storage-layout/src/index.ts
+@@ -18,7 +18,6 @@ task(TASK_COMPILE).setAction(async function(args, hre, runSuper) {
+   for (const compiler of hre.config.solidity.compilers) {
+     compiler.settings.outputSelection["*"]["*"].push("storageLayout");
+   }
+-  console.log(hre.config.solidity.compilers);
+   await runSuper(args);
+ });
+ 
