@@ -26,11 +26,14 @@ import "./scripts/tasks/setAllAddresses";
 import "./scripts/tasks/setCommissionParameters";
 import "./scripts/tasks/setEpochUpdatePeriod";
 import "./scripts/tasks/setLocalPoolParameters";
+import "./scripts/tasks/setQueueParameters";
 import "./scripts/tasks/setRateParameters";
 import "./scripts/tasks/setSwapParameters";
 import "./scripts/tasks/setTreasuryCommission";
 import "./scripts/tasks/setTreasuryRunway";
+import "./scripts/tasks/setUnstakeParameters";
 import "./scripts/tasks/setValidatorWithdrawalThreshold";
+import "./scripts/tasks/setWithdrawalParameters";
 import "./scripts/tasks/upgrade-StakeStar";
 import "./scripts/tasks/upgrade-StakeStarOracle";
 import "./scripts/tasks/upgrade-StakeStarOracleStrict";
@@ -45,7 +48,7 @@ const config: HardhatUserConfig = {
     [Network.HARDHAT]: {
       forking: {
         url: process.env.GOERLI_RPC || HARDHAT_NETWORK,
-        blockNumber: 9305000,
+        blockNumber: 10231900,
       },
     },
     [Network.GOERLI]: {
@@ -53,6 +56,10 @@ const config: HardhatUserConfig = {
       accounts: [process.env.GOERLI_DEPLOYER_PRIVKEY || ZERO_PRIVATE_KEY],
       timeout: 3000000,
     },
+    [Network.MAINNET]: {
+      url: "http://127.0.0.1:1248", // frame
+      timeout: 10000000,
+    }
   },
   solidity: {
     compilers: [

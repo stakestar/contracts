@@ -26,9 +26,9 @@ interface ISSVNetwork {
         uint64 operatorMaxFeeIncrease_
     ) external;
 
+    function getVersion() external pure returns (string memory version);
+
+    function setFeeRecipientAddress(address feeRecipientAddress) external;
+
     function updateModule(SSVModules moduleId, address moduleAddress) external;
-
-    function setRegisterAuth(address userAddress, bool authOperators, bool authValidators) external;
-
-    function getRegisterAuth(address userAddress) external view returns (bool authOperators, bool authValidators);
 }

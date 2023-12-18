@@ -93,8 +93,6 @@ export async function deployStakeStarFixture() {
     addresses.ssvNetworkViews
   );
 
-  await ssvNetwork.setRegisterAuth(stakeStar.address, false, true);
-
   const operatorIDs = OPERATOR_IDS[currentNetwork(hre)];
 
   const validatorParams1 = await generateValidatorParams(

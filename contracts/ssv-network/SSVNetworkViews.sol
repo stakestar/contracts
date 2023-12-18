@@ -20,7 +20,7 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
 
     // @dev reserve storage space for future new state variables in base contract
     // slither-disable-next-line shadowing-state
-    uint256[50] private__gap;
+    uint256[50] private __gap;
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
@@ -39,8 +39,8 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
     /* Validator External View Functions */
     /*************************************/
 
-    function getValidator(address owner, bytes calldata publicKey) external view override returns (bool active) {
-        return ssvNetwork.getValidator(owner, publicKey);
+    function getValidator(address clusterOwner, bytes calldata publicKey) external view override returns (bool) {
+        return ssvNetwork.getValidator(clusterOwner, publicKey);
     }
 
     /************************************/
@@ -51,11 +51,13 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
         return ssvNetwork.getOperatorFee(operatorId);
     }
 
-    function getOperatorDeclaredFee(uint64 operatorId) external view override returns (uint256, uint64, uint64) {
+    function getOperatorDeclaredFee(uint64 operatorId) external view override returns (bool, uint256, uint64, uint64) {
         return ssvNetwork.getOperatorDeclaredFee(operatorId);
     }
 
-    function getOperatorById(uint64 operatorId) external view override returns (address, uint256, uint32, address, bool, bool) {
+    function getOperatorById(
+        uint64 operatorId
+    ) external view override returns (address, uint256, uint32, address, bool, bool) {
         return ssvNetwork.getOperatorById(operatorId);
     }
 
@@ -64,27 +66,27 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
     /***********************************/
 
     function isLiquidatable(
-        address owner,
+        address clusterOwner,
         uint64[] calldata operatorIds,
         Cluster memory cluster
     ) external view override returns (bool) {
-        return ssvNetwork.isLiquidatable(owner, operatorIds, cluster);
+        return ssvNetwork.isLiquidatable(clusterOwner, operatorIds, cluster);
     }
 
     function isLiquidated(
-        address owner,
+        address clusterOwner,
         uint64[] calldata operatorIds,
         Cluster memory cluster
     ) external view override returns (bool) {
-        return ssvNetwork.isLiquidated(owner, operatorIds, cluster);
+        return ssvNetwork.isLiquidated(clusterOwner, operatorIds, cluster);
     }
 
     function getBurnRate(
-        address owner,
+        address clusterOwner,
         uint64[] calldata operatorIds,
         Cluster memory cluster
     ) external view returns (uint256) {
-        return ssvNetwork.getBurnRate(owner, operatorIds, cluster);
+        return ssvNetwork.getBurnRate(clusterOwner, operatorIds, cluster);
     }
 
     /***********************************/
@@ -96,11 +98,11 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
     }
 
     function getBalance(
-        address owner,
+        address clusterOwner,
         uint64[] calldata operatorIds,
         Cluster memory cluster
     ) external view override returns (uint256) {
-        return ssvNetwork.getBalance(owner, operatorIds, cluster);
+        return ssvNetwork.getBalance(clusterOwner, operatorIds, cluster);
     }
 
     /*******************************/
@@ -115,16 +117,15 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
         return ssvNetwork.getNetworkEarnings();
     }
 
-    function getOperatorFeeIncreaseLimit() external view override returns (uint64 operatorMaxFeeIncrease) {
+    function getOperatorFeeIncreaseLimit() external view override returns (uint64) {
         return ssvNetwork.getOperatorFeeIncreaseLimit();
     }
 
-    function getOperatorFeePeriods()
-        external
-        view
-        override
-        returns (uint64 declareOperatorFeePeriod, uint64 executeOperatorFeePeriod)
-    {
+    function getMaximumOperatorFee() external view override returns (uint64) {
+        return ssvNetwork.getMaximumOperatorFee();
+    }
+
+    function getOperatorFeePeriods() external view override returns (uint64, uint64) {
         return ssvNetwork.getOperatorFeePeriods();
     }
 
@@ -140,7 +141,11 @@ contract SSVNetworkViews is UUPSUpgradeable, Ownable2StepUpgradeable, ISSVViews 
         return ssvNetwork.getValidatorsPerOperatorLimit();
     }
 
-    function getVersion() external view override returns (string memory version) {
+    function getNetworkValidatorsCount() external view override returns (uint32) {
+        return ssvNetwork.getNetworkValidatorsCount();
+    }
+
+    function getVersion() external view override returns (string memory) {
         return ssvNetwork.getVersion();
     }
 }

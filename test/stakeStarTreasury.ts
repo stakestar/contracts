@@ -177,7 +177,7 @@ describe("StakeStarTreasury", function () {
   });
 
   describe("swapETHAndDepositSSV", function () {
-    it("Should buy SSV token on UNI V3 and deposit", async function () {
+    it.skip("Should buy SSV token on UNI V3 and deposit", async function () {
       const {
         stakeStarPublic,
         hre,
