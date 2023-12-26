@@ -8,6 +8,8 @@ export function currentNetwork(hre: HardhatRuntimeEnvironment) {
       return Network.HARDHAT;
     case "goerli":
       return Network.GOERLI;
+    case "mainnet":
+      return Network.MAINNET;
 
     default:
       throw new Error("Unsupported network");
