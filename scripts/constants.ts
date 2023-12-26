@@ -38,11 +38,11 @@ export const ADDRESSES: Record<
   }
 > = {
   [Network.MAINNET]: {
-    depositContract: "",
-    ssvNetwork: "",
-    ssvNetworkOwner: "",
-    ssvNetworkViews: "",
-    ssvToken: "",
+    depositContract: "0x00000000219ab540356cBB839Cbe05303d7705Fa",
+    ssvNetwork: "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1",
+    ssvNetworkOwner: "0x3187a42658417a4d60866163A4534Ce00D40C0C8",
+    ssvNetworkViews: "0xafE830B6Ee262ba11cce5F32fDCd760FFE6a66e4",
+    ssvToken: "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54",
     stakeStarOracle: "",
     stakeStarOracleStrict: "0xd58F6D0d48C96001Eaab92ABE74438B9C3D5b79e",
     stakeStarTreasury: "0xd339Fef5b2b96E9B136781594BdaD19f29f10a4d",
