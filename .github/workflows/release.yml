@@ -1,20 +1,22 @@
-name: Publish
+name: Release
+
 on:
   release:
-    types: [created]
+    types: [published ]
+
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          cache: "yarn"
-          node-version: 18
-          registry-url: "https://npm.pkg.github.com"
-      - run: yarn && yarn build
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build
+      - run: yarn version --new-version ${TAG:1} --no-git-tag-version
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GPR_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
       - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

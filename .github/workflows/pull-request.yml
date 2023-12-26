@@ -1,0 +1,18 @@
+name: Tests
+
+on: pull_request
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build
+      - run: yarn test
+        env:
+          GOERLI_RPC: ${{ secrets.GOERLI_RPC }}
+          GOERLI_DEPLOYER_PRIVKEY: ${{ secrets.GOERLI_DEPLOYER_PRIVKEY }}
