@@ -15,6 +15,7 @@ import "./scripts/tasks/events/printValidatorEvents";
 import "./scripts/tasks/allowListOperators";
 import "./scripts/tasks/commitSnapshot";
 import "./scripts/tasks/deployAll";
+import "./scripts/tasks/deposit";
 import "./scripts/tasks/grant-ManagerRole";
 import "./scripts/tasks/grant-OracleRole";
 import "./scripts/tasks/grant-StakeStarRole";
