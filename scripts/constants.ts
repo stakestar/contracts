@@ -127,12 +127,17 @@ export const EPOCHS: Record<Network, number> = {
 };
 
 export const OPERATOR_IDS: Record<Network, BigNumber[]> = {
-  [Network.MAINNET]: [],
+  [Network.MAINNET]: [
+    BigNumber.from(66),
+    BigNumber.from(79),
+    BigNumber.from(80),
+    BigNumber.from(81),
+  ],
   [Network.GOERLI]: [
     BigNumber.from(58),
     BigNumber.from(61),
     BigNumber.from(62),
-    BigNumber.from(63)
+    BigNumber.from(63),
   ],
   [Network.HARDHAT]: [
     BigNumber.from(1),
