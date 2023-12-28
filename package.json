@@ -13,12 +13,11 @@
   "author": "onestar.dev",
   "license": "MIT",
   "scripts": {
-    "build": "hardhat clean && hardhat compile && rm -rf dist && tsc",
+    "build": "patch-package && hardhat clean && hardhat compile && rm -rf dist && tsc",
     "test": "hardhat test",
     "bump": "bump --commit 'Release v' --tag",
     "solhint": "solhint contracts/**/*",
-    "prettier": "prettier --write .",
-    "postinstall": "patch-package"
+    "prettier": "prettier --write ."
   },
   "dependencies": {
     "ethers": "^5.7.2"
